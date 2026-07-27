@@ -73,7 +73,7 @@ export default function Sidebar({ active, onNavigate, collapsed, onToggleCollaps
             transition={{ duration: 0.2 }}
             style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15.5, letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}
           >
-            NJinix
+            EdgeJournal
           </motion.span>
         )}
       </div>

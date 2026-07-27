@@ -1,4 +1,4 @@
-# NJinix Journal Hub
+# EdgeJournal
 
 A forex/futures trading journal web app. React + Vite, all data stored locally in the browser (`localStorage`) — no backend, no database, no account system.
 

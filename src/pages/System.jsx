@@ -79,7 +79,7 @@ export default function System() {
   function handleExport() {
     const data = exportAllData();
     const stamp = new Date().toISOString().slice(0, 10);
-    downloadJSONFile(data, `njinix-journal-backup-${stamp}.json`);
+    downloadJSONFile(data, `edgejournal-backup-${stamp}.json`);
   }
 
   function handleImportClick() {
@@ -96,7 +96,7 @@ export default function System() {
       reloadAllFromStorage();
       setImportMsg({ type: 'success', text: 'Backup imported successfully.' });
     } catch (err) {
-      setImportMsg({ type: 'error', text: 'Could not import this file. Make sure it is a valid NJinix backup JSON.' });
+      setImportMsg({ type: 'error', text: 'Could not import this file. Make sure it is a valid EdgeJournal backup JSON.' });
     } finally {
       e.target.value = '';
     }

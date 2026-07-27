@@ -46,7 +46,7 @@ export function estimateStorageBytes() {
 export function exportAllData() {
   const data = {
     exportedAt: new Date().toISOString(),
-    app: 'NJinix Journal Hub',
+    app: 'EdgeJournal',
     version: 1,
     trades: loadJSON(KEYS.trades, []),
     plans: loadJSON(KEYS.plans, []),
