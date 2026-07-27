@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Pencil, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Pencil, Check, LogOut } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function Header({ title, subtitle }) {
   const { accountName, setAccountName } = useData();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(accountName);
 
@@ -18,6 +22,13 @@ export default function Header({ title, subtitle }) {
   function save() {
     setAccountName(draft.trim() || 'My Trading Account');
     setEditing(false);
+  }
+
+  function handleLogout() {
+    // Fake auth only — clears the in-memory isAuthenticated flag and
+    // sends the visitor back to /login. No backend/session call.
+    logout();
+    navigate('/login', { replace: true });
   }
 
   return (
@@ -88,6 +99,11 @@ export default function Header({ title, subtitle }) {
             <Pencil size={13} />
           </button>
         )}
+
+        <button className="btn btn-ghost btn-sm" onClick={handleLogout} title="Log out">
+          <LogOut size={14} />
+          Logout
+        </button>
       </div>
     </motion.div>
   );

@@ -1,17 +1,20 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, ArrowRight } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import FormField from '../../components/auth/FormField';
 import PasswordField from '../../components/auth/PasswordField';
 import AuthButton from '../../components/auth/AuthButton';
 import SocialButtons from '../../components/auth/SocialButtons';
+import { useAuth } from '../../context/AuthContext';
 
-// Login UI only. There is no auth provider wired up yet — submitting
-// just simulates a brief loading state and does not persist, validate
-// against, or redirect to any backend/session.
+// Login UI wired to the fake AuthProvider only — there is still no real
+// backend/Supabase call. Submitting simulates a brief loading state, then
+// marks the visitor authenticated and sends them to /dashboard.
 
 export default function Login() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '', remember: true });
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +27,11 @@ export default function Login() {
     setLoading(true);
     // Placeholder only — no backend call. Swapped for a real
     // Supabase sign-in call once auth is connected.
-    setTimeout(() => setLoading(false), 900);
+    setTimeout(() => {
+      setLoading(false);
+      login();
+      navigate('/dashboard', { replace: true });
+    }, 900);
   }
 
   return (

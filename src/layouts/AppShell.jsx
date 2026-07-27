@@ -60,6 +60,9 @@ export default function AppShell() {
                   }
                 />
               ))}
+              {/* Alias: login redirects here per spec; Dashboard itself
+                  still lives at "/" so nothing about its route changes. */}
+              <Route path="/dashboard" element={<Navigate to={defaultRoute.path} replace />} />
               <Route path="*" element={<Navigate to={defaultRoute.path} replace />} />
             </Routes>
           </AnimatePresence>
