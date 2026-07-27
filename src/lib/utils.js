@@ -1,0 +1,55 @@
+export function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
+}
+
+export function formatMoney(n) {
+  const v = Number(n) || 0;
+  const sign = v > 0 ? '+' : v < 0 ? '-' : '';
+  return `${sign}$${Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+export function formatMoneyShort(n) {
+  const v = Number(n) || 0;
+  const sign = v > 0 ? '+' : v < 0 ? '-' : '';
+  return `${sign}$${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+}
+
+export function pnlClass(n) {
+  const v = Number(n) || 0;
+  if (v > 0) return 'pnl-pos';
+  if (v < 0) return 'pnl-neg';
+  return 'pnl-flat';
+}
+
+export function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return dateStr;
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+export function formatDateShort(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return dateStr;
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+export function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export function fileToDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+export function resultTagClass(result) {
+  if (result === 'Win') return 'tag-win';
+  if (result === 'Loss') return 'tag-loss';
+  return 'tag-be';
+}
