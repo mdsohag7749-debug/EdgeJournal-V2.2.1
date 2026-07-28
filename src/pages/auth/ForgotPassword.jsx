@@ -4,25 +4,32 @@ import { Mail, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import FormField from '../../components/auth/FormField';
 import AuthButton from '../../components/auth/AuthButton';
+import { useAuth } from '../../context/AuthContext';
 
-// Forgot Password UI only. Submitting does not send any email or call any
-// backend — it only flips a local "sent" view to show what the flow will
-// look like once a real provider (e.g. Supabase) is connected.
+// Forgot Password wired to real Supabase auth
+// (supabase.auth.resetPasswordForEmail via AuthContext). Supabase itself
+// intentionally does not reveal whether the address exists, so the
+// "if an account exists..." copy below is accurate, not just cautious UI.
 
 export default function ForgotPassword() {
+  const { requestPasswordReset } = useAuth();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    setError('');
     setLoading(true);
-    // Placeholder only — no backend call. Swapped for a real
-    // Supabase password-reset request once auth is connected.
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await requestPasswordReset(email);
       setSent(true);
-    }, 900);
+    } catch (err) {
+      setError(err?.message || 'Unable to send a reset link right now. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (sent) {
@@ -86,6 +93,8 @@ export default function ForgotPassword() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
+
+        {error && <span className="auth-error-text">{error}</span>}
 
         <AuthButton loading={loading}>
           Send Reset Link <ArrowRight size={16} />

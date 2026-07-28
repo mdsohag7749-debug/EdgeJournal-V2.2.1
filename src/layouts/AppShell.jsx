@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { DataProvider } from '../context/DataContext';
+import { DataProvider, useData } from '../context/DataContext';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import LoadingScreen from '../components/LoadingScreen';
 import { routes, defaultRoute } from '../routes/routes';
 
 function PageTransition({ children }) {
@@ -25,9 +26,21 @@ function PageTransition({ children }) {
 // Auth pages (Login/Register/ForgotPassword) live outside this shell
 // entirely — see src/App.jsx.
 export default function AppShell() {
+  return (
+    <DataProvider>
+      <AppShellContent />
+    </DataProvider>
+  );
+}
+
+// Split out so it can read `trades.loading` from DataContext — gates
+// the shell behind the first Supabase trades fetch so pages never
+// render a misleading "0 trades" empty state before real data arrives.
+function AppShellContent() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { trades } = useData();
 
   const activeRoute = routes.find((r) => r.path === location.pathname) || defaultRoute;
 
@@ -36,38 +49,40 @@ export default function AppShell() {
     if (target) navigate(target.path);
   }
 
+  if (trades.loading) {
+    return <LoadingScreen message="Loading your trades…" />;
+  }
+
   return (
-    <DataProvider>
-      <div style={{ display: 'flex', minHeight: '100vh' }}>
-        <Sidebar
-          active={activeRoute.id}
-          onNavigate={handleNavigate}
-          collapsed={collapsed}
-          onToggleCollapsed={() => setCollapsed((c) => !c)}
-        />
-        <main style={{ flex: 1, minWidth: 0, padding: '28px 32px 60px' }}>
-          {!activeRoute.hideHeader && <Header title={activeRoute.title} subtitle={activeRoute.subtitle} />}
-          <AnimatePresence mode="wait">
-            <Routes location={location} key={location.pathname}>
-              {routes.map(({ path, Component }) => (
-                <Route
-                  key={path}
-                  path={path}
-                  element={
-                    <PageTransition>
-                      <Component onNavigate={handleNavigate} />
-                    </PageTransition>
-                  }
-                />
-              ))}
-              {/* Alias: login redirects here per spec; Dashboard itself
-                  still lives at "/" so nothing about its route changes. */}
-              <Route path="/dashboard" element={<Navigate to={defaultRoute.path} replace />} />
-              <Route path="*" element={<Navigate to={defaultRoute.path} replace />} />
-            </Routes>
-          </AnimatePresence>
-        </main>
-      </div>
-    </DataProvider>
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <Sidebar
+        active={activeRoute.id}
+        onNavigate={handleNavigate}
+        collapsed={collapsed}
+        onToggleCollapsed={() => setCollapsed((c) => !c)}
+      />
+      <main style={{ flex: 1, minWidth: 0, padding: '28px 32px 60px' }}>
+        {!activeRoute.hideHeader && <Header title={activeRoute.title} subtitle={activeRoute.subtitle} />}
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            {routes.map(({ path, Component }) => (
+              <Route
+                key={path}
+                path={path}
+                element={
+                  <PageTransition>
+                    <Component onNavigate={handleNavigate} />
+                  </PageTransition>
+                }
+              />
+            ))}
+            {/* Alias: login redirects here per spec; Dashboard itself
+                still lives at "/" so nothing about its route changes. */}
+            <Route path="/dashboard" element={<Navigate to={defaultRoute.path} replace />} />
+            <Route path="*" element={<Navigate to={defaultRoute.path} replace />} />
+          </Routes>
+        </AnimatePresence>
+      </main>
+    </div>
   );
 }

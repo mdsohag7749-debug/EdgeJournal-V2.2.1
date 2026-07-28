@@ -24,11 +24,15 @@ export default function Header({ title, subtitle }) {
     setEditing(false);
   }
 
-  function handleLogout() {
-    // Fake auth only — clears the in-memory isAuthenticated flag and
-    // sends the visitor back to /login. No backend/session call.
-    logout();
-    navigate('/login', { replace: true });
+  async function handleLogout() {
+    // Real Supabase sign-out. The auth-state listener in AuthContext
+    // will clear the session automatically; we also navigate explicitly
+    // so the redirect to /login happens immediately.
+    try {
+      await logout();
+    } finally {
+      navigate('/login', { replace: true });
+    }
   }
 
   return (

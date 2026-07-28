@@ -4,18 +4,41 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ProtectedRoute from './routes/ProtectedRoute';
+import GuestRoute from './routes/GuestRoute';
 
-// Top-level router: authentication pages render standalone (no Sidebar/
-// Header, no data store, no auth guard). Every other page falls through
-// to AppShell, wrapped in a single ProtectedRoute — this protects the
-// whole authenticated app (dashboard, journal, etc.) in one place rather
-// than guarding each page individually.
+// Top-level router.
+// - /login, /register, /forgot-password: standalone auth pages, guarded
+//   by GuestRoute so an already-authenticated (auto-logged-in) visitor
+//   skips straight to the dashboard instead of seeing the form again.
+// - everything else: AppShell, guarded by ProtectedRoute so the whole
+//   authenticated app is protected in one place.
 export default function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route
+        path="/login"
+        element={
+          <GuestRoute>
+            <Login />
+          </GuestRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <GuestRoute>
+            <Register />
+          </GuestRoute>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <GuestRoute>
+            <ForgotPassword />
+          </GuestRoute>
+        }
+      />
       <Route
         path="/*"
         element={

@@ -8,30 +8,34 @@ import AuthButton from '../../components/auth/AuthButton';
 import SocialButtons from '../../components/auth/SocialButtons';
 import { useAuth } from '../../context/AuthContext';
 
-// Login UI wired to the fake AuthProvider only — there is still no real
-// backend/Supabase call. Submitting simulates a brief loading state, then
-// marks the visitor authenticated and sends them to /dashboard.
+// Login wired to real Supabase auth (supabase.auth.signInWithPassword
+// via AuthContext). On success, AuthContext's session/isAuthenticated
+// update from the auth-state listener; we also navigate explicitly so
+// the redirect to /dashboard happens immediately.
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '', remember: true });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   function set(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    setError('');
     setLoading(true);
-    // Placeholder only — no backend call. Swapped for a real
-    // Supabase sign-in call once auth is connected.
-    setTimeout(() => {
-      setLoading(false);
-      login();
+    try {
+      await login(form.email, form.password);
       navigate('/dashboard', { replace: true });
-    }, 900);
+    } catch (err) {
+      setError(err?.message || 'Unable to sign in. Check your credentials and try again.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -77,6 +81,8 @@ export default function Login() {
             Forgot password?
           </Link>
         </div>
+
+        {error && <span className="auth-error-text">{error}</span>}
 
         <AuthButton loading={loading}>
           Sign In <ArrowRight size={16} />

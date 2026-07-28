@@ -43,12 +43,16 @@ export function estimateStorageBytes() {
   return total;
 }
 
-export function exportAllData() {
+export function exportAllData(liveTrades) {
   const data = {
     exportedAt: new Date().toISOString(),
     app: 'EdgeJournal',
     version: 1,
-    trades: loadJSON(KEYS.trades, []),
+    // Trades now live in Supabase, not localStorage — the caller
+    // (System.jsx) passes the current trades.items from DataContext.
+    // Falling back to the old localStorage key keeps this function
+    // safe to call without an argument.
+    trades: Array.isArray(liveTrades) ? liveTrades : loadJSON(KEYS.trades, []),
     plans: loadJSON(KEYS.plans, []),
     reflections: loadJSON(KEYS.reflections, []),
     study: loadJSON(KEYS.study, []),
@@ -75,7 +79,9 @@ export function downloadJSONFile(data, filename) {
 
 export function importAllData(data) {
   if (!data || typeof data !== 'object') throw new Error('Invalid backup file');
-  if (Array.isArray(data.trades)) saveJSON(KEYS.trades, data.trades);
+  // Trades are intentionally not written here — they now live in
+  // Supabase, not localStorage. System.jsx reads `data.trades` itself
+  // and imports it via the trades collection's importMany().
   if (Array.isArray(data.plans)) saveJSON(KEYS.plans, data.plans);
   if (Array.isArray(data.reflections)) saveJSON(KEYS.reflections, data.reflections);
   if (Array.isArray(data.study)) saveJSON(KEYS.study, data.study);

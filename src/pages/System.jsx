@@ -69,7 +69,16 @@ function EditableList({ title, description, items, onChange }) {
 }
 
 export default function System() {
-  const { models, setModels, riskCriteria, setRiskCriteria, checklistCriteria, setChecklistCriteria, reloadAllFromStorage } = useData();
+  const {
+    trades,
+    models,
+    setModels,
+    riskCriteria,
+    setRiskCriteria,
+    checklistCriteria,
+    setChecklistCriteria,
+    reloadAllFromStorage,
+  } = useData();
   const fileInputRef = useRef(null);
   const [importMsg, setImportMsg] = useState(null);
 
@@ -77,7 +86,7 @@ export default function System() {
   const kb = (bytes / 1024).toFixed(1);
 
   function handleExport() {
-    const data = exportAllData();
+    const data = exportAllData(trades.items);
     const stamp = new Date().toISOString().slice(0, 10);
     downloadJSONFile(data, `edgejournal-backup-${stamp}.json`);
   }
@@ -94,6 +103,9 @@ export default function System() {
       const data = JSON.parse(text);
       importAllData(data);
       reloadAllFromStorage();
+      if (Array.isArray(data.trades) && data.trades.length) {
+        await trades.importMany(data.trades);
+      }
       setImportMsg({ type: 'success', text: 'Backup imported successfully.' });
     } catch (err) {
       setImportMsg({ type: 'error', text: 'Could not import this file. Make sure it is a valid EdgeJournal backup JSON.' });
@@ -120,7 +132,7 @@ export default function System() {
           <Database size={16} /> Backup & Restore
         </h3>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6, marginBottom: 18 }}>
-          Everything lives in this browser's local storage — export a backup regularly so you never lose your data.
+          Trades sync to your Supabase account automatically. Everything else (plans, reflections, study notes, goals) lives only in this browser's local storage — export a backup regularly so you never lose that data.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <button className="btn btn-primary" onClick={handleExport}>
@@ -141,9 +153,9 @@ export default function System() {
           <ShieldCheck size={16} color="var(--red)" /> Data Safety Notice
         </h3>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 8, lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <p>All trades, plans, reflections, study notes, and goals are stored only in this browser's local storage — nothing is sent to a server.</p>
-          <p>Clearing your browser data, using a different browser, or switching devices will make this data inaccessible unless you've exported a backup.</p>
-          <p>Screenshots are stored as embedded images, so large libraries can grow local storage usage quickly — export backups periodically.</p>
+          <p>Trades are stored in your Supabase account, protected by row-level security so only you can ever read or change them. Pre-market plans, reflections, study notes, and goals are still stored only in this browser's local storage — nothing about those is sent to a server.</p>
+          <p>Clearing your browser data, using a different browser, or switching devices won't affect your trades, but will make plans, reflections, study notes, and goals inaccessible unless you've exported a backup.</p>
+          <p>Screenshots are stored as embedded images, so large libraries can grow storage usage quickly — export backups periodically.</p>
           <p style={{ marginTop: 4 }}>
             Current local storage usage: <span className="mono" style={{ color: 'var(--text)' }}>{kb} KB</span>
           </p>

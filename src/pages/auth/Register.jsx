@@ -1,17 +1,22 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, User, ArrowRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Mail, User, ArrowRight, CheckCircle2 } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import FormField from '../../components/auth/FormField';
 import PasswordField from '../../components/auth/PasswordField';
 import AuthButton from '../../components/auth/AuthButton';
 import SocialButtons from '../../components/auth/SocialButtons';
+import { useAuth } from '../../context/AuthContext';
 
-// Register UI only. No backend/Supabase call is made — submitting
-// simulates a brief loading state after a quick client-side sanity check
-// (fields present, passwords match) purely for form-UX polish.
+// Register wired to real Supabase auth (supabase.auth.signUp via
+// AuthContext). Depending on the Supabase project's email-confirmation
+// setting, signUp either returns a live session (confirmation off ->
+// go straight to the dashboard) or requires the visitor to confirm via
+// email first (confirmation on -> show a "check your email" view).
 
 export default function Register() {
+  const { register } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -21,12 +26,13 @@ export default function Register() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [registered, setRegistered] = useState(false);
 
   function set(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError('');
 
@@ -40,9 +46,57 @@ export default function Register() {
     }
 
     setLoading(true);
-    // Placeholder only — no backend call. Swapped for a real
-    // Supabase sign-up call once auth is connected.
-    setTimeout(() => setLoading(false), 900);
+    try {
+      const data = await register(form.name, form.email, form.password);
+      if (data?.session) {
+        // Email confirmation is off for this project: signUp already
+        // returned a live session, so the auth-state listener will pick
+        // it up — send the visitor straight in.
+        navigate('/dashboard', { replace: true });
+      } else {
+        // Email confirmation is required: no session yet.
+        setRegistered(true);
+      }
+    } catch (err) {
+      setError(err?.message || 'Unable to create your account. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (registered) {
+    return (
+      <AuthLayout
+        eyebrow="Almost there"
+        title="Confirm your email"
+        subtitle={`We sent a confirmation link to ${form.email || 'your inbox'}.`}
+        footer={
+          <p className="auth-footer-note">
+            <Link to="/login">Back to sign in</Link>
+          </p>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '8px 0 4px' }}>
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: '50%',
+              background: 'rgba(22, 163, 74, 0.1)',
+              border: '1px solid rgba(22, 163, 74, 0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <CheckCircle2 size={26} color="var(--win)" />
+          </div>
+          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', textAlign: 'center' }}>
+            Click the link in that email to activate your account, then come back and sign in.
+          </p>
+        </div>
+      </AuthLayout>
+    );
   }
 
   return (
