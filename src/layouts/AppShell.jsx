@@ -33,15 +33,15 @@ export default function AppShell() {
   );
 }
 
-// Split out so it can read `trades.loading`/`goals.loading` from
-// DataContext — gates the shell behind the first Supabase fetch for
+// Split out so it can read `trades.loading`/`goals.loading`/`plans.loading`
+// from DataContext — gates the shell behind the first Supabase fetch for
 // each so pages never render a misleading empty state before real
 // data arrives.
 function AppShellContent() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { trades, goals } = useData();
+  const { trades, goals, plans } = useData();
 
   const activeRoute = routes.find((r) => r.path === location.pathname) || defaultRoute;
 
@@ -50,8 +50,8 @@ function AppShellContent() {
     if (target) navigate(target.path);
   }
 
-  if (trades.loading || goals.loading) {
-    return <LoadingScreen message="Loading your trades and goals…" />;
+  if (trades.loading || goals.loading || plans.loading) {
+    return <LoadingScreen message="Loading your trades, goals, and plans…" />;
   }
 
   return (

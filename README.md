@@ -48,9 +48,9 @@ Every tab (Trading Journal, Pre-Market Plan, Reflections, Study, Goals, System s
 src/
   components/     shared UI: Sidebar, SidePanel, Lightbox, ImageUpload, ConfirmDialog, StatCard, CalendarHeatmap
   components/auth/  reusable auth UI: AuthLayout, FormField, PasswordField, AuthButton, SocialButtons, AuthLoading
-  context/        DataContext.jsx — trades (Supabase-backed) + plans/reflections/study/goals (localStorage-backed)
+  context/        DataContext.jsx — trades/goals/plans (Supabase-backed) + reflections/study (localStorage-backed)
                   AuthContext.jsx — Supabase auth (session, login/register/logout/password reset)
-  lib/            storage.js, utils.js, calculations.js, supabase.js — Supabase client, tradesApi.js — trade row <-> app object mapping
+  lib/            storage.js, utils.js, calculations.js, supabase.js — Supabase client, tradesApi.js/goalsApi.js/plansApi.js — row <-> app object mapping
   layouts/        AppShell.jsx — the authenticated app's Sidebar/Header/routes wrapper
   routes/         routes.js — dashboard/journal/etc. route config
                   ProtectedRoute.jsx, GuestRoute.jsx — auth route guards
@@ -59,6 +59,8 @@ src/
   pages/panels/   the slide-in forms (Log Trade, Pre-Market Plan, Reflection, Study, Goal)
 supabase/
   migrations/     0001_profiles_and_trades.sql — profiles + trades tables, RLS policies, triggers
+                  0002_goals.sql — goals table, RLS policies, triggers
+                  0003_premarket_plans.sql — premarket_plans table, RLS policies, triggers
 ```
 
 ## Authentication (Supabase)
@@ -82,15 +84,16 @@ If email confirmation is turned on for your Supabase project (the default), regi
 
 ## Database (Supabase)
 
-The first database integration lives in `supabase/migrations/0001_profiles_and_trades.sql`. Run it once against your Supabase project — either paste it into **SQL Editor → New query** in the dashboard, or `supabase db push` if you're using the CLI.
+Three migrations live in `supabase/migrations/`. Run them in order against your Supabase project — either paste each into **SQL Editor → New query** in the dashboard, or `supabase db push` if you're using the CLI.
 
-It creates:
+- **`0001_profiles_and_trades.sql`** creates:
+  - **`profiles`** — one row per auth user (`id`, `email`, `full_name`), auto-populated by a trigger on signup from the `full_name` passed to `supabase.auth.signUp`. Not yet surfaced in the UI — this is foundational schema for future profile features.
+  - **`trades`** — mirrors the trade shape the app already used in `localStorage` (date, instrument, entry/exit price, P&L, checklists, notes, screenshot, etc.), now with a `user_id` column.
+- **`0002_goals.sql`** creates **`goals`** — mirrors the goal shape the app already used in `localStorage` (title, period, target date, sub-items, etc.), now with a `user_id` column.
+- **`0003_premarket_plans.sql`** creates **`premarket_plans`** — mirrors the pre-market plan shape the app already used in `localStorage` (date, bias, economic events, targets, game plan, notes, chart screenshots), now with a `user_id` column.
 
-- **`profiles`** — one row per auth user (`id`, `email`, `full_name`), auto-populated by a trigger on signup from the `full_name` passed to `supabase.auth.signUp`. Not yet surfaced in the UI — this is foundational schema for future profile features.
-- **`trades`** — mirrors the trade shape the app already used in `localStorage` (date, instrument, entry/exit price, P&L, checklists, notes, screenshot, etc.), now with a `user_id` column.
+**Row Level Security** is enabled on every table above, with `select`/`insert`/`update`/`delete` policies scoped to `auth.uid()` — every authenticated user can only ever read or write their own rows, enforced by Postgres itself regardless of what the client sends.
 
-**Row Level Security** is enabled on both tables, with `select`/`insert`/`update`/`delete` policies scoped to `auth.uid()` — every authenticated user can only ever read or write their own `profiles` row and their own `trades` rows, enforced by Postgres itself regardless of what the client sends.
-
-**What moved, what didn't:** only `trades` moved from `localStorage` to Supabase (`src/context/DataContext.jsx`'s `useTradesCollection`, backed by `src/lib/tradesApi.js` for the camelCase ↔ snake_case mapping). Dashboard statistics, the Trading Journal table, and JSON backup/restore all read from this Supabase-backed collection now. Pre-market plans, reflections, study notes, goals, and system settings are unchanged and still live in `localStorage`, as called out in System → Data Safety Notice.
+**What moved, what didn't:** `trades`, `goals`, and `premarket_plans` have all moved from `localStorage` to Supabase (`src/context/DataContext.jsx`'s `useTradesCollection`/`useGoalsCollection`/`usePlansCollection`, backed by `src/lib/tradesApi.js`/`goalsApi.js`/`plansApi.js` for the camelCase ↔ snake_case mapping). Dashboard statistics, the Trading Journal table, the Pre-Market Plan tab, and JSON backup/restore all read from these Supabase-backed collections now. Reflections, study notes, and system settings are unchanged and still live in `localStorage`, as called out in System → Data Safety Notice.
 
 

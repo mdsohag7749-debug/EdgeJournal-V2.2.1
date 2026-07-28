@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { toTradeRow, fromTradeRow } from '../lib/tradesApi';
 import { toGoalRow, fromGoalRow } from '../lib/goalsApi';
+import { toPlanRow, fromPlanRow } from '../lib/plansApi';
 
 const DataContext = createContext(null);
 
@@ -20,8 +21,8 @@ const DEFAULT_CHECKLIST_CRITERIA = [
   'Confirmation candle present',
 ];
 
-// Unchanged: localStorage-backed collection, still used for plans,
-// reflections, and study — `trades` and `goals` are now Supabase-backed
+// Unchanged: localStorage-backed collection, still used for reflections
+// and study — `trades`, `goals`, and `plans` are now Supabase-backed
 // (see useSupabaseCollection below).
 function useCollection(key, defaultValue = []) {
   const [items, setItems] = useState(() => loadJSON(key, defaultValue));
@@ -176,13 +177,22 @@ function useGoalsCollection(userId) {
   });
 }
 
+function usePlansCollection(userId) {
+  return useSupabaseCollection('premarket_plans', userId, {
+    toRow: toPlanRow,
+    fromRow: fromPlanRow,
+    orderColumn: 'date',
+    ascending: false,
+  });
+}
+
 export function DataProvider({ children }) {
   const { user } = useAuth();
   const userId = user?.id ?? null;
 
   const trades = useTradesCollection(userId);
   const goals = useGoalsCollection(userId);
-  const plans = useCollection(KEYS.plans);
+  const plans = usePlansCollection(userId);
   const reflections = useCollection(KEYS.reflections);
   const study = useCollection(KEYS.study);
 
@@ -201,7 +211,7 @@ export function DataProvider({ children }) {
   const reloadAllFromStorage = useCallback(() => {
     trades.refetch();
     goals.refetch();
-    plans.setItems(loadJSON(KEYS.plans, []));
+    plans.refetch();
     reflections.setItems(loadJSON(KEYS.reflections, []));
     study.setItems(loadJSON(KEYS.study, []));
     setModelsState(loadJSON(KEYS.models, DEFAULT_MODELS));
