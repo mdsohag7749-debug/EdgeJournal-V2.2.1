@@ -4,6 +4,7 @@ import { uid } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { toTradeRow, fromTradeRow } from '../lib/tradesApi';
+import { toGoalRow, fromGoalRow } from '../lib/goalsApi';
 
 const DataContext = createContext(null);
 
@@ -20,7 +21,8 @@ const DEFAULT_CHECKLIST_CRITERIA = [
 ];
 
 // Unchanged: localStorage-backed collection, still used for plans,
-// reflections, study, and goals — only `trades` moved to Supabase.
+// reflections, and study — `trades` and `goals` are now Supabase-backed
+// (see useSupabaseCollection below).
 function useCollection(key, defaultValue = []) {
   const [items, setItems] = useState(() => loadJSON(key, defaultValue));
 
@@ -47,14 +49,15 @@ function useCollection(key, defaultValue = []) {
   return { items, add, update, remove, setItems: replaceAll };
 }
 
-// Supabase-backed replacement for `trades`, exposing the exact same
-// shape (`items`, `add`, `update`, `remove`, `setItems`) plus two
-// extras (`importMany`, `refetch`, `loading`) used by System.jsx's
+// Generic Supabase-backed collection, exposing the same shape as
+// useCollection (`items`, `add`, `update`, `remove`, `setItems`) plus
+// three extras (`importMany`, `refetch`, `loading`) used by System.jsx's
 // backup restore and by AppShell's initial-load gate. Every query is
 // additionally scoped to `user_id = userId` client-side as defense in
-// depth — Row Level Security on the `trades` table is what actually
-// enforces "every user can only access their own data".
-function useTradesCollection(userId) {
+// depth — Row Level Security on the underlying table is what actually
+// enforces "every user can only access their own data". `trades` and
+// `goals` are both thin wrappers around this (see below).
+function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, ascending = false }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,20 +68,18 @@ function useTradesCollection(userId) {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
-      .from('trades')
-      .select('*')
-      .eq('user_id', userId)
-      .order('date', { ascending: false });
+    let query = supabase.from(table).select('*').eq('user_id', userId);
+    if (orderColumn) query = query.order(orderColumn, { ascending });
+    const { data, error } = await query;
 
     if (error) {
-      console.error('Failed to load trades from Supabase:', error.message);
+      console.error(`Failed to load ${table} from Supabase:`, error.message);
       setItems([]);
     } else {
-      setItems((data || []).map(fromTradeRow));
+      setItems((data || []).map(fromRow));
     }
     setLoading(false);
-  }, [userId]);
+  }, [table, userId, orderColumn, ascending, fromRow]);
 
   useEffect(() => {
     refetch();
@@ -87,78 +88,92 @@ function useTradesCollection(userId) {
   const add = useCallback(
     async (item) => {
       if (!userId) return null;
-      const { data, error } = await supabase
-        .from('trades')
-        .insert(toTradeRow(item, userId))
-        .select()
-        .single();
+      const { data, error } = await supabase.from(table).insert(toRow(item, userId)).select().single();
 
       if (error) {
-        console.error('Failed to save trade to Supabase:', error.message);
+        console.error(`Failed to save ${table.slice(0, -1)} to Supabase:`, error.message);
         return null;
       }
-      const saved = fromTradeRow(data);
+      const saved = fromRow(data);
       setItems((prev) => [saved, ...prev]);
       return saved;
     },
-    [userId]
+    [table, userId, toRow, fromRow]
   );
 
   const update = useCallback(
     async (id, patch) => {
       if (!userId) return;
       const { data, error } = await supabase
-        .from('trades')
-        .update(toTradeRow(patch, userId, { partial: true }))
+        .from(table)
+        .update(toRow(patch, userId, { partial: true }))
         .eq('id', id)
         .eq('user_id', userId)
         .select()
         .single();
 
       if (error) {
-        console.error('Failed to update trade in Supabase:', error.message);
+        console.error(`Failed to update ${table.slice(0, -1)} in Supabase:`, error.message);
         return;
       }
-      const saved = fromTradeRow(data);
+      const saved = fromRow(data);
       setItems((prev) => prev.map((it) => (it.id === id ? saved : it)));
     },
-    [userId]
+    [table, userId, toRow, fromRow]
   );
 
   const remove = useCallback(
     async (id) => {
       if (!userId) return;
-      const { error } = await supabase.from('trades').delete().eq('id', id).eq('user_id', userId);
+      const { error } = await supabase.from(table).delete().eq('id', id).eq('user_id', userId);
 
       if (error) {
-        console.error('Failed to delete trade from Supabase:', error.message);
+        console.error(`Failed to delete ${table.slice(0, -1)} from Supabase:`, error.message);
         return;
       }
       setItems((prev) => prev.filter((it) => it.id !== id));
     },
-    [userId]
+    [table, userId]
   );
 
   // Bulk insert used only by System.jsx's "Import JSON Backup" — a
-  // backup file's `trades` array gets pushed into Supabase instead of
-  // localStorage.
+  // backup file's array for this collection gets pushed into Supabase
+  // instead of localStorage.
   const importMany = useCallback(
     async (rows) => {
       if (!userId || !Array.isArray(rows) || rows.length === 0) return;
-      const payload = rows.map((r) => toTradeRow(r, userId));
-      const { data, error } = await supabase.from('trades').insert(payload).select();
+      const payload = rows.map((r) => toRow(r, userId));
+      const { data, error } = await supabase.from(table).insert(payload).select();
 
       if (error) {
-        console.error('Failed to import trades into Supabase:', error.message);
+        console.error(`Failed to import ${table} into Supabase:`, error.message);
         throw error;
       }
-      const saved = (data || []).map(fromTradeRow);
+      const saved = (data || []).map(fromRow);
       setItems((prev) => [...saved, ...prev]);
     },
-    [userId]
+    [table, userId, toRow, fromRow]
   );
 
   return { items, add, update, remove, setItems, importMany, refetch, loading };
+}
+
+function useTradesCollection(userId) {
+  return useSupabaseCollection('trades', userId, {
+    toRow: toTradeRow,
+    fromRow: fromTradeRow,
+    orderColumn: 'date',
+    ascending: false,
+  });
+}
+
+function useGoalsCollection(userId) {
+  return useSupabaseCollection('goals', userId, {
+    toRow: toGoalRow,
+    fromRow: fromGoalRow,
+    orderColumn: 'created_at',
+    ascending: false,
+  });
 }
 
 export function DataProvider({ children }) {
@@ -166,10 +181,10 @@ export function DataProvider({ children }) {
   const userId = user?.id ?? null;
 
   const trades = useTradesCollection(userId);
+  const goals = useGoalsCollection(userId);
   const plans = useCollection(KEYS.plans);
   const reflections = useCollection(KEYS.reflections);
   const study = useCollection(KEYS.study);
-  const goals = useCollection(KEYS.goals);
 
   const [models, setModelsState] = useState(() => loadJSON(KEYS.models, DEFAULT_MODELS));
   const [riskCriteria, setRiskCriteriaState] = useState(() => loadJSON(KEYS.riskCriteria, DEFAULT_RISK_CRITERIA));
@@ -185,10 +200,10 @@ export function DataProvider({ children }) {
 
   const reloadAllFromStorage = useCallback(() => {
     trades.refetch();
+    goals.refetch();
     plans.setItems(loadJSON(KEYS.plans, []));
     reflections.setItems(loadJSON(KEYS.reflections, []));
     study.setItems(loadJSON(KEYS.study, []));
-    goals.setItems(loadJSON(KEYS.goals, []));
     setModelsState(loadJSON(KEYS.models, DEFAULT_MODELS));
     setRiskCriteriaState(loadJSON(KEYS.riskCriteria, DEFAULT_RISK_CRITERIA));
     setChecklistCriteriaState(loadJSON(KEYS.checklistCriteria, DEFAULT_CHECKLIST_CRITERIA));
@@ -198,10 +213,10 @@ export function DataProvider({ children }) {
 
   const value = {
     trades,
+    goals,
     plans,
     reflections,
     study,
-    goals,
     models,
     setModels: setModelsState,
     riskCriteria,

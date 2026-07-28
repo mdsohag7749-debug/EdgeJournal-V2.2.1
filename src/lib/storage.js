@@ -43,20 +43,20 @@ export function estimateStorageBytes() {
   return total;
 }
 
-export function exportAllData(liveTrades) {
+export function exportAllData(liveTrades, liveGoals) {
   const data = {
     exportedAt: new Date().toISOString(),
     app: 'EdgeJournal',
     version: 1,
-    // Trades now live in Supabase, not localStorage — the caller
-    // (System.jsx) passes the current trades.items from DataContext.
-    // Falling back to the old localStorage key keeps this function
-    // safe to call without an argument.
+    // Trades and goals now live in Supabase, not localStorage — the
+    // caller (System.jsx) passes the current trades.items/goals.items
+    // from DataContext. Falling back to the old localStorage keys keeps
+    // this function safe to call without those arguments.
     trades: Array.isArray(liveTrades) ? liveTrades : loadJSON(KEYS.trades, []),
     plans: loadJSON(KEYS.plans, []),
     reflections: loadJSON(KEYS.reflections, []),
     study: loadJSON(KEYS.study, []),
-    goals: loadJSON(KEYS.goals, []),
+    goals: Array.isArray(liveGoals) ? liveGoals : loadJSON(KEYS.goals, []),
     models: loadJSON(KEYS.models, []),
     riskCriteria: loadJSON(KEYS.riskCriteria, []),
     checklistCriteria: loadJSON(KEYS.checklistCriteria, []),
@@ -79,13 +79,13 @@ export function downloadJSONFile(data, filename) {
 
 export function importAllData(data) {
   if (!data || typeof data !== 'object') throw new Error('Invalid backup file');
-  // Trades are intentionally not written here — they now live in
-  // Supabase, not localStorage. System.jsx reads `data.trades` itself
-  // and imports it via the trades collection's importMany().
+  // Trades and goals are intentionally not written here — they now live
+  // in Supabase, not localStorage. System.jsx reads `data.trades` /
+  // `data.goals` itself and imports them via each collection's
+  // importMany().
   if (Array.isArray(data.plans)) saveJSON(KEYS.plans, data.plans);
   if (Array.isArray(data.reflections)) saveJSON(KEYS.reflections, data.reflections);
   if (Array.isArray(data.study)) saveJSON(KEYS.study, data.study);
-  if (Array.isArray(data.goals)) saveJSON(KEYS.goals, data.goals);
   if (Array.isArray(data.models)) saveJSON(KEYS.models, data.models);
   if (Array.isArray(data.riskCriteria)) saveJSON(KEYS.riskCriteria, data.riskCriteria);
   if (Array.isArray(data.checklistCriteria)) saveJSON(KEYS.checklistCriteria, data.checklistCriteria);
