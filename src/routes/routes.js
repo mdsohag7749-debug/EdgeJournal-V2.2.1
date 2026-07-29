@@ -13,6 +13,7 @@ import Reflections from '../pages/Reflections';
 import Study from '../pages/Study';
 import Goals from '../pages/Goals';
 import System from '../pages/System';
+import Profile from '../pages/Profile';
 
 export const routes = [
   {
@@ -59,6 +60,13 @@ export const routes = [
     path: '/system',
     Component: System,
     title: 'System',
+  },
+  {
+    id: 'profile',
+    path: '/profile',
+    Component: Profile,
+    title: 'Profile',
+    subtitle: 'Manage how your account appears across EdgeJournal',
   },
 ];
 

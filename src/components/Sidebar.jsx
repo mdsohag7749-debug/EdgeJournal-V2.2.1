@@ -10,6 +10,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   TrendingUp,
+  User,
 } from 'lucide-react';
 
 const NAV = [
@@ -20,6 +21,7 @@ const NAV = [
   { id: 'study', label: 'Study', icon: GraduationCap },
   { id: 'goals', label: 'Goals', icon: Target },
   { id: 'system', label: 'System', icon: SlidersHorizontal },
+  { id: 'profile', label: 'Profile', icon: User },
 ];
 
 export default function Sidebar({ active, onNavigate, collapsed, onToggleCollapsed }) {
