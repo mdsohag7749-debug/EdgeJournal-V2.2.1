@@ -43,18 +43,19 @@ export function estimateStorageBytes() {
   return total;
 }
 
-export function exportAllData(liveTrades, liveGoals, livePlans) {
+export function exportAllData(liveTrades, liveGoals, livePlans, liveReflections) {
   const data = {
     exportedAt: new Date().toISOString(),
     app: 'EdgeJournal',
     version: 1,
-    // Trades, goals, and plans now live in Supabase, not localStorage —
-    // the caller (System.jsx) passes the current trades.items/goals.items/
-    // plans.items from DataContext. Falling back to the old localStorage
-    // keys keeps this function safe to call without those arguments.
+    // Trades, goals, plans, and reflections now live in Supabase, not
+    // localStorage — the caller (System.jsx) passes the current
+    // trades.items/goals.items/plans.items/reflections.items from
+    // DataContext. Falling back to the old localStorage keys keeps this
+    // function safe to call without those arguments.
     trades: Array.isArray(liveTrades) ? liveTrades : loadJSON(KEYS.trades, []),
     plans: Array.isArray(livePlans) ? livePlans : loadJSON(KEYS.plans, []),
-    reflections: loadJSON(KEYS.reflections, []),
+    reflections: Array.isArray(liveReflections) ? liveReflections : loadJSON(KEYS.reflections, []),
     study: loadJSON(KEYS.study, []),
     goals: Array.isArray(liveGoals) ? liveGoals : loadJSON(KEYS.goals, []),
     models: loadJSON(KEYS.models, []),
@@ -79,11 +80,10 @@ export function downloadJSONFile(data, filename) {
 
 export function importAllData(data) {
   if (!data || typeof data !== 'object') throw new Error('Invalid backup file');
-  // Trades, goals, and plans are intentionally not written here — they
-  // now live in Supabase, not localStorage. System.jsx reads
-  // `data.trades` / `data.goals` / `data.plans` itself and imports them
-  // via each collection's importMany().
-  if (Array.isArray(data.reflections)) saveJSON(KEYS.reflections, data.reflections);
+  // Trades, goals, plans, and reflections are intentionally not written
+  // here — they now live in Supabase, not localStorage. System.jsx reads
+  // `data.trades` / `data.goals` / `data.plans` / `data.reflections`
+  // itself and imports them via each collection's importMany().
   if (Array.isArray(data.study)) saveJSON(KEYS.study, data.study);
   if (Array.isArray(data.models)) saveJSON(KEYS.models, data.models);
   if (Array.isArray(data.riskCriteria)) saveJSON(KEYS.riskCriteria, data.riskCriteria);
