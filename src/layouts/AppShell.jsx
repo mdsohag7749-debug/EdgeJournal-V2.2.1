@@ -34,14 +34,14 @@ export default function AppShell() {
 }
 
 // Split out so it can read `trades.loading`/`goals.loading`/`plans.loading`/
-// `reflections.loading` from DataContext — gates the shell behind the
-// first Supabase fetch for each so pages never render a misleading
-// empty state before real data arrives.
+// `reflections.loading`/`study.loading` from DataContext — gates the
+// shell behind the first Supabase fetch for each so pages never render
+// a misleading empty state before real data arrives.
 function AppShellContent() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { trades, goals, plans, reflections } = useData();
+  const { trades, goals, plans, reflections, study } = useData();
 
   const activeRoute = routes.find((r) => r.path === location.pathname) || defaultRoute;
 
@@ -50,8 +50,8 @@ function AppShellContent() {
     if (target) navigate(target.path);
   }
 
-  if (trades.loading || goals.loading || plans.loading || reflections.loading) {
-    return <LoadingScreen message="Loading your trades, goals, plans, and reflections…" />;
+  if (trades.loading || goals.loading || plans.loading || reflections.loading || study.loading) {
+    return <LoadingScreen message="Loading your trades, goals, plans, reflections, and study notes…" />;
   }
 
   return (

@@ -7,6 +7,7 @@ import { toTradeRow, fromTradeRow } from '../lib/tradesApi';
 import { toGoalRow, fromGoalRow } from '../lib/goalsApi';
 import { toPlanRow, fromPlanRow } from '../lib/plansApi';
 import { toReflectionRow, fromReflectionRow } from '../lib/reflectionsApi';
+import { toStudyRow, fromStudyRow } from '../lib/studyApi';
 
 const DataContext = createContext(null);
 
@@ -22,9 +23,10 @@ const DEFAULT_CHECKLIST_CRITERIA = [
   'Confirmation candle present',
 ];
 
-// Unchanged: localStorage-backed collection, still used for study —
-// `trades`, `goals`, `plans`, and `reflections` are now Supabase-backed
-// (see useSupabaseCollection below).
+// Generic localStorage-backed collection. No longer used by any
+// module now that `trades`, `goals`, `plans`, `reflections`, and
+// `study` are all Supabase-backed (see useSupabaseCollection below) —
+// kept here in case a future module needs a purely local collection.
 function useCollection(key, defaultValue = []) {
   const [items, setItems] = useState(() => loadJSON(key, defaultValue));
 
@@ -196,6 +198,15 @@ function useReflectionsCollection(userId) {
   });
 }
 
+function useStudyCollection(userId) {
+  return useSupabaseCollection('study_notes', userId, {
+    toRow: toStudyRow,
+    fromRow: fromStudyRow,
+    orderColumn: 'date',
+    ascending: false,
+  });
+}
+
 export function DataProvider({ children }) {
   const { user } = useAuth();
   const userId = user?.id ?? null;
@@ -204,7 +215,7 @@ export function DataProvider({ children }) {
   const goals = useGoalsCollection(userId);
   const plans = usePlansCollection(userId);
   const reflections = useReflectionsCollection(userId);
-  const study = useCollection(KEYS.study);
+  const study = useStudyCollection(userId);
 
   const [models, setModelsState] = useState(() => loadJSON(KEYS.models, DEFAULT_MODELS));
   const [riskCriteria, setRiskCriteriaState] = useState(() => loadJSON(KEYS.riskCriteria, DEFAULT_RISK_CRITERIA));
@@ -223,7 +234,7 @@ export function DataProvider({ children }) {
     goals.refetch();
     plans.refetch();
     reflections.refetch();
-    study.setItems(loadJSON(KEYS.study, []));
+    study.refetch();
     setModelsState(loadJSON(KEYS.models, DEFAULT_MODELS));
     setRiskCriteriaState(loadJSON(KEYS.riskCriteria, DEFAULT_RISK_CRITERIA));
     setChecklistCriteriaState(loadJSON(KEYS.checklistCriteria, DEFAULT_CHECKLIST_CRITERIA));

@@ -36,10 +36,10 @@ npm run preview   # preview the production build locally
 
 ## How data works
 
-Every tab (Trading Journal, Pre-Market Plan, Reflections, Study, Goals, System settings) reads and writes to `localStorage` under keys prefixed `njh_`. There is no server — this means:
+Trading Journal, Pre-Market Plan, Reflections, Study, and Goals data live in Supabase (per-user, protected by Row Level Security). System settings (trading models and checklists) still read and write to `localStorage` under keys prefixed `njh_`. This means:
 
-- Data is per-browser, per-device. It will **not** sync across devices or browsers automatically.
-- Clearing site data / browser storage will erase your journal.
+- Trades, goals, pre-market plans, reflections, and study notes sync to your Supabase account and follow you across devices/browsers once you sign in.
+- Trading models and checklists are per-browser, per-device — clearing site data / browser storage will reset those to the defaults.
 - Use **System → Export JSON Backup** regularly, and **Import JSON Backup** to restore or move data to another browser/device.
 
 ## Project structure
@@ -48,9 +48,9 @@ Every tab (Trading Journal, Pre-Market Plan, Reflections, Study, Goals, System s
 src/
   components/     shared UI: Sidebar, SidePanel, Lightbox, ImageUpload, ConfirmDialog, StatCard, CalendarHeatmap
   components/auth/  reusable auth UI: AuthLayout, FormField, PasswordField, AuthButton, SocialButtons, AuthLoading
-  context/        DataContext.jsx — trades/goals/plans/reflections (Supabase-backed) + study (localStorage-backed)
+  context/        DataContext.jsx — trades/goals/plans/reflections/study (all Supabase-backed)
                   AuthContext.jsx — Supabase auth (session, login/register/logout/password reset)
-  lib/            storage.js, utils.js, calculations.js, supabase.js — Supabase client, tradesApi.js/goalsApi.js/plansApi.js/reflectionsApi.js — row <-> app object mapping
+  lib/            storage.js, utils.js, calculations.js, supabase.js — Supabase client, tradesApi.js/goalsApi.js/plansApi.js/reflectionsApi.js/studyApi.js — row <-> app object mapping
   layouts/        AppShell.jsx — the authenticated app's Sidebar/Header/routes wrapper
   routes/         routes.js — dashboard/journal/etc. route config
                   ProtectedRoute.jsx, GuestRoute.jsx — auth route guards
@@ -62,6 +62,7 @@ supabase/
                   0002_goals.sql — goals table, RLS policies, triggers
                   0003_premarket_plans.sql — premarket_plans table, RLS policies, triggers
                   0004_reflections.sql — reflections table, RLS policies, triggers
+                  0005_study_notes.sql — study_notes table, RLS policies, triggers
 ```
 
 ## Authentication (Supabase)
@@ -85,7 +86,7 @@ If email confirmation is turned on for your Supabase project (the default), regi
 
 ## Database (Supabase)
 
-Four migrations live in `supabase/migrations/`. Run them in order against your Supabase project — either paste each into **SQL Editor → New query** in the dashboard, or `supabase db push` if you're using the CLI.
+Five migrations live in `supabase/migrations/`. Run them in order against your Supabase project — either paste each into **SQL Editor → New query** in the dashboard, or `supabase db push` if you're using the CLI.
 
 - **`0001_profiles_and_trades.sql`** creates:
   - **`profiles`** — one row per auth user (`id`, `email`, `full_name`), auto-populated by a trigger on signup from the `full_name` passed to `supabase.auth.signUp`. Not yet surfaced in the UI — this is foundational schema for future profile features.
@@ -93,9 +94,10 @@ Four migrations live in `supabase/migrations/`. Run them in order against your S
 - **`0002_goals.sql`** creates **`goals`** — mirrors the goal shape the app already used in `localStorage` (title, period, target date, sub-items, etc.), now with a `user_id` column.
 - **`0003_premarket_plans.sql`** creates **`premarket_plans`** — mirrors the pre-market plan shape the app already used in `localStorage` (date, bias, economic events, targets, game plan, notes, chart screenshots), now with a `user_id` column.
 - **`0004_reflections.sql`** creates **`reflections`** — mirrors the reflection shape the app already used in `localStorage` (period, date, rating, title, reflection, went well, lessons, improvements), now with a `user_id` column.
+- **`0005_study_notes.sql`** creates **`study_notes`** — mirrors the study entry shape the app already used in `localStorage` (date, session type, title, description, chart screenshot), now with a `user_id` column.
 
 **Row Level Security** is enabled on every table above, with `select`/`insert`/`update`/`delete` policies scoped to `auth.uid()` — every authenticated user can only ever read or write their own rows, enforced by Postgres itself regardless of what the client sends.
 
-**What moved, what didn't:** `trades`, `goals`, `premarket_plans`, and `reflections` have all moved from `localStorage` to Supabase (`src/context/DataContext.jsx`'s `useTradesCollection`/`useGoalsCollection`/`usePlansCollection`/`useReflectionsCollection`, backed by `src/lib/tradesApi.js`/`goalsApi.js`/`plansApi.js`/`reflectionsApi.js` for the camelCase ↔ snake_case mapping). Dashboard statistics, the Trading Journal table, the Pre-Market Plan tab, the Reflections tab, and JSON backup/restore all read from these Supabase-backed collections now. Study notes and system settings are unchanged and still live in `localStorage`, as called out in System → Data Safety Notice.
+**What moved, what didn't:** `trades`, `goals`, `premarket_plans`, `reflections`, and `study_notes` have all moved from `localStorage` to Supabase (`src/context/DataContext.jsx`'s `useTradesCollection`/`useGoalsCollection`/`usePlansCollection`/`useReflectionsCollection`/`useStudyCollection`, backed by `src/lib/tradesApi.js`/`goalsApi.js`/`plansApi.js`/`reflectionsApi.js`/`studyApi.js` for the camelCase ↔ snake_case mapping). Dashboard statistics, the Trading Journal table, the Pre-Market Plan tab, the Reflections tab, the Study tab, and JSON backup/restore all read from these Supabase-backed collections now. Trading models and checklists (System settings) are unchanged and still live in `localStorage`, as called out in System → Data Safety Notice.
 
 
