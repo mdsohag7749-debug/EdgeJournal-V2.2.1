@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Loader2, User, AtSign, Clock, Camera, Save, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { fetchProfile, updateProfile } from '../lib/profileApi';
+import { uploadAvatar } from '../lib/avatarApi';
 
 // Common IANA timezones, falling back to whatever the browser
 // supports if the environment exposes the full list. Kept short and
@@ -45,9 +46,11 @@ export default function Profile() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState(BLANK);
   const [message, setMessage] = useState(null);
+  const avatarInputRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -112,6 +115,24 @@ export default function Profile() {
     }
   }
 
+  async function handleAvatarChange(e) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file later
+    if (!file || !user?.id) return;
+
+    setUploadingAvatar(true);
+    setMessage(null);
+    try {
+      const updated = await uploadAvatar(user.id, file);
+      setProfile(updated);
+      setMessage({ type: 'success', text: 'Profile photo updated.' });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Could not upload your photo.' });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-muted)', padding: '40px 0' }}>
@@ -134,6 +155,7 @@ export default function Profile() {
         <div className="card" style={{ padding: 22, display: 'flex', alignItems: 'center', gap: 18 }}>
           <div
             style={{
+              position: 'relative',
               width: 72,
               height: 72,
               borderRadius: '50%',
@@ -154,6 +176,20 @@ export default function Profile() {
             ) : (
               initials(form.fullName, profile?.email)
             )}
+            {uploadingAvatar && (
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'rgba(10,10,12,0.55)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Loader2 size={20} className="auth-spin" color="#fff" />
+              </div>
+            )}
           </div>
           <div style={{ flex: 1 }}>
             <h3 className="section-title" style={{ marginBottom: 4 }}>
@@ -164,10 +200,21 @@ export default function Profile() {
               <span>{profile?.email || '—'}</span>
             </div>
           </div>
-          {/* Avatar upload is not implemented yet — placeholder only,
-              per the spec for this module. */}
-          <button type="button" className="btn btn-ghost btn-sm" disabled title="Avatar upload is coming soon">
-            <Camera size={14} /> Change Photo
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            onChange={handleAvatarChange}
+            style={{ display: 'none' }}
+          />
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            disabled={uploadingAvatar}
+            onClick={() => avatarInputRef.current?.click()}
+          >
+            {uploadingAvatar ? <Loader2 size={14} className="auth-spin" /> : <Camera size={14} />}
+            {uploadingAvatar ? 'Uploading…' : 'Change Photo'}
           </button>
         </div>
 
