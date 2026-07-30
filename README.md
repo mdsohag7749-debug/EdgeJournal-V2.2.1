@@ -100,4 +100,19 @@ Five migrations live in `supabase/migrations/`. Run them in order against your S
 
 **What moved, what didn't:** `trades`, `goals`, `premarket_plans`, `reflections`, and `study_notes` have all moved from `localStorage` to Supabase (`src/context/DataContext.jsx`'s `useTradesCollection`/`useGoalsCollection`/`usePlansCollection`/`useReflectionsCollection`/`useStudyCollection`, backed by `src/lib/tradesApi.js`/`goalsApi.js`/`plansApi.js`/`reflectionsApi.js`/`studyApi.js` for the camelCase ↔ snake_case mapping). Dashboard statistics, the Trading Journal table, the Pre-Market Plan tab, the Reflections tab, the Study tab, and JSON backup/restore all read from these Supabase-backed collections now. Trading models and checklists (System settings) are unchanged and still live in `localStorage`, as called out in System → Data Safety Notice.
 
+## Trade Screenshot Upload (Supabase Storage)
+
+Each trade can now have 0–5 screenshots, stored in Supabase Storage rather than as inline base64 (unlike the older single "Execution Screenshot" field, which is unchanged and still lives on the trade row itself).
+
+**Setup:**
+
+1. Run `supabase/migrations/0008_trade_screenshots.sql` in **SQL Editor → New query** (or `supabase db push`). This single migration:
+   - Creates the **`trade-screenshots`** Storage bucket (private, 10 MB file size limit, restricted to `image/jpeg`, `image/jpg`, `image/png`, `image/webp`).
+   - Adds `select`/`insert`/`update`/`delete` policies on `storage.objects` so a user can only read/write files under their own `{auth.uid()}/` folder.
+   - Creates **`trade_screenshots`** (`trade_id`, `user_id`, `storage_path`, `file_name`, `file_size`, `created_at`) as the gallery's source of truth, with the same per-user RLS pattern as every other table, plus a trigger that rejects a 6th insert for the same trade (server-side backstop for the 0–5 limit already enforced in the UI).
+   - You do **not** need to create the bucket manually in the dashboard — the `insert into storage.buckets` statement does that for you.
+2. No other configuration is needed; the existing `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` env vars are reused.
+
+**How it works:** `src/lib/screenshotApi.js` uploads via a signed upload URL (`createSignedUploadUrl` + a raw `XMLHttpRequest` PUT so real upload-progress events are available), stores each file at `trade-screenshots/{auth.uid()}/{trade_id}/{uuid}.{ext}`, and reads them back via short-lived signed URLs (`createSignedUrls`) since the bucket is private. `src/components/TradeScreenshots.jsx` renders the upload/replace/delete grid inside `TradeFormPanel` (only once a trade has been saved and has a real id) and a lazy-loading (`loading="lazy"`), read-only gallery + Lightbox preview inside the Trade Details expanded row in `TradingJournal.jsx`. Deleting an image removes both the Storage object and its `trade_screenshots` row; replacing uploads the new file first, then deletes the old one.
+
 

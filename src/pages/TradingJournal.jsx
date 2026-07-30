@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useData } from '../context/DataContext';
 import TradeFormPanel from './panels/TradeFormPanel';
 import Lightbox from '../components/Lightbox';
+import { TradeScreenshotGallery } from '../components/TradeScreenshots';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { formatDate, formatMoney, pnlClass, resultTagClass } from '../lib/utils';
 import { Plus, ChevronDown, Pencil, Trash2, BookOpen, Star } from 'lucide-react';
@@ -138,6 +139,9 @@ export default function TradingJournal() {
                       ) : (
                         <div style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>No screenshot attached.</div>
                       )}
+                      <div style={{ marginTop: t.screenshot ? 16 : 0 }}>
+                        <TradeScreenshotGallery tradeId={t.id} />
+                      </div>
                     </div>
                   </div>
                 )}

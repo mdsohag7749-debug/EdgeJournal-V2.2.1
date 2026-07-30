@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import SidePanel from '../../components/SidePanel';
 import ImageUpload from '../../components/ImageUpload';
+import { TradeScreenshotManager } from '../../components/TradeScreenshots';
 import { useData } from '../../context/DataContext';
 import { todayISO } from '../../lib/utils';
 
@@ -250,6 +251,7 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
             <textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} style={{ minHeight: 120 }} />
           </div>
           <ImageUpload label="Execution Screenshot" value={form.screenshot} onChange={(v) => set('screenshot', v)} />
+          <TradeScreenshotManager tradeId={initial?.id} />
         </div>
       </div>
     </SidePanel>
