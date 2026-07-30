@@ -115,4 +115,24 @@ Each trade can now have 0–5 screenshots, stored in Supabase Storage rather tha
 
 **How it works:** `src/lib/screenshotApi.js` uploads via a signed upload URL (`createSignedUploadUrl` + a raw `XMLHttpRequest` PUT so real upload-progress events are available), stores each file at `trade-screenshots/{auth.uid()}/{trade_id}/{uuid}.{ext}`, and reads them back via short-lived signed URLs (`createSignedUrls`) since the bucket is private. `src/components/TradeScreenshots.jsx` renders the upload/replace/delete grid inside `TradeFormPanel` (only once a trade has been saved and has a real id) and a lazy-loading (`loading="lazy"`), read-only gallery + Lightbox preview inside the Trade Details expanded row in `TradingJournal.jsx`. Deleting an image removes both the Storage object and its `trade_screenshots` row; replacing uploads the new file first, then deletes the old one.
 
+## Progressive Web App & Offline Support
+
+EdgeJournal is installable and works offline for previously loaded data.
+
+**Setup:**
+
+1. `npm install` (pulls in the new `vite-plugin-pwa` dev dependency).
+2. `npm run dev` or `npm run build && npm run preview` — `devOptions.enabled` is on, so the service worker registers in dev too, not just in a production build.
+3. Nothing else to configure — no new env vars, no Supabase migration.
+
+**What's included:**
+
+- **Installable** — `vite.config.js`'s `VitePWA(...)` plugin generates `manifest.json` (name, icons in `public/pwa-*.png`, theme color) and a Workbox service worker at build time; `index.html` links the manifest and `src/main.jsx` registers the service worker (`src/pwa.js`, `registerType: 'autoUpdate'`). `src/components/InstallPrompt.jsx` turns the browser's native `beforeinstallprompt` event into a small dismissible "Install EdgeJournal" card (Chrome/Edge/Android only — iOS Safari has no install-prompt event and installs via the share sheet instead).
+- **Precached app shell** — HTML/JS/CSS/icons are precached by Workbox (`globPatterns` in `vite.config.js`), so the app opens offline. Google Fonts (stylesheet + `.woff2` files) and Supabase Storage images (avatars, trade screenshots) are cached at runtime as you use the app, so previously viewed fonts/images keep rendering offline too.
+- **Offline data + queue** (`src/lib/offlineQueue.js`, wired into `src/context/DataContext.jsx`) — every Supabase-backed collection (trades, goals, pre-market plans, reflections, study notes) now:
+  - caches its last successful fetch to `localStorage`, and falls back to that cache if a reload happens while offline, so the Dashboard, Trading Journal, and Analytics stay browsable with the last-synced data.
+  - queues any create/edit/delete made while offline (or that fails mid-request due to a dropped connection) instead of losing it — the new record shows up immediately in the UI tagged as pending.
+  - automatically replays the whole queue, oldest first, the moment the browser comes back online (checked on an `online` event plus a 20s background retry, in case the browser doesn't fire that event reliably).
+- **Status UI** — `src/components/OfflineBanner.jsx` (a banner while offline), `src/components/SyncStatus.jsx` (a "N changes pending sync" pill while the queue isn't empty, and a "Synced N changes" toast once it drains). All three are additive overlays wired into `src/layouts/AppShell.jsx` — no existing page or component was restructured.
+
 

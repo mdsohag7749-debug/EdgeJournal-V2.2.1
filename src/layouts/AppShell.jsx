@@ -5,6 +5,9 @@ import { DataProvider, useData } from '../context/DataContext';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import LoadingScreen from '../components/LoadingScreen';
+import OfflineBanner from '../components/OfflineBanner';
+import { SyncPendingIndicator, SyncCompletedToast } from '../components/SyncStatus';
+import InstallPrompt from '../components/InstallPrompt';
 import { routes, defaultRoute } from '../routes/routes';
 
 function PageTransition({ children }) {
@@ -55,35 +58,41 @@ function AppShellContent() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <Sidebar
-        active={activeRoute.id}
-        onNavigate={handleNavigate}
-        collapsed={collapsed}
-        onToggleCollapsed={() => setCollapsed((c) => !c)}
-      />
-      <main style={{ flex: 1, minWidth: 0, padding: '28px 32px 60px' }}>
-        {!activeRoute.hideHeader && <Header title={activeRoute.title} subtitle={activeRoute.subtitle} />}
-        <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            {routes.map(({ path, Component }) => (
-              <Route
-                key={path}
-                path={path}
-                element={
-                  <PageTransition>
-                    <Component onNavigate={handleNavigate} />
-                  </PageTransition>
-                }
-              />
-            ))}
-            {/* Alias: login redirects here per spec; Dashboard itself
-                still lives at "/" so nothing about its route changes. */}
-            <Route path="/dashboard" element={<Navigate to={defaultRoute.path} replace />} />
-            <Route path="*" element={<Navigate to={defaultRoute.path} replace />} />
-          </Routes>
-        </AnimatePresence>
-      </main>
-    </div>
+    <>
+      <OfflineBanner />
+      <div style={{ display: 'flex', minHeight: '100vh' }}>
+        <Sidebar
+          active={activeRoute.id}
+          onNavigate={handleNavigate}
+          collapsed={collapsed}
+          onToggleCollapsed={() => setCollapsed((c) => !c)}
+        />
+        <main style={{ flex: 1, minWidth: 0, padding: '28px 32px 60px' }}>
+          {!activeRoute.hideHeader && <Header title={activeRoute.title} subtitle={activeRoute.subtitle} />}
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              {routes.map(({ path, Component }) => (
+                <Route
+                  key={path}
+                  path={path}
+                  element={
+                    <PageTransition>
+                      <Component onNavigate={handleNavigate} />
+                    </PageTransition>
+                  }
+                />
+              ))}
+              {/* Alias: login redirects here per spec; Dashboard itself
+                  still lives at "/" so nothing about its route changes. */}
+              <Route path="/dashboard" element={<Navigate to={defaultRoute.path} replace />} />
+              <Route path="*" element={<Navigate to={defaultRoute.path} replace />} />
+            </Routes>
+          </AnimatePresence>
+        </main>
+      </div>
+      <SyncPendingIndicator />
+      <SyncCompletedToast />
+      <InstallPrompt />
+    </>
   );
 }

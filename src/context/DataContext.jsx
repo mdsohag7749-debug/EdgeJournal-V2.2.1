@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { KEYS, loadJSON, saveJSON } from '../lib/storage';
 import { uid } from '../lib/utils';
 import { supabase } from '../lib/supabase';
@@ -8,6 +8,19 @@ import { toGoalRow, fromGoalRow } from '../lib/goalsApi';
 import { toPlanRow, fromPlanRow } from '../lib/plansApi';
 import { toReflectionRow, fromReflectionRow } from '../lib/reflectionsApi';
 import { toStudyRow, fromStudyRow } from '../lib/studyApi';
+import {
+  isOnline,
+  isNetworkError,
+  enqueueChange,
+  dequeueChange,
+  getQueueForTable,
+  updateQueuedInsert,
+  removeQueuedInsert,
+  mergeQueueIntoItems,
+  saveCache,
+  loadCache,
+  notifySyncComplete,
+} from '../lib/offlineQueue';
 
 const DataContext = createContext(null);
 
@@ -55,13 +68,25 @@ function useCollection(key, defaultValue = []) {
 
 // Generic Supabase-backed collection, exposing the same shape as
 // useCollection (`items`, `add`, `update`, `remove`, `setItems`) plus
-// three extras (`importMany`, `refetch`, `loading`) used by System.jsx's
-// backup restore and by AppShell's initial-load gate. Every query is
-// additionally scoped to `user_id = userId` client-side as defense in
-// depth — Row Level Security on the underlying table is what actually
-// enforces "every user can only access their own data". `trades` and
-// `goals` are both thin wrappers around this (see below).
-function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, ascending = false }) {
+// extras (`importMany`, `refetch`, `loading`, `syncPending`) used by
+// System.jsx's backup restore, AppShell's initial-load gate, and the
+// offline-sync effect below. Every query is additionally scoped to
+// `user_id = userId` client-side as defense in depth — Row Level
+// Security on the underlying table is what actually enforces "every
+// user can only access their own data". `trades`, `goals`, `plans`,
+// `reflections`, and `study` are all thin wrappers around this.
+//
+// Offline support: `add`/`update`/`remove` check connectivity (and
+// fall back the same way if a call that started online turns out to
+// hit a network error mid-flight) — instead of failing, the change is
+// applied to local state optimistically (tagged `_pending: true`) and
+// appended to the offline write queue (src/lib/offlineQueue.js).
+// `refetch` caches every successful load to localStorage and, on
+// failure, falls back to that cache so previously loaded data is still
+// browsable offline. `syncPending` drains this table's slice of the
+// queue once connectivity returns; the effect in DataProvider below
+// calls it for all five collections.
+function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, ascending = false, label }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,15 +97,21 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
       return;
     }
     setLoading(true);
-    let query = supabase.from(table).select('*').eq('user_id', userId);
-    if (orderColumn) query = query.order(orderColumn, { ascending });
-    const { data, error } = await query;
+    try {
+      let query = supabase.from(table).select('*').eq('user_id', userId);
+      if (orderColumn) query = query.order(orderColumn, { ascending });
+      const { data, error } = await query;
+      if (error) throw error;
 
-    if (error) {
-      console.error(`Failed to load ${table} from Supabase:`, error.message);
-      setItems([]);
-    } else {
-      setItems((data || []).map(fromRow));
+      const fetched = (data || []).map(fromRow);
+      saveCache(table, userId, fetched);
+      setItems(mergeQueueIntoItems(table, userId, fetched));
+    } catch (err) {
+      // Offline (or Supabase unreachable): fall back to the last
+      // successful fetch instead of wiping the screen, so the
+      // dashboard/analytics/etc. stay browsable offline.
+      console.error(`Failed to load ${table} from Supabase, using cached data:`, err.message || err);
+      setItems(mergeQueueIntoItems(table, userId, loadCache(table, userId)));
     }
     setLoading(false);
   }, [table, userId, orderColumn, ascending, fromRow]);
@@ -92,52 +123,97 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
   const add = useCallback(
     async (item) => {
       if (!userId) return null;
-      const { data, error } = await supabase.from(table).insert(toRow(item, userId)).select().single();
 
-      if (error) {
-        console.error(`Failed to save ${table.slice(0, -1)} to Supabase:`, error.message);
+      const queueOffline = () => {
+        const tempId = `pending_${uid()}`;
+        const optimistic = { ...item, id: tempId, createdAt: new Date().toISOString(), _pending: true };
+        setItems((prev) => [optimistic, ...prev]);
+        enqueueChange({ table, userId, type: 'insert', tempId, item, label });
+        return optimistic;
+      };
+
+      if (!isOnline()) return queueOffline();
+
+      try {
+        const { data, error } = await supabase.from(table).insert(toRow(item, userId)).select().single();
+        if (error) throw error;
+        const saved = fromRow(data);
+        setItems((prev) => [saved, ...prev]);
+        return saved;
+      } catch (err) {
+        if (isNetworkError(err)) return queueOffline();
+        console.error(`Failed to save ${table.slice(0, -1)} to Supabase:`, err.message || err);
         return null;
       }
-      const saved = fromRow(data);
-      setItems((prev) => [saved, ...prev]);
-      return saved;
     },
-    [table, userId, toRow, fromRow]
+    [table, userId, toRow, fromRow, label]
   );
 
   const update = useCallback(
     async (id, patch) => {
       if (!userId) return;
-      const { data, error } = await supabase
-        .from(table)
-        .update(toRow(patch, userId, { partial: true }))
-        .eq('id', id)
-        .eq('user_id', userId)
-        .select()
-        .single();
+      const isPendingItem = typeof id === 'string' && id.startsWith('pending_');
 
-      if (error) {
-        console.error(`Failed to update ${table.slice(0, -1)} in Supabase:`, error.message);
-        return;
+      const queueOffline = () => {
+        setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch, _pending: true } : it)));
+        if (isPendingItem) {
+          // Still-unsynced local record: fold the edit into the queued
+          // insert rather than creating a separate update entry for an
+          // id Supabase has never seen.
+          updateQueuedInsert(table, userId, id, patch);
+        } else {
+          enqueueChange({ table, userId, type: 'update', itemId: id, item: patch, label });
+        }
+      };
+
+      if (!isOnline() || isPendingItem) return queueOffline();
+
+      try {
+        const { data, error } = await supabase
+          .from(table)
+          .update(toRow(patch, userId, { partial: true }))
+          .eq('id', id)
+          .eq('user_id', userId)
+          .select()
+          .single();
+        if (error) throw error;
+        const saved = fromRow(data);
+        setItems((prev) => prev.map((it) => (it.id === id ? saved : it)));
+      } catch (err) {
+        if (isNetworkError(err)) return queueOffline();
+        console.error(`Failed to update ${table.slice(0, -1)} in Supabase:`, err.message || err);
       }
-      const saved = fromRow(data);
-      setItems((prev) => prev.map((it) => (it.id === id ? saved : it)));
     },
-    [table, userId, toRow, fromRow]
+    [table, userId, toRow, fromRow, label]
   );
 
   const remove = useCallback(
     async (id) => {
       if (!userId) return;
-      const { error } = await supabase.from(table).delete().eq('id', id).eq('user_id', userId);
+      const isPendingItem = typeof id === 'string' && id.startsWith('pending_');
 
-      if (error) {
-        console.error(`Failed to delete ${table.slice(0, -1)} from Supabase:`, error.message);
-        return;
+      const queueOffline = () => {
+        setItems((prev) => prev.filter((it) => it.id !== id));
+        if (isPendingItem) {
+          // Never made it to the server — just drop the queued insert.
+          removeQueuedInsert(table, userId, id);
+        } else {
+          enqueueChange({ table, userId, type: 'delete', itemId: id, label });
+        }
+      };
+
+      if (!isOnline() || isPendingItem) return queueOffline();
+
+      try {
+        const { error } = await supabase.from(table).delete().eq('id', id).eq('user_id', userId);
+        if (error) throw error;
+        setItems((prev) => prev.filter((it) => it.id !== id));
+      } catch (err) {
+        if (isNetworkError(err)) return queueOffline();
+        console.error(`Failed to delete ${table.slice(0, -1)} from Supabase:`, err.message || err);
       }
-      setItems((prev) => prev.filter((it) => it.id !== id));
     },
-    [table, userId]
+    [table, userId, label]
   );
 
   // Bulk insert used only by System.jsx's "Import JSON Backup" — a
@@ -159,7 +235,51 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
     [table, userId, toRow, fromRow]
   );
 
-  return { items, add, update, remove, setItems, importMany, refetch, loading };
+  // Drains this collection's slice of the offline write queue,
+  // oldest-first, stopping at the first failure (connectivity can drop
+  // again mid-sync) so the remaining entries stay queued for the next
+  // attempt instead of being replayed out of order. Returns how many
+  // entries were successfully synced.
+  const syncPending = useCallback(async () => {
+    if (!userId || !isOnline()) return 0;
+    const queue = getQueueForTable(table, userId);
+    let synced = 0;
+
+    for (const entry of queue) {
+      try {
+        if (entry.type === 'insert') {
+          const { data, error } = await supabase.from(table).insert(toRow(entry.item, userId)).select().single();
+          if (error) throw error;
+          const saved = fromRow(data);
+          setItems((prev) => prev.map((it) => (it.id === entry.tempId ? saved : it)));
+        } else if (entry.type === 'update') {
+          const { data, error } = await supabase
+            .from(table)
+            .update(toRow(entry.item, userId, { partial: true }))
+            .eq('id', entry.itemId)
+            .eq('user_id', userId)
+            .select()
+            .single();
+          if (error) throw error;
+          const saved = fromRow(data);
+          setItems((prev) => prev.map((it) => (it.id === entry.itemId ? saved : it)));
+        } else if (entry.type === 'delete') {
+          const { error } = await supabase.from(table).delete().eq('id', entry.itemId).eq('user_id', userId);
+          if (error) throw error;
+          setItems((prev) => prev.filter((it) => it.id !== entry.itemId));
+        }
+        dequeueChange(entry.id);
+        synced += 1;
+      } catch (err) {
+        console.error(`Failed to sync queued ${table} change, will retry later:`, err.message || err);
+        break;
+      }
+    }
+
+    return synced;
+  }, [table, userId, toRow, fromRow]);
+
+  return { items, add, update, remove, setItems, importMany, refetch, loading, syncPending };
 }
 
 function useTradesCollection(userId) {
@@ -168,6 +288,7 @@ function useTradesCollection(userId) {
     fromRow: fromTradeRow,
     orderColumn: 'date',
     ascending: false,
+    label: 'Trade',
   });
 }
 
@@ -177,6 +298,7 @@ function useGoalsCollection(userId) {
     fromRow: fromGoalRow,
     orderColumn: 'created_at',
     ascending: false,
+    label: 'Goal',
   });
 }
 
@@ -186,6 +308,7 @@ function usePlansCollection(userId) {
     fromRow: fromPlanRow,
     orderColumn: 'date',
     ascending: false,
+    label: 'Pre-Market Plan',
   });
 }
 
@@ -195,6 +318,7 @@ function useReflectionsCollection(userId) {
     fromRow: fromReflectionRow,
     orderColumn: 'date',
     ascending: false,
+    label: 'Reflection',
   });
 }
 
@@ -204,6 +328,7 @@ function useStudyCollection(userId) {
     fromRow: fromStudyRow,
     orderColumn: 'date',
     ascending: false,
+    label: 'Study Note',
   });
 }
 
@@ -216,6 +341,42 @@ export function DataProvider({ children }) {
   const plans = usePlansCollection(userId);
   const reflections = useReflectionsCollection(userId);
   const study = useStudyCollection(userId);
+
+  // Offline queue sync: the moment the browser reports connectivity
+  // (on mount if already online, and on every subsequent 'online'
+  // event), drain each collection's queued creates/edits/deletes into
+  // Supabase. A ref-guarded flag stops overlapping runs (e.g. the
+  // 'online' event firing again mid-sync), and a background interval
+  // covers the case where the browser never fires 'online'/'offline'
+  // reliably but connectivity is actually back.
+  const syncingRef = useRef(false);
+  const syncFns = [trades.syncPending, goals.syncPending, plans.syncPending, reflections.syncPending, study.syncPending];
+
+  useEffect(() => {
+    if (!userId) return undefined;
+
+    async function runSync() {
+      if (syncingRef.current || !isOnline()) return;
+      syncingRef.current = true;
+      try {
+        const results = await Promise.all(syncFns.map((fn) => fn()));
+        const total = results.reduce((sum, n) => sum + n, 0);
+        if (total > 0) notifySyncComplete(total);
+      } finally {
+        syncingRef.current = false;
+      }
+    }
+
+    runSync();
+    window.addEventListener('online', runSync);
+    const interval = setInterval(runSync, 20000);
+
+    return () => {
+      window.removeEventListener('online', runSync);
+      clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, ...syncFns]);
 
   const [models, setModelsState] = useState(() => loadJSON(KEYS.models, DEFAULT_MODELS));
   const [riskCriteria, setRiskCriteriaState] = useState(() => loadJSON(KEYS.riskCriteria, DEFAULT_RISK_CRITERIA));
