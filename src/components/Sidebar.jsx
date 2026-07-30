@@ -6,6 +6,7 @@ import {
   MessageSquareText,
   GraduationCap,
   Target,
+  Activity,
   SlidersHorizontal,
   ChevronsLeft,
   ChevronsRight,
@@ -20,6 +21,7 @@ const NAV = [
   { id: 'reflections', label: 'Reflections', icon: MessageSquareText },
   { id: 'study', label: 'Study', icon: GraduationCap },
   { id: 'goals', label: 'Goals', icon: Target },
+  { id: 'analytics', label: 'Analytics', icon: Activity },
   { id: 'system', label: 'System', icon: SlidersHorizontal },
   { id: 'profile', label: 'Profile', icon: User },
 ];

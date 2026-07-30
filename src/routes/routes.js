@@ -12,6 +12,7 @@ import TradingJournal from '../pages/TradingJournal';
 import Reflections from '../pages/Reflections';
 import Study from '../pages/Study';
 import Goals from '../pages/Goals';
+import Analytics from '../pages/Analytics';
 import System from '../pages/System';
 import Profile from '../pages/Profile';
 
@@ -54,6 +55,13 @@ export const routes = [
     Component: Goals,
     title: 'Goals',
     subtitle: 'Set targets and track your progress toward them',
+  },
+  {
+    id: 'analytics',
+    path: '/analytics',
+    Component: Analytics,
+    title: 'Advanced Analytics',
+    subtitle: 'Deep-dive performance breakdowns across every trade',
   },
   {
     id: 'system',
