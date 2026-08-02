@@ -100,27 +100,61 @@ export function TradeScreenshotManager({ tradeId }) {
   const [lightbox, setLightbox] = useState(null);
   const [uploadPct, setUploadPct] = useState(null);
   const [busyId, setBusyId] = useState(null); // screenshot currently being replaced/deleted
+  const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef(null);
   const replaceInputRef = useRef(null);
   const replaceTargetRef = useRef(null);
 
   const atLimit = items.length >= MAX_SCREENSHOTS_PER_TRADE;
 
-  async function handleUpload(e) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file || !user?.id || !tradeId) return;
+  // Shared by both the file-picker input and drag & drop: uploads
+  // each valid image file in order, stopping once the trade hits
+  // MAX_SCREENSHOTS_PER_TRADE (tracked locally since setItems is async).
+  async function processFiles(fileList) {
+    if (!user?.id || !tradeId) return;
+    const files = Array.from(fileList || []).filter((f) => f.type?.startsWith('image/'));
+    if (!files.length) return;
 
     setError('');
-    setUploadPct(0);
-    try {
-      const saved = await uploadScreenshot(user.id, tradeId, file, setUploadPct);
-      setItems((prev) => [...prev, saved]);
-    } catch (err) {
-      setError(err.message || 'Upload failed.');
-    } finally {
-      setUploadPct(null);
+    let currentCount = items.length;
+    for (const file of files) {
+      if (currentCount >= MAX_SCREENSHOTS_PER_TRADE) {
+        setError(`Each trade can have at most ${MAX_SCREENSHOTS_PER_TRADE} screenshots.`);
+        break;
+      }
+      setUploadPct(0);
+      try {
+        const saved = await uploadScreenshot(user.id, tradeId, file, setUploadPct);
+        setItems((prev) => [...prev, saved]);
+        currentCount += 1;
+      } catch (err) {
+        setError(err.message || 'Upload failed.');
+        break;
+      }
     }
+    setUploadPct(null);
+  }
+
+  async function handleUpload(e) {
+    const files = e.target.files;
+    e.target.value = '';
+    await processFiles(files);
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    if (!atLimit) setDragOver(true);
+  }
+
+  function handleDragLeave() {
+    setDragOver(false);
+  }
+
+  async function handleGridDrop(e) {
+    e.preventDefault();
+    setDragOver(false);
+    if (atLimit) return;
+    await processFiles(e.dataTransfer.files);
   }
 
   async function handleReplaceFile(e) {
@@ -195,7 +229,20 @@ export function TradeScreenshotManager({ tradeId }) {
         <p style={{ fontSize: 12, color: 'var(--loss)', marginBottom: 8 }}>{error}</p>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 10 }}>
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleGridDrop}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
+          gap: 10,
+          borderRadius: 'var(--radius-sm)',
+          outline: dragOver ? '2px dashed var(--red)' : 'none',
+          outlineOffset: 4,
+          transition: 'outline-color 0.15s ease',
+        }}
+      >
         {items.map((s) => (
           <GridThumb key={s.id}>
             {s.url && (
@@ -264,8 +311,15 @@ export function TradeScreenshotManager({ tradeId }) {
                 }}
               >
                 <ImagePlus size={18} />
-                <span>Add screenshot</span>
-                <input ref={fileInputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/webp" onChange={handleUpload} style={{ display: 'none' }} />
+                <span>Add or drop images</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  multiple
+                  onChange={handleUpload}
+                  style={{ display: 'none' }}
+                />
               </label>
             )}
           </GridThumb>

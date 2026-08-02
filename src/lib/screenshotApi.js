@@ -12,7 +12,7 @@
 import { supabase } from './supabase';
 
 const BUCKET = 'trade-screenshots';
-export const MAX_SCREENSHOTS_PER_TRADE = 5;
+export const MAX_SCREENSHOTS_PER_TRADE = 10;
 export const MAX_SCREENSHOT_BYTES = 10 * 1024 * 1024; // 10 MB
 
 const EXT_BY_MIME = {
@@ -101,7 +101,7 @@ function putWithProgress(signedUrl, file, onProgress) {
   });
 }
 
-// Uploads one screenshot for `tradeId`, enforcing the 0-5 per trade
+// Uploads one screenshot for `tradeId`, enforcing the 0-10 per trade
 // limit, then records it in `trade_screenshots`. Returns the new
 // screenshot (with a signed `url`) ready to add straight into gallery
 // state. `onProgress` (0-100) is optional.
@@ -141,7 +141,7 @@ export async function uploadScreenshot(userId, tradeId, file, onProgress) {
 
   if (insertError) {
     // Don't leave an orphaned file in Storage if the DB insert failed
-    // (e.g. the 5-per-trade trigger raced with another upload).
+    // (e.g. the 10-per-trade trigger raced with another upload).
     await supabase.storage.from(BUCKET).remove([path]);
     throw insertError;
   }
