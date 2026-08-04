@@ -6,15 +6,17 @@
 // page component to render, and the header meta shown at the top of the
 // page. Adding a new page later only requires adding one entry here.
 
-import Dashboard from '../pages/Dashboard';
-import PreMarketPlan from '../pages/PreMarketPlan';
-import TradingJournal from '../pages/TradingJournal';
-import Reflections from '../pages/Reflections';
-import Study from '../pages/Study';
-import Goals from '../pages/Goals';
-import Analytics from '../pages/Analytics';
-import System from '../pages/System';
-import Profile from '../pages/Profile';
+import { lazy } from 'react';
+
+const Dashboard = lazy(() => import('../pages/Dashboard'));
+const PreMarketPlan = lazy(() => import('../pages/PreMarketPlan'));
+const TradingJournal = lazy(() => import('../pages/TradingJournal'));
+const Reflections = lazy(() => import('../pages/Reflections'));
+const Study = lazy(() => import('../pages/Study'));
+const Goals = lazy(() => import('../pages/Goals'));
+const Analytics = lazy(() => import('../pages/Analytics'));
+const System = lazy(() => import('../pages/System'));
+const Profile = lazy(() => import('../pages/Profile'));
 
 export const routes = [
   {

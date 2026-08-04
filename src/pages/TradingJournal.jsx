@@ -106,12 +106,19 @@ export default function TradingJournal() {
                 </div>
 
                 {isOpen && (
-                  <div style={{ padding: '4px 20px 20px', borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 20 }}>
+                  <div style={{ padding: '4px 20px 20px', borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 14 }}>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                         <MiniStat label="Entry" value={t.entryPrice} />
                         <MiniStat label="Exit" value={t.exitPrice} />
                         <MiniStat label="Contracts" value={t.contracts} />
+                        <MiniStat label="Stop Loss" value={t.stopLoss} />
+                        <MiniStat label="Take Profit" value={t.takeProfit} />
+                        <MiniStat label="Risk %" value={t.riskPercent ? `${t.riskPercent}%` : ''} />
+                        <MiniStat label="R:R" value={t.rr} />
+                        <MiniStat label="Position Size" value={t.positionSize} />
+                        <MiniStat label="Grade" value={t.tradeGrade} />
+                        <MiniStat label="Emotion" value={t.emotion} />
                         <MiniStat label="Entry Time" value={t.entryTime} />
                         <MiniStat label="Exit Time" value={t.exitTime} />
                         <MiniStat label="Commission" value={t.commission ? formatMoney(-Math.abs(t.commission)) : '—'} />
@@ -120,8 +127,10 @@ export default function TradingJournal() {
                       <Field label="Confluences" value={t.confluences} />
                       <Field label="Trade Management" value={t.tradeManagement} />
                       <Field label="Trade Notes" value={t.notes} />
+                      <Field label="Lessons Learned" value={t.lessonsLearned} />
                       <ChecklistSummary title="Risk Management" values={t.riskChecklist} />
                       <ChecklistSummary title="Trade Checklist" values={t.tradeChecklist} />
+                      <ChecklistSummary title="Mistakes" values={t.mistakes} />
                     </div>
                     <div style={{ paddingTop: 14 }}>
                       {t.screenshot ? (

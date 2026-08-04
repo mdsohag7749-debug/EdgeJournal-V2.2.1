@@ -12,7 +12,9 @@ export function computeDashboardStats(trades) {
   const losses = sorted.filter((t) => t.result === 'Loss');
   const decided = wins.length + losses.length;
 
-  const netPnl = sorted.reduce((s, t) => s + (Number(t.netPnl) || 0), 0);
+  const round2 = (val) => Math.round((val + Number.EPSILON) * 100) / 100;
+
+  const netPnl = round2(sorted.reduce((s, t) => s + (Number(t.netPnl) || 0), 0));
   const tradeWinPct = decided ? (wins.length / decided) * 100 : 0;
 
   // Daily win %
@@ -27,13 +29,13 @@ export function computeDashboardStats(trades) {
   const decidedDays = winDays + lossDays;
   const dailyWinPct = decidedDays ? (winDays / decidedDays) * 100 : 0;
 
-  const avgWin = wins.length ? wins.reduce((s, t) => s + (Number(t.netPnl) || 0), 0) / wins.length : 0;
-  const avgLoss = losses.length ? losses.reduce((s, t) => s + (Number(t.netPnl) || 0), 0) / losses.length : 0;
-  const avgRR = avgLoss !== 0 ? Math.abs(avgWin / avgLoss) : 0;
+  const avgWin = wins.length ? round2(wins.reduce((s, t) => s + (Number(t.netPnl) || 0), 0) / wins.length) : 0;
+  const avgLoss = losses.length ? round2(losses.reduce((s, t) => s + (Number(t.netPnl) || 0), 0) / losses.length) : 0;
+  const avgRR = avgLoss !== 0 ? round2(Math.abs(avgWin / avgLoss)) : 0;
 
   const grossProfit = wins.reduce((s, t) => s + (Number(t.netPnl) || 0), 0);
   const grossLoss = Math.abs(losses.reduce((s, t) => s + (Number(t.netPnl) || 0), 0));
-  const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0;
+  const profitFactor = grossLoss > 0 ? round2(grossProfit / grossLoss) : grossProfit > 0 ? 99.99 : 0;
 
   const bestTrade = sorted.length ? Math.max(...sorted.map((t) => Number(t.netPnl) || 0)) : 0;
   const worstTrade = sorted.length ? Math.min(...sorted.map((t) => Number(t.netPnl) || 0)) : 0;

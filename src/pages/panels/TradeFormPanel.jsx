@@ -179,10 +179,45 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
       );
       setErrors({});
     }
-  }, [open, initial, models]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initial]);
 
   function set(key, value) {
-    setForm((f) => ({ ...f, [key]: value }));
+    setForm((f) => {
+      const next = { ...f, [key]: value };
+
+      const entry = Number(next.entryPrice);
+      const exit = Number(next.exitPrice);
+      const qty = isBlank(next.contracts) ? 1 : Number(next.contracts);
+      const comm = Number(next.commission) || 0;
+      const sl = Number(next.stopLoss);
+      const tp = Number(next.takeProfit);
+
+      // Auto-compute Net P&L & Result when prices, contracts, or direction change
+      if (['entryPrice', 'exitPrice', 'contracts', 'direction', 'commission'].includes(key)) {
+        if (!isBlank(next.entryPrice) && !isBlank(next.exitPrice) && !Number.isNaN(entry) && !Number.isNaN(exit)) {
+          const rawPnl = next.direction === 'Buy' ? (exit - entry) * qty : (entry - exit) * qty;
+          const calculatedNetPnl = Math.round((rawPnl - comm) * 100) / 100;
+          next.netPnl = calculatedNetPnl;
+          if (calculatedNetPnl > 0) next.result = 'Win';
+          else if (calculatedNetPnl < 0) next.result = 'Loss';
+          else next.result = 'BE';
+        }
+      }
+
+      // Auto-compute R:R ratio when Stop Loss, Take Profit, or Entry Price change
+      if (['stopLoss', 'takeProfit', 'entryPrice', 'direction'].includes(key)) {
+        if (!isBlank(next.entryPrice) && !isBlank(next.stopLoss) && !isBlank(next.takeProfit) && !Number.isNaN(entry) && !Number.isNaN(sl) && !Number.isNaN(tp)) {
+          const risk = Math.abs(entry - sl);
+          const reward = Math.abs(tp - entry);
+          if (risk > 0) {
+            next.rr = Math.round((reward / risk) * 100) / 100;
+          }
+        }
+      }
+
+      return next;
+    });
     setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
   }
 

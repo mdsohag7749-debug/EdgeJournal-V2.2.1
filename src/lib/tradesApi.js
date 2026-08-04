@@ -16,9 +16,12 @@ const TEXT_FIELDS = {
   protocol: 'protocol',
   result: 'result',
   planId: 'plan_id',
+  tradeGrade: 'trade_grade',
+  emotion: 'emotion',
   confluences: 'confluences',
   tradeManagement: 'trade_management',
   notes: 'notes',
+  lessonsLearned: 'lessons_learned',
   screenshot: 'screenshot',
 };
 
@@ -26,6 +29,11 @@ const NUMERIC_FIELDS = {
   entryPrice: 'entry_price',
   exitPrice: 'exit_price',
   contracts: 'contracts',
+  stopLoss: 'stop_loss',
+  takeProfit: 'take_profit',
+  riskPercent: 'risk_percent',
+  rr: 'rr',
+  positionSize: 'position_size',
   netPnl: 'net_pnl',
   commission: 'commission',
   rating: 'rating',
@@ -62,6 +70,7 @@ export function toTradeRow(trade, userId, { partial = false } = {}) {
 
   if (!partial || 'riskChecklist' in trade) row.risk_checklist = trade.riskChecklist || {};
   if (!partial || 'tradeChecklist' in trade) row.trade_checklist = trade.tradeChecklist || {};
+  if (!partial || 'mistakes' in trade) row.mistakes = trade.mistakes || {};
 
   return row;
 }
@@ -84,6 +93,11 @@ export function fromTradeRow(row) {
     entryPrice: row.entry_price ?? '',
     exitPrice: row.exit_price ?? '',
     contracts: row.contracts ?? '',
+    stopLoss: row.stop_loss ?? '',
+    takeProfit: row.take_profit ?? '',
+    riskPercent: row.risk_percent ?? '',
+    rr: row.rr ?? '',
+    positionSize: row.position_size ?? '',
     netPnl: row.net_pnl ?? '',
     commission: row.commission ?? '',
     result: row.result || 'Win',
@@ -91,10 +105,15 @@ export function fromTradeRow(row) {
     rating: row.rating ?? 5,
     riskChecklist: row.risk_checklist || {},
     tradeChecklist: row.trade_checklist || {},
+    tradeGrade: row.trade_grade || '',
+    emotion: row.emotion || '',
+    mistakes: row.mistakes || {},
     confluences: row.confluences || '',
     tradeManagement: row.trade_management || '',
     notes: row.notes || '',
+    lessonsLearned: row.lessons_learned || '',
     screenshot: row.screenshot || '',
     createdAt: row.created_at,
   };
 }
+

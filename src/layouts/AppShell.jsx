@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { DataProvider, useData } from '../context/DataContext';
@@ -69,25 +69,27 @@ function AppShellContent() {
         />
         <main style={{ flex: 1, minWidth: 0, padding: '28px 32px 60px' }}>
           {!activeRoute.hideHeader && <Header title={activeRoute.title} subtitle={activeRoute.subtitle} />}
-          <AnimatePresence mode="wait">
-            <Routes location={location} key={location.pathname}>
-              {routes.map(({ path, Component }) => (
-                <Route
-                  key={path}
-                  path={path}
-                  element={
-                    <PageTransition>
-                      <Component onNavigate={handleNavigate} />
-                    </PageTransition>
-                  }
-                />
-              ))}
-              {/* Alias: login redirects here per spec; Dashboard itself
-                  still lives at "/" so nothing about its route changes. */}
-              <Route path="/dashboard" element={<Navigate to={defaultRoute.path} replace />} />
-              <Route path="*" element={<Navigate to={defaultRoute.path} replace />} />
-            </Routes>
-          </AnimatePresence>
+          <Suspense fallback={<LoadingScreen message="Loading page..." />}>
+            <AnimatePresence mode="wait">
+              <Routes location={location} key={location.pathname}>
+                {routes.map(({ path, Component }) => (
+                  <Route
+                    key={path}
+                    path={path}
+                    element={
+                      <PageTransition>
+                        <Component onNavigate={handleNavigate} />
+                      </PageTransition>
+                    }
+                  />
+                ))}
+                {/* Alias: login redirects here per spec; Dashboard itself
+                    still lives at "/" so nothing about its route changes. */}
+                <Route path="/dashboard" element={<Navigate to={defaultRoute.path} replace />} />
+                <Route path="*" element={<Navigate to={defaultRoute.path} replace />} />
+              </Routes>
+            </AnimatePresence>
+          </Suspense>
         </main>
       </div>
       <SyncPendingIndicator />
