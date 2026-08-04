@@ -1,0 +1,59 @@
+import SidePanel from '../SidePanel';
+import { formatDate, formatMoney, pnlClass, resultTagClass } from '../../lib/utils';
+import { BookOpen } from 'lucide-react';
+
+export default function DayTradesModal({ open, date, trades, onClose, onSelectTrade }) {
+  if (!open || !date) return null;
+
+  return (
+    <SidePanel
+      open={open}
+      onClose={onClose}
+      title={`Trades logged on ${formatDate(date)}`}
+      subtitle={`${trades.length} ${trades.length === 1 ? 'trade' : 'trades'} executed on this date`}
+      width="normal"
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {trades.length === 0 ? (
+          <div className="empty-state">
+            <BookOpen size={24} style={{ color: 'var(--text-faint)' }} />
+            <p>No trades found for this day.</p>
+          </div>
+        ) : (
+          trades.map((t) => (
+            <div
+              key={t.id}
+              onClick={() => {
+                onClose();
+                onSelectTrade(t);
+              }}
+              className="card card-lift"
+              style={{
+                padding: 14,
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+                background: 'var(--card)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 700, fontSize: 14 }}>{t.instrument}</span>
+                <span className={`tag ${resultTagClass(t.result)}`}>{t.result}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13 }}>
+                <span style={{ color: 'var(--text-muted)' }}>
+                  {t.direction} · {t.model || 'No model'}
+                </span>
+                <span className={`mono ${pnlClass(t.netPnl)}`} style={{ fontWeight: 700 }}>
+                  {formatMoney(t.netPnl)}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </SidePanel>
+  );
+}
