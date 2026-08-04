@@ -1,38 +1,38 @@
 :root {
-  --bg: #f8f9fa;
-  --bg-elevated: #ffffff;
-  --card: #ffffff;
-  --card-hover: #ffffff;
-  --border: rgba(0, 0, 0, 0.08);
-  --border-strong: rgba(0, 0, 0, 0.16);
-  --text: #111827;
-  --text-muted: #6b7280;
-  --text-faint: #9ca3af;
+  --bg: #0b0b0f;
+  --bg-elevated: #12121a;
+  --card: rgba(18, 18, 26, 0.85);
+  --card-hover: rgba(26, 26, 36, 0.95);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --text: #f3f4f6;
+  --text-muted: #9ca3af;
+  --text-faint: #6b7280;
 
   --red: #c1121f;
   --red-strong: #780000;
-  --red-dim: #fdecec;
-  --red-glow: rgba(193, 18, 31, 0.12);
+  --red-dim: rgba(193, 18, 31, 0.15);
+  --red-glow: rgba(193, 18, 31, 0.25);
 
   --white: #ffffff;
 
-  --win: #16a34a;
-  --loss: #dc2626;
-  --be: #6b7280;
+  --win: #2fd66e;
+  --loss: #ff4d5e;
+  --be: #9a9aa3;
 
-  --radius-sm: 12px;
+  --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
 
-  --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.08);
-  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.05);
-  --shadow-lifted: 0 20px 48px rgba(0, 0, 0, 0.12);
+  --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-lifted: 0 20px 48px rgba(0, 0, 0, 0.55);
 
   --font-display: 'Space Grotesk', 'Inter', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --sidebar-w: 190px;
+  --sidebar-w: 200px;
   --sidebar-w-collapsed: 72px;
   --panel-narrow: 520px;
   --panel-wide: 1000px;
@@ -55,8 +55,8 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   background-image:
-    radial-gradient(circle at 12% 0%, rgba(193, 18, 31, 0.05), transparent 45%),
-    radial-gradient(circle at 100% 20%, rgba(120, 0, 0, 0.035), transparent 40%);
+    radial-gradient(circle at 12% 0%, rgba(193, 18, 31, 0.08), transparent 45%),
+    radial-gradient(circle at 100% 20%, rgba(47, 214, 110, 0.04), transparent 40%);
   background-attachment: fixed;
 }
 
