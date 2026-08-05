@@ -431,17 +431,12 @@ button:focus-visible {
   justify-content: space-between;
   padding: 48px;
   color: var(--white);
-  background: linear-gradient(160deg, var(--red-strong) 0%, var(--red) 60%, #9a0f1a 100%);
+  background: #0b0b0f;
   overflow: hidden;
 }
 
 .auth-brand-panel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.1), transparent 45%),
-    radial-gradient(circle at 10% 90%, rgba(0, 0, 0, 0.18), transparent 55%);
-  pointer-events: none;
+  content: none;
 }
 
 .auth-mark {
@@ -596,5 +591,311 @@ button:focus-visible {
 @media (max-width: 420px) {
   .auth-form-panel {
     padding: 32px 16px;
+  }
+}
+
+/* ---------- Premium auth experience (v2.2.3) ---------- */
+/* Visual + motion upgrade for the auth pages. Scoped to .auth- classes so
+   nothing outside the Login/Register/ForgotPassword shell is affected.
+   Only transform / opacity / filter are animated for 60fps; everything
+   collapses under prefers-reduced-motion. */
+
+/* Animated aurora gradient — slow, GPU-accelerated drift (25s loop). */
+.auth-aurora {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(55% 45% at 28% 22%, rgba(176, 0, 32, 0.5), transparent 62%),
+    radial-gradient(48% 55% at 82% 78%, rgba(92, 11, 11, 0.85), transparent 68%),
+    radial-gradient(70% 55% at 55% 48%, rgba(35, 7, 7, 0.9), transparent 70%),
+    linear-gradient(160deg, #0b0b0f 0%, #230707 45%, #0b0b0f 100%);
+  animation: auth-aurora 25s ease-in-out infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+
+@keyframes auth-aurora {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(-4%, -2.5%, 0) scale(1.12);
+  }
+  66% {
+    transform: translate3d(3.5%, 2.5%, 0) scale(1.08);
+  }
+}
+
+/* Soft trading grid, faded toward the edges. */
+.auth-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: radial-gradient(120% 90% at 50% 40%, #000 30%, transparent 85%);
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 40%, #000 30%, transparent 85%);
+  pointer-events: none;
+}
+
+/* Candlestick silhouettes — purely decorative, sub-8% opacity. */
+.auth-candles {
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.auth-candle {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.auth-candle-wick {
+  width: 1px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.auth-candle-body {
+  border-radius: 1.5px;
+  margin-top: 1px;
+}
+.auth-candle-body.up {
+  background: rgba(47, 214, 110, 0.09);
+}
+.auth-candle-body.down {
+  background: rgba(255, 77, 94, 0.09);
+}
+.auth-candle-body.neutral {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+/* Floating particles. */
+.auth-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.auth-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  opacity: 0;
+  animation-name: auth-float;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+@keyframes auth-float {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  12% {
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate3d(8px, -34px, 0);
+  }
+  88% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-6px, -64px, 0);
+  }
+}
+
+/* Brand panel content sits above the decorative layers. */
+.auth-brand-content {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 28px;
+}
+.auth-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.auth-brand-quote p {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0;
+  min-height: 68px;
+}
+.auth-brand-footer {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Login card entrance wrapper + breathing ambient glow behind it. */
+.auth-card-anim {
+  position: relative;
+}
+.auth-card-glow {
+  position: absolute;
+  inset: -60px -30px;
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(36px);
+}
+.auth-card-glow::before,
+.auth-card-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+.auth-card-glow::before {
+  background: radial-gradient(55% 60% at 50% 42%, rgba(176, 0, 32, 0.5), rgba(120, 0, 0, 0.14) 62%, transparent 75%);
+  animation: auth-breathe-a 6s ease-in-out infinite;
+}
+.auth-card-glow::after {
+  background: radial-gradient(55% 60% at 50% 42%, rgba(140, 12, 32, 0.5), rgba(96, 4, 18, 0.16) 62%, transparent 75%);
+  animation: auth-breathe-b 6s ease-in-out infinite;
+  opacity: 0;
+}
+@keyframes auth-breathe-a {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(1.06);
+  }
+}
+@keyframes auth-breathe-b {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+/* Mouse-follow radial light, confined to the card. */
+.auth-card {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+.auth-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(176, 0, 32, 0.14), transparent 60%);
+  transform: translate(calc(var(--mx, -999px) - 130px), calc(var(--my, -999px) - 130px));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  will-change: transform;
+}
+.auth-card:hover::after {
+  opacity: 1;
+}
+
+/* Inputs: soft focus glow, icon tint, placeholder fade (200ms). */
+.auth-form-panel .field input {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.auth-form-panel .field input:focus {
+  border-color: rgba(176, 0, 32, 0.75);
+  box-shadow: 0 0 0 4px rgba(176, 0, 32, 0.14), 0 0 22px rgba(176, 0, 32, 0.12);
+}
+.auth-form-panel .auth-input-icon,
+.auth-form-panel .auth-input-toggle {
+  transition: color 0.2s ease;
+}
+.auth-form-panel .auth-input-wrap:focus-within .auth-input-icon {
+  color: var(--red);
+}
+.auth-form-panel .field input::placeholder {
+  color: var(--text-faint);
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+}
+.auth-form-panel .field input:focus::placeholder {
+  opacity: 0.35;
+}
+
+/* Sign-in button: lift + glow on hover, arrow slides, press scale. */
+.auth-submit-btn {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease,
+    background 0.22s ease, border-color 0.22s ease;
+}
+.auth-submit-btn:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #b00020, #780000);
+  border-color: rgba(176, 0, 32, 0.5);
+  box-shadow: 0 12px 32px -10px rgba(176, 0, 32, 0.6), 0 0 0 1px rgba(176, 0, 32, 0.5);
+}
+.auth-submit-btn:active {
+  transform: translateY(-2px) scale(0.97);
+}
+.auth-submit-btn svg {
+  transition: transform 0.2s ease;
+}
+.auth-submit-btn:hover svg:last-child {
+  transform: translateX(4px);
+}
+
+/* Post-login success overlay. */
+.auth-success-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background:
+    radial-gradient(60% 55% at 50% 42%, rgba(176, 0, 32, 0.16), transparent 65%),
+    #0b0b0f;
+}
+.auth-success-overlay .auth-mark {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(176, 0, 32, 0.16);
+  border: 1px solid rgba(176, 0, 32, 0.38);
+  box-shadow: 0 0 44px rgba(176, 0, 32, 0.35);
+}
+.auth-success-overlay span {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .auth-aurora,
+  .auth-grid,
+  .auth-candles,
+  .auth-particle,
+  .auth-card-glow::before,
+  .auth-card-glow::after,
+  .auth-card::after {
+    animation: none !important;
+    transition: none !important;
   }
 }

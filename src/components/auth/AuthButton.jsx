@@ -7,7 +7,7 @@ export default function AuthButton({ children, loading, className = '', ...props
   return (
     <button
       type="submit"
-      className={`btn btn-accent ${className}`}
+      className={`btn btn-accent auth-submit-btn ${className}`}
       disabled={loading}
       style={{ width: '100%', padding: '12px 16px', fontSize: 14 }}
       {...props}

@@ -42,7 +42,6 @@ export default function TradingJournal() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700 }}>Trading Journal</h1>
           <p style={{ fontSize: 13.5, color: 'var(--text-muted)', marginTop: 4 }}>Every trade, logged and reviewable</p>
         </div>
         <button className="btn btn-accent" onClick={openNew}>
