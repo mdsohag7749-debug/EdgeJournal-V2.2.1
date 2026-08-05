@@ -80,6 +80,10 @@ export function toTradeRow(trade, userId, { partial = false, accountId } = {}) {
   if (!partial || 'tradeChecklist' in trade) row.trade_checklist = trade.tradeChecklist || {};
   if (!partial || 'mistakes' in trade) row.mistakes = trade.mistakes || {};
 
+  // tags (text[]) and is_favorite (bool) — added by migration 0015.
+  if (!partial || 'tags' in trade) row.tags = Array.isArray(trade.tags) ? trade.tags : [];
+  if (!partial || 'isFavorite' in trade) row.is_favorite = !!trade.isFavorite;
+
   return row;
 }
 
@@ -137,6 +141,8 @@ export function fromTradeRow(row) {
     screenshot: row.screenshot || '',
     accountId: row.account_id || '',
     createdAt: row.created_at,
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    isFavorite: !!row.is_favorite,
   };
 }
 
