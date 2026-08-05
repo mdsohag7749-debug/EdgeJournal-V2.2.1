@@ -1,4 +1,4 @@
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { DataProvider, useData } from '../context/DataContext';
@@ -49,6 +49,16 @@ function AppShellContent() {
   const navigate = useNavigate();
   const { trades, goals, plans, reflections, study } = useData();
 
+  // Show the full-screen loader only on the very first data resolution.
+  // After the app has loaded once, later re-loads (e.g. switching
+  // accounts or a background refetch) update in place instead of flashing
+  // a loader screen — this is what made navigation feel laggy/stuck.
+  const anyLoading = trades.loading || goals.loading || plans.loading || reflections.loading || study.loading;
+  const [initialized, setInitialized] = useState(false);
+  useEffect(() => {
+    if (!anyLoading) setInitialized(true);
+  }, [anyLoading]);
+
   const activeRoute = routes.find((r) => r.path === location.pathname) || defaultRoute;
 
   function handleNavigate(id) {
@@ -56,7 +66,7 @@ function AppShellContent() {
     if (target) navigate(target.path);
   }
 
-  if (trades.loading || goals.loading || plans.loading || reflections.loading || study.loading) {
+  if (!initialized && anyLoading) {
     return <LoadingScreen message="Loading your trades, goals, plans, reflections, and study notes…" />;
   }
 

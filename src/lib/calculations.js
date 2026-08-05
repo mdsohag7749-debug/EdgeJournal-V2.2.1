@@ -162,19 +162,52 @@ export function computeDashboardStats(trades) {
     dayMap[t.date].trades.push(t);
   });
 
-  // Radar Scores (0-100)
-  const totalRated = sorted.filter((t) => t.rating).length;
-  const avgRatingScore = totalRated ? (sorted.reduce((s, t) => s + (t.rating || 5), 0) / totalRated) * 10 : 70;
+  // Radar Scores (0-100) — Institutional Performance Radar. Every score
+  // is derived from real trading data (never placeholders): plan
+  // adherence + risk-checklist adherence feed Discipline and Risk
+  // Management; win rate / R:R feed Execution; self-assessed ratings +
+  // win-rate feed Psychology; daily win % feeds Consistency; profit
+  // factor + win rate feed Profitability. Each is clamped to 20–100.
+  const clampScore = (v) => Math.round(Math.min(100, Math.max(20, v)));
+
+  // Real data-drove pieces (no defaults):
+  const totalRated = sorted.filter((t) => Number(t.rating) > 0).length;
+  const avgRatingScore = totalRated ? (sorted.reduce((s, t) => s + Number(t.rating || 0), 0) / totalRated) * 10 : 0;
   const linkedPlanCount = sorted.filter((t) => t.planId).length;
-  const planLinkRate = total ? (linkedPlanCount / total) * 100 : 50;
+  const planLinkRate = total ? (linkedPlanCount / total) * 100 : 0;
+
+  // Risk-checklist adherence: average % of actually-defined risk rules
+  // that were followed. Falls back to "% of trades that at least defined
+  // a risk %" when no checklists are present — still real data.
+  let riskRules = 0;
+  let riskRulesMet = 0;
+  let tradesWithRiskRules = 0;
+  sorted.forEach((t) => {
+    const keys = Object.keys(t.riskChecklist || {});
+    if (keys.length) {
+      riskRules += keys.length;
+      riskRulesMet += keys.filter((k) => t.riskChecklist[k]).length;
+      tradesWithRiskRules += 1;
+    }
+  });
+  const riskAdherence = riskRules
+    ? (riskRulesMet / riskRules) * 100
+    : total
+      ? (sorted.filter((t) => t.riskPercent).length / total) * 100
+      : 0;
+
+  // Instrument-effort reward: how strong an R:R the trader takes.
+  const rrScore = Math.min(100, avgRR >= 1.5 ? 90 : avgRR * 50);
+  const profitFactorScore = profitFactor >= 99 ? 100 : Math.min(100, profitFactor * 40);
+  const profitable = netPnl >= 0;
 
   const radarScores = [
-    { subject: 'Discipline', score: Math.round(Math.min(100, Math.max(20, planLinkRate * 0.4 + avgRatingScore * 0.6))) },
-    { subject: 'Execution', score: Math.round(Math.min(100, Math.max(20, tradeWinPct * 0.6 + (profitFactor > 1.5 ? 40 : profitFactor * 20)))) },
-    { subject: 'Risk', score: Math.round(Math.min(100, Math.max(20, (avgRR >= 1.5 ? 90 : avgRR * 50)))) },
-    { subject: 'Psychology', score: Math.round(Math.min(100, Math.max(20, avgRatingScore))) },
-    { subject: 'RR Score', score: Math.round(Math.min(100, Math.max(20, avgRR * 40))) },
-    { subject: 'Consistency', score: Math.round(Math.min(100, Math.max(20, dailyWinPct))) },
+    { subject: 'Discipline', score: clampScore(planLinkRate * 0.55 + riskAdherence * 0.45) },
+    { subject: 'Execution', score: clampScore(tradeWinPct * 0.5 + rrScore * 0.5) },
+    { subject: 'Risk Management', score: clampScore(riskAdherence * 0.6 + rrScore * 0.4) },
+    { subject: 'Psychology', score: clampScore((totalRated ? avgRatingScore : 0) * 0.6 + dailyWinPct * 0.4) },
+    { subject: 'Consistency', score: clampScore(dailyWinPct) },
+    { subject: 'Profitability', score: clampScore(profitFactorScore * 0.6 + (profitable ? tradeWinPct : 100 - tradeWinPct) * 0.4) },
   ];
 
   // Dynamic Algorithmic Insights Generator

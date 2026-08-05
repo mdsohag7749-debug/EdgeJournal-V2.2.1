@@ -78,6 +78,9 @@ export default function TradingJournal() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 13, color: 'var(--text-muted)', minWidth: 84 }}>{formatDate(t.date)}</span>
                     <span style={{ fontWeight: 700, fontSize: 14, minWidth: 44 }}>{t.instrument}</span>
+                    {t.direction && (
+                      <span className={`tag ${t.direction === 'Buy' ? 'tag-win' : 'tag-loss'}`}>{t.direction}</span>
+                    )}
                     <span className={`mono ${pnlClass(t.netPnl)}`} style={{ fontWeight: 700, fontSize: 14, minWidth: 90 }}>
                       {formatMoney(t.netPnl)}
                     </span>
@@ -109,6 +112,7 @@ export default function TradingJournal() {
                   <div style={{ padding: '4px 20px 20px', borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 14 }}>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                        <MiniStat label="Direction" value={t.direction} />
                         <MiniStat label="Entry" value={t.entryPrice} />
                         <MiniStat label="Exit" value={t.exitPrice} />
                         <MiniStat label="Contracts" value={t.contracts} />

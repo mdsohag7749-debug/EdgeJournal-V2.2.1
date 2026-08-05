@@ -4,12 +4,12 @@ import { ShieldCheck } from 'lucide-react';
 
 export default function PerformanceRadarChart({ radarScores }) {
   const data = radarScores || [
-    { subject: 'Discipline', score: 75 },
-    { subject: 'Execution', score: 80 },
-    { subject: 'Risk', score: 70 },
-    { subject: 'Psychology', score: 85 },
-    { subject: 'RR Score', score: 65 },
-    { subject: 'Consistency', score: 75 },
+    { subject: 'Discipline', score: 20 },
+    { subject: 'Execution', score: 20 },
+    { subject: 'Risk Management', score: 20 },
+    { subject: 'Psychology', score: 20 },
+    { subject: 'Consistency', score: 20 },
+    { subject: 'Profitability', score: 20 },
   ];
 
   return (

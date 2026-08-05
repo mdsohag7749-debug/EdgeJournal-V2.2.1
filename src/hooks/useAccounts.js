@@ -26,6 +26,7 @@ import { loadCache, saveCache } from '../lib/offlineQueue';
 import { ALL_ACCOUNTS } from '../components/accounts/accounts';
 import { computeAccountStats, ledgerFromRow, mergeLedgerQueue } from '../lib/accountStats';
 import { fetchBalanceTrades } from '../lib/tradesApi';
+import { withTimeout } from '../lib/utils';
 import {
   fetchAccounts,
   createAccount,
@@ -99,7 +100,7 @@ export function useAccountsManager(userId) {
       return;
     }
     try {
-      const fetched = await fetchBalanceTrades(userId);
+      const fetched = await withTimeout(fetchBalanceTrades(userId), 15000);
       const merged = mergeLedgerQueue(fetched, userId);
       ledgerRef.current = merged;
       setLedger(merged);
@@ -128,14 +129,15 @@ export function useAccountsManager(userId) {
     try {
       // Idempotent runtime migration: guarantees a default account and
       // folds any account-less trades into it.
-      const ensured = await ensureDefaultAccount(userId);
-      const data = await fetchAccounts(userId);
+      const ensured = await withTimeout(ensureDefaultAccount(userId), 15000);
+      const data = await withTimeout(fetchAccounts(userId), 15000);
       setBaseAccounts(data);
       saveCache(TABLE, userId, data);
 
       const prev = rawRef.current;
       const prevValid = isValidSelection(prev, data);
-      const fallback = (ensured && data.find((a) => a.id === ensured.id)) || data.find((a) => a.isDefault) || data[0];
+      const active = data.filter((a) => a.status && a.status !== 'archived');
+      const fallback = (ensured && data.find((a) => a.id === ensured.id)) || data.find((a) => a.isDefault) || active[0] || data[0];
       const next = prevValid ? prev : fallback?.id || null;
       rawRef.current = next;
       setRawSelection(next);
@@ -148,7 +150,8 @@ export function useAccountsManager(userId) {
       setBaseAccounts(cached);
       const prev = rawRef.current;
       const prevValid = isValidSelection(prev, cached);
-      const next = prevValid ? prev : (cached.find((a) => a.isDefault) || cached[0])?.id || null;
+      const active = cached.filter((a) => a.status && a.status !== 'archived');
+      const next = prevValid ? prev : (cached.find((a) => a.isDefault) || active[0] || cached[0])?.id || null;
       rawRef.current = next;
       setRawSelection(next);
     } finally {

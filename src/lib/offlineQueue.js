@@ -73,6 +73,7 @@ export function isNetworkError(err) {
     msg.includes('network request failed') ||
     msg.includes('networkerror') ||
     msg.includes('load failed') ||
+    msg.includes('request timed out') ||
     msg.includes('the internet connection appears to be offline')
   );
 }

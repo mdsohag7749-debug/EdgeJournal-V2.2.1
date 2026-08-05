@@ -53,3 +53,15 @@ export function resultTagClass(result) {
   if (result === 'Loss') return 'tag-loss';
   return 'tag-be';
 }
+
+// Resolves a promise but rejects with a timeout error if it doesn't
+// settle within `ms`. Keeps a hanging network request from leaving the
+// app stuck on a loading screen forever — the caller treats the
+// resulting error like being offline (falls back to cache / queue).
+export function withTimeout(promise, ms = 15000) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Request timed out')), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}

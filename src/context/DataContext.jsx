@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { KEYS, loadJSON, saveJSON } from '../lib/storage';
-import { uid } from '../lib/utils';
+import { uid, withTimeout } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { useAccounts } from './AccountContext';
@@ -118,7 +118,7 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
       let query = supabase.from(table).select('*').eq('user_id', userId);
       if (filter?.value) query = query.eq(filter.column, filter.value);
       if (orderColumn) query = query.order(orderColumn, { ascending });
-      const { data, error } = await query;
+      const { data, error } = await withTimeout(query, 15000);
       if (error) throw error;
 
       const fetched = (data || []).map(fromRow);
