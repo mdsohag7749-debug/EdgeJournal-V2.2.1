@@ -27,7 +27,7 @@ export default function PerformanceRadarChart({ radarScores }) {
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>6 Core Performance Pillars</span>
       </div>
 
-      <div style={{ width: '100%', height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '100%', flex: 1, minHeight: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <ResponsiveContainer>
           <RadarChart cx="50%" cy="50%" outerRadius="75%" data={data}>
             <PolarGrid stroke="var(--border)" />

@@ -464,6 +464,24 @@ button:focus-visible {
   gap: 18px;
 }
 
+.dash-insight-row {
+  display: grid;
+  grid-template-columns: 32% 68%;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.dash-insight-left {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dash-insight-left > .card {
+  flex: 1;
+  min-height: 0;
+}
+
 .dash-quick-actions {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -481,6 +499,15 @@ button:focus-visible {
   .dash-two-col-reverse,
   .dash-two-col-even {
     grid-template-columns: 1fr;
+  }
+  .dash-insight-row {
+    grid-template-columns: 1fr;
+  }
+  .dash-insight-left {
+    gap: 20px;
+  }
+  .dash-insight-left > .card {
+    flex: none;
   }
   .dash-quick-actions {
     grid-template-columns: repeat(4, 1fr);

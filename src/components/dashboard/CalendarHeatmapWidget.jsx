@@ -1,153 +1,122 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatMoney, formatMoneyShort, pnlClass } from '../../lib/utils';
+import { formatMoneyShort, pnlClass } from '../../lib/utils';
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+// Cell colors
+const NEUTRAL = {
+  background: 'var(--card-hover)',
+  border: '1px solid var(--border)',
+  color: 'var(--text-faint)',
+};
+const PROFIT = {
+  background: 'rgba(47, 214, 110, 0.12)',
+  border: '1px solid rgba(47, 214, 110, 0.38)',
+  color: 'var(--win)',
+};
+const LOSS = {
+  background: 'rgba(255, 77, 94, 0.12)',
+  border: '1px solid rgba(255, 77, 94, 0.38)',
+  color: 'var(--loss)',
+};
+
+function cellStyle(data) {
+  if (!data || data.count === 0) return NEUTRAL;
+  if (data.pnl > 0) return PROFIT;
+  if (data.pnl < 0) return LOSS;
+  return { ...NEUTRAL, color: 'var(--text)' };
+}
 
 export default function CalendarHeatmapWidget({ dayMap, onSelectDay }) {
-  // Month navigation cursor (defaults to current month)
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
-
-  const [tooltip, setTooltip] = useState(null); // { x, y, date, data }
+  const [tooltip, setTooltip] = useState(null);
 
   const monthLabel = cursor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const monthValue = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`;
 
-  // Generate 7-column calendar grid for the selected month
+  // Build the flat month grid (leading nulls = adjacent-month padding).
   const cells = useMemo(() => {
     const year = cursor.getFullYear();
     const month = cursor.getMonth();
-    const firstDayIndex = new Date(year, month, 1).getDay();
+    const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     const arr = [];
-    // Empty padding slots before 1st of month
-    for (let i = 0; i < firstDayIndex; i++) {
-      arr.push(null);
-    }
-    // Month days
+    for (let i = 0; i < firstDayIndex; i++) arr.push(null);
     for (let d = 1; d <= daysInMonth; d++) {
       const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const dayData = dayMap[iso] || { pnl: 0, count: 0, trades: [] };
-      arr.push({
-        day: d,
-        iso,
-        data: dayData,
-      });
+      arr.push({ day: d, iso, data: dayMap[iso] || { pnl: 0, count: 0, trades: [] } });
     }
     return arr;
   }, [cursor, dayMap]);
 
-  // Monthly sum calculation
-  const monthlyTotal = useMemo(() => {
-    return cells.reduce((sum, cell) => sum + (cell?.data?.pnl || 0), 0);
+  // Chunk into weeks (rows). Each row gets its own computed Week Total.
+  const weeks = useMemo(() => {
+    const out = [];
+    for (let i = 0; i < cells.length; i += 7) {
+      const week = cells.slice(i, i + 7);
+      const pnl = week.reduce((s, c) => s + (c?.data?.pnl || 0), 0);
+      const count = week.reduce((s, c) => s + (c?.data?.count || 0), 0);
+      out.push({ cells: week, weekNumber: out.length + 1, pnl, count });
+    }
+    return out;
   }, [cells]);
 
-  const monthlyTradesCount = useMemo(() => {
-    return cells.reduce((sum, cell) => sum + (cell?.data?.count || 0), 0);
-  }, [cells]);
+  const monthlyTradesCount = useMemo(() => cells.reduce((s, c) => s + (c?.data?.count || 0), 0), [cells]);
 
-  // GitHub-style Heatmap Shading
-  function getHeatmapStyle(data) {
-    if (!data || data.count === 0) {
-      return {
-        background: 'rgba(255, 255, 255, 0.02)',
-        border: '1px solid var(--border)',
-        color: 'var(--text-faint)',
-      };
-    }
-
-    const pnl = data.pnl;
-    if (pnl > 0) {
-      let intensity = '0.15';
-      let borderIntensity = '0.3';
-      if (pnl > 500) {
-        intensity = '0.45';
-        borderIntensity = '0.7';
-      } else if (pnl > 200) {
-        intensity = '0.3';
-        borderIntensity = '0.5';
-      }
-      return {
-        background: `rgba(47, 214, 110, ${intensity})`,
-        border: `1px solid rgba(47, 214, 110, ${borderIntensity})`,
-        color: 'var(--win)',
-      };
-    }
-
-    if (pnl < 0) {
-      let intensity = '0.15';
-      let borderIntensity = '0.3';
-      if (Math.abs(pnl) > 500) {
-        intensity = '0.45';
-        borderIntensity = '0.7';
-      } else if (Math.abs(pnl) > 200) {
-        intensity = '0.3';
-        borderIntensity = '0.5';
-      }
-      return {
-        background: `rgba(255, 77, 94, ${intensity})`,
-        border: `1px solid rgba(255, 77, 94, ${borderIntensity})`,
-        color: 'var(--loss)',
-      };
-    }
-
-    // Breakeven trade day
-    return {
-      background: 'rgba(255, 255, 255, 0.08)',
-      border: '1px solid var(--border-strong)',
-      color: 'var(--text)',
-    };
-  }
-
-  // Calculate day stats for hover tooltip
-  function calculateDayTooltipStats(trades) {
-    if (!trades || trades.length === 0) return { winRate: 0, avgRR: 0 };
+  const tooltipStats = (trades) => {
+    if (!trades || trades.length === 0) return { winRate: 0 };
     const wins = trades.filter((t) => t.result === 'Win').length;
     const losses = trades.filter((t) => t.result === 'Loss').length;
     const decided = wins + losses;
-    const winRate = decided ? Math.round((wins / decided) * 100) : 0;
-
-    const rrValues = trades.map((t) => Number(t.rr) || 0).filter((v) => v > 0);
-    const avgRR = rrValues.length ? (rrValues.reduce((s, r) => s + r, 0) / rrValues.length).toFixed(1) : 0;
-
-    return { winRate, avgRR };
-  }
+    return { winRate: decided ? Math.round((wins / decided) * 100) : 0 };
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.15 }}
-      className="card card-lift"
-      style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 18, position: 'relative' }}
+      className="card card-lift calendar-widget"
+      style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10, position: 'relative' }}
     >
-      {/* Calendar Header with Controls */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h3 style={{ fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <CalendarIcon size={18} color="#ec4899" /> Trading Calendar Heatmap
-          </h3>
-          <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 2 }}>
-            {monthLabel} · Monthly Net P&L:{' '}
-            <span className={`mono ${pnlClass(monthlyTotal)}`} style={{ fontWeight: 700 }}>
-              {formatMoney(monthlyTotal)}
-            </span>{' '}
-            ({monthlyTradesCount} trades)
-          </p>
+      {/* Header: title + month selector + nav */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <CalendarIcon size={16} color="#ec4899" />
+          <h3 style={{ fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' }}>Trading Calendar</h3>
         </div>
 
-        {/* Month Navigation Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <button
             className="btn btn-ghost btn-icon btn-sm"
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
             aria-label="Previous Month"
+            style={{ padding: '4px 6px' }}
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={15} />
+          </button>
+          <input
+            type="month"
+            value={monthValue}
+            onChange={(e) => {
+              const [y, m] = (e.target.value || '').split('-').map(Number);
+              if (y && m) setCursor(new Date(y, m - 1, 1));
+            }}
+            style={{ colorScheme: 'dark', color: 'var(--text)', background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 6px', fontSize: 11, fontWeight: 700, width: 108 }}
+          />
+          <button
+            className="btn btn-ghost btn-icon btn-sm"
+            onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
+            aria-label="Next Month"
+            style={{ padding: '4px 6px' }}
+          >
+            <ChevronRight size={15} />
           </button>
           <button
             className="btn btn-ghost btn-sm"
@@ -155,111 +124,130 @@ export default function CalendarHeatmapWidget({ dayMap, onSelectDay }) {
               const now = new Date();
               setCursor(new Date(now.getFullYear(), now.getMonth(), 1));
             }}
-            style={{ fontSize: 12 }}
+            style={{ fontSize: 10.5, padding: '4px 8px' }}
           >
             Today
-          </button>
-          <button
-            className="btn btn-ghost btn-icon btn-sm"
-            onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-            aria-label="Next Month"
-          >
-            <ChevronRight size={16} />
           </button>
         </div>
       </div>
 
-      {/* 7-Column Weekday Headers (Sun - Sat) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
+      {/* Weekday header + Week Total column header */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr) 1.15fr', gap: 4 }}>
         {WEEKDAYS.map((w) => (
           <div
             key={w}
-            style={{
-              textAlign: 'center',
-              fontSize: 11.5,
-              fontWeight: 700,
-              color: 'var(--text-faint)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              paddingBottom: 4,
-            }}
+            style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1, paddingBottom: 2 }}
           >
             {w}
           </div>
         ))}
+        <div style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em', lineHeight: 1, paddingBottom: 2, whiteSpace: 'nowrap' }}>
+          Week Total
+        </div>
       </div>
 
-      {/* 7-Column Monthly Calendar Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
-        {cells.map((cell, idx) => {
-          if (!cell) {
-            return (
-              <div
-                key={`empty-${idx}`}
-                style={{
-                  aspectRatio: '1 / 1',
-                  background: 'rgba(255, 255, 255, 0.01)',
-                  borderRadius: 8,
-                  border: '1px solid var(--border)',
-                }}
-              />
-            );
-          }
+      {/* Compact weeks grid with per-week total column */}
+      {weeks.map((week) => {
+        const weekStyle = cellStyle({ count: week.count, pnl: week.pnl });
+        return (
+          <div key={week.weekNumber} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr) 1.15fr', gap: 4, alignItems: 'stretch' }}>
+            {week.cells.map((cell, idx) => {
+              if (!cell) {
+                return (
+                  <div
+                    key={`empty-${idx}`}
+                    style={{ ...NEUTRAL, borderRadius: 10, aspectRatio: '1 / 1', opacity: 0.45 }}
+                  />
+                );
+              }
+              const hasTrades = cell.data.count > 0;
+              const style = cellStyle(cell.data);
+              return (
+                <button
+                  key={cell.iso}
+                  type="button"
+                  onClick={() => hasTrades && onSelectDay(cell.iso, cell.data.trades)}
+                  onMouseEnter={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTooltip({ x: rect.left + rect.width / 2, y: rect.top - 8, date: cell.iso, data: cell.data });
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
+                  style={{
+                    ...style,
+                    borderRadius: 10,
+                    aspectRatio: '1 / 1',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 2,
+                    padding: 2,
+                    cursor: hasTrades ? 'pointer' : 'default',
+                    transition: 'all 0.15s ease',
+                    backgroundImage: hasTrades ? 'none' : undefined,
+                  }}
+                  className={hasTrades ? 'card-lift' : ''}
+                >
+                  <span style={{ fontSize: 11, fontWeight: 700, lineHeight: 1, color: hasTrades ? style.color : 'var(--text-faint)' }}>
+                    {cell.day}
+                  </span>
+                  {hasTrades ? (
+                    <>
+                      <span className="mono" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.1, color: style.color }}>
+                        {formatMoneyShort(cell.data.pnl)}
+                      </span>
+                      <span style={{ fontSize: 9, lineHeight: 1, color: hasTrades ? style.color : 'var(--text-faint)', opacity: 0.85 }}>
+                        {cell.data.count} {cell.data.count === 1 ? 'trade' : 'trades'}
+                      </span>
+                    </>
+                  ) : (
+                    <span style={{ fontSize: 10, lineHeight: 1, color: 'var(--text-faint)', opacity: 0.5 }}>—</span>
+                  )}
+                </button>
+              );
+            })}
 
-          const hasTrades = cell.data && cell.data.count > 0;
-          const style = getHeatmapStyle(cell.data);
-
-          return (
-            <button
-              key={cell.iso}
-              type="button"
-              onClick={() => hasTrades && onSelectDay(cell.iso, cell.data.trades)}
-              onMouseEnter={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setTooltip({
-                  x: rect.left + rect.width / 2,
-                  y: rect.top - 8,
-                  date: cell.iso,
-                  data: cell.data,
-                });
-              }}
-              onMouseLeave={() => setTooltip(null)}
+            {/* Week Total cell */}
+            <div
               style={{
-                ...style,
-                aspectRatio: '1 / 1',
-                borderRadius: 8,
-                padding: '8px 6px',
+                ...weekStyle,
+                borderRadius: 10,
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'space-between',
-                cursor: hasTrades ? 'pointer' : 'default',
-                transition: 'all 0.15s ease',
-                position: 'relative',
-                width: '100%',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 2,
+                background: weekStyle.background,
+                border: weekStyle.border,
               }}
-              className={hasTrades ? 'card-lift' : ''}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: 11, fontWeight: 700 }}>
-                <span style={{ color: hasTrades ? style.color : 'var(--text-faint)' }}>{cell.day}</span>
-                {hasTrades && (
-                  <span style={{ fontSize: 9.5, opacity: 0.8 }} className="tag tag-neutral">
-                    {cell.data.count}t
-                  </span>
-                )}
-              </div>
+              <span style={{ fontSize: 9, fontWeight: 700, lineHeight: 1, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--text-faint)' }}>
+                Week {week.weekNumber}
+              </span>
+              <span className="mono" style={{ fontSize: 11, fontWeight: 800, lineHeight: 1.1, color: weekStyle.color }}>
+                {formatMoneyShort(week.pnl)}
+              </span>
+              <span style={{ fontSize: 9, lineHeight: 1, color: 'var(--text-faint)', opacity: 0.85, whiteSpace: 'nowrap' }}>
+                {week.count} {week.count === 1 ? 'trade' : 'trades'}
+              </span>
+            </div>
+          </div>
+        );
+      })}
 
-              {hasTrades ? (
-                <div style={{ textAlign: 'center', width: '100%' }}>
-                  <span className="mono" style={{ fontSize: 12, fontWeight: 700 }}>
-                    {formatMoneyShort(cell.data.pnl)}
-                  </span>
-                </div>
-              ) : (
-                <div style={{ fontSize: 11, color: 'var(--text-faint)', textAlign: 'center' }}>—</div>
-              )}
-            </button>
-          );
-        })}
+      {/* Legend + total trades */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginTop: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 10.5, color: 'var(--text-muted)' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ width: 9, height: 9, borderRadius: 3, background: 'rgba(47, 214, 110, 0.85)' }} /> Profit
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ width: 9, height: 9, borderRadius: 3, background: 'rgba(255, 77, 94, 0.85)' }} /> Loss
+          </span>
+        </div>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+          Total Trades: <span className="mono" style={{ fontWeight: 700, color: 'var(--text)' }}>{monthlyTradesCount}</span>
+        </span>
       </div>
 
       {/* Floating Hover Tooltip */}
@@ -278,7 +266,7 @@ export default function CalendarHeatmapWidget({ dayMap, onSelectDay }) {
             zIndex: 9999,
             boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
             fontSize: 12,
-            minWidth: 160,
+            minWidth: 150,
           }}
         >
           <div style={{ fontWeight: 700, marginBottom: 4, color: 'var(--text)' }}>{tooltip.date}</div>
@@ -286,27 +274,19 @@ export default function CalendarHeatmapWidget({ dayMap, onSelectDay }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Net P&L:</span>
-                <span className={`mono ${pnlClass(tooltip.data.pnl)}`} style={{ fontWeight: 700 }}>
-                  {formatMoney(tooltip.data.pnl)}
-                </span>
+                <span className={`mono ${pnlClass(tooltip.data.pnl)}`} style={{ fontWeight: 700 }}>{formatMoneyShort(tooltip.data.pnl)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Trades:</span>
                 <span style={{ fontWeight: 600 }}>{tooltip.data.count}</span>
               </div>
               {(() => {
-                const stats = calculateDayTooltipStats(tooltip.data.trades);
+                const st = tooltipStats(tooltip.data.trades);
                 return (
-                  <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Win Rate:</span>
-                      <span style={{ fontWeight: 600 }}>{stats.winRate}%</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Avg R:R:</span>
-                      <span style={{ fontWeight: 600 }}>{stats.avgRR}R</span>
-                    </div>
-                  </>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Win Rate:</span>
+                    <span style={{ fontWeight: 600 }}>{st.winRate}%</span>
+                  </div>
                 );
               })()}
             </div>
@@ -314,23 +294,7 @@ export default function CalendarHeatmapWidget({ dayMap, onSelectDay }) {
             <div style={{ color: 'var(--text-faint)' }}>No trades executed</div>
           )}
         </div>
-      )}
-
-      {/* Heatmap Color Legend */}
-      <div className="heatmap-legend" style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: 'var(--text-muted)', paddingTop: 4 }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 12, borderRadius: 3, background: 'rgba(47, 214, 110, 0.45)', border: '1px solid rgba(47, 214, 110, 0.7)' }} /> High Profit
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 12, borderRadius: 3, background: 'rgba(47, 214, 110, 0.15)', border: '1px solid rgba(47, 214, 110, 0.3)' }} /> Profit
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 12, borderRadius: 3, background: 'rgba(255, 77, 94, 0.15)', border: '1px solid rgba(255, 77, 94, 0.3)' }} /> Loss
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 12, borderRadius: 3, background: 'rgba(255, 77, 94, 0.45)', border: '1px solid rgba(255, 77, 94, 0.7)' }} /> High Loss
-        </span>
-      </div>
+        )}
     </motion.div>
   );
 }

@@ -12,6 +12,7 @@ import KpiCardsGrid from '../components/dashboard/KpiCardsGrid';
 import EquityAndPnLCharts from '../components/dashboard/EquityAndPnLCharts';
 import CalendarHeatmapWidget from '../components/dashboard/CalendarHeatmapWidget';
 import PerformanceRadarChart from '../components/dashboard/PerformanceRadarChart';
+import DisciplineScoreWidget from '../components/dashboard/DisciplineScoreWidget';
 import BreakdownGrids from '../components/dashboard/BreakdownGrids';
 import RecentTradesTable from '../components/dashboard/RecentTradesTable';
 import TradingInsightsWidget from '../components/dashboard/TradingInsightsWidget';
@@ -290,25 +291,33 @@ export default function Dashboard({ onNavigate }) {
         </motion.div>
       )}
 
-      {/* Row 2: Equity Curve, Daily PnL & Distribution */}
+      {/* Row 2: Radar, Discipline Score & Compact Trading Calendar */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="dash-insight-row"
+      >
+        <div className="dash-insight-left">
+          <PerformanceRadarChart radarScores={stats.radarScores} />
+          <DisciplineScoreWidget radarScores={stats.radarScores} />
+        </div>
+        <CalendarHeatmapWidget
+          dayMap={stats.dayMap}
+          onSelectDay={(date, dateTrades) => setDayModal({ open: true, date, trades: dateTrades })}
+        />
+      </motion.div>
+
+      {/* Row 3: Equity Curve, Daily PnL & Distribution */}
       <EquityAndPnLCharts stats={stats} />
 
-      {/* Row 3: Trading Calendar Heatmap */}
-      <CalendarHeatmapWidget
-        dayMap={stats.dayMap}
-        onSelectDay={(date, dateTrades) => setDayModal({ open: true, date, trades: dateTrades })}
-      />
-
-      {/* Row 4: Performance Radar Chart */}
-      <PerformanceRadarChart radarScores={stats.radarScores} />
-
-      {/* Row 5: Edge Performance Breakdowns */}
+      {/* Row 4: Edge Performance Breakdowns */}
       <BreakdownGrids stats={stats} />
 
-      {/* Row 6: Recent Trades Execution Log Table */}
+      {/* Row 5: Recent Trades Execution Log Table */}
       <RecentTradesTable trades={filteredTrades} onNavigate={onNavigate} onSelectTrade={handleSelectTrade} />
 
-      {/* Row 7: Algorithmic Edge Insights */}
+      {/* Row 6: Algorithmic Edge Insights */}
       <TradingInsightsWidget insights={stats.insights} />
 
       {/* Modals & Slide-over Panels */}
