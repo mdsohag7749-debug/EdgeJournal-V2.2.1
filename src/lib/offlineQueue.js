@@ -190,23 +190,27 @@ export function useQueueCount(userId) {
 // Read cache (for offline browsing of previously loaded data)
 // ---------------------------------------------------------------------
 
-function cacheKey(table, userId) {
-  return `njh_cache_${table}_${userId || 'anon'}`;
+function cacheKey(table, userId, scope) {
+  return `njh_cache_${table}_${userId || 'anon'}${scope ? `_${scope}` : ''}`;
 }
 
-export function saveCache(table, userId, items) {
+// `scope` isolates the cache per data view (e.g. the currently selected
+// account), so switching views while offline never serves another view's
+// rows. Omit it to keep the shared per-user cache used by non-scoped
+// modules (accounts, balance ledger).
+export function saveCache(table, userId, items, scope) {
   if (!userId) return;
   try {
-    localStorage.setItem(cacheKey(table, userId), JSON.stringify(items));
+    localStorage.setItem(cacheKey(table, userId, scope), JSON.stringify(items));
   } catch (e) {
     console.error(`Failed to cache ${table} for offline use`, e);
   }
 }
 
-export function loadCache(table, userId) {
+export function loadCache(table, userId, scope) {
   if (!userId) return [];
   try {
-    const raw = localStorage.getItem(cacheKey(table, userId));
+    const raw = localStorage.getItem(cacheKey(table, userId, scope));
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
     console.error(`Failed to read cached ${table}`, e);

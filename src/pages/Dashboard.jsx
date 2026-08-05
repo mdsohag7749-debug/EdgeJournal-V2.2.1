@@ -51,22 +51,22 @@ export default function Dashboard({ onNavigate }) {
     ? accounts.find((a) => a.id === selectedAccountId)
     : accounts.find((a) => a.isDefault) || accounts[0] || null;
 
-  const accountTrades = useMemo(() => {
-    if (!selectedAccount) return trades.items;
-    return trades.items.filter((t) => t.accountId === selectedAccount.id);
-  }, [trades.items, selectedAccount]);
-
   const activeChallenges = useMemo(() => {
     return challenges.items.filter((c) => c.status === 'active' || c.status === 'paused');
   }, [challenges.items]);
 
   const challengeStats = useMemo(() => {
+    // `challenges.items` is already scoped to the selected account, so the
+    // shared engine here just needs each challenge's linked-account trades.
+    // Filtering from the full `trades` list (not a pre-narrowed array) keeps
+    // "All Accounts" correct: a challenge linked to a non-default account
+    // must still see that account's trades.
     return activeChallenges.map((c) => {
       const acc = c.accountId ? accounts.find((a) => a.id === c.accountId) : selectedAccount;
-      const cTrades = c.accountId ? accountTrades.filter((t) => t.accountId === c.accountId) : accountTrades;
+      const cTrades = c.accountId ? trades.items.filter((t) => t.accountId === c.accountId) : trades.items;
       return { ...c, ...computeChallengeMetrics(c, cTrades, acc) };
     });
-  }, [activeChallenges, accounts, accountTrades, selectedAccount]);
+  }, [activeChallenges, accounts, trades.items, selectedAccount]);
 
   function handleSaveTrade(form) {
     if (editingTrade) trades.update(editingTrade.id, form);

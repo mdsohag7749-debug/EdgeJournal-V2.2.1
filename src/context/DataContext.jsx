@@ -89,11 +89,13 @@ function useCollection(key, defaultValue = []) {
 // queue once connectivity returns; the effect in DataProvider below
 // calls it for all five collections.
 //
-// Optional `filter` ({ column, value }) restricts every read to matching
-// rows (e.g. trades scoped to the selected account) and optional
-// `rowContext` is merged into every toRow() call so writes carry the same
-// scope (e.g. account_id). Other collections pass neither and behave
-// exactly as before.
+// Optional `filter` restricts every read to matching rows (e.g. trades
+// scoped to the selected account). Shape: `{ eq: { column, value } }`,
+// `{ or: [clauses] }`, plus `scope` (cache-isolation key) and
+// `clientFilter` (applied to offline-queued rows so pending writes can't
+// leak across views). Optional `rowContext` is merged into every toRow()
+// call so writes carry the same scope (e.g. account_id). Other collections
+// pass neither and behave exactly as before.
 function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, ascending = false, label, filter, rowContext, onChange }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -108,6 +110,37 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
 
   const rowOpts = useCallback((partial) => ({ ...rowContext, partial }), [rowContext]);
 
+  // A filter can be:
+  //   null / undefined        -> no scoping (All Accounts / no selection)
+  //   { eq: { column, value } } -> `column = value`
+  //   { or: [clauses] }         -> PostgREST .or() string clauses
+  //   { scope, clientFilter }   -> cache-isolation key + client-side check
+  //                                (applied to offline-queued rows that have
+  //                                not reached the DB yet, so pending writes
+  //                                can never leak across account views)
+  const cacheScope = filter?.scope || '';
+  const applyClientFilter = useCallback(
+    (list) => (filter?.clientFilter ? list.filter(filter.clientFilter) : list),
+    [filter]
+  );
+
+  // The instant the view scope changes (e.g. switching accounts), drop the
+  // previous scope's rows so stale cross-account data is never rendered
+  // while the scoped refetch is in flight. If the new scope already has its
+  // own offline cache, seed it immediately so switches feel instant (and
+  // correct offline) — the network refetch reconciles right after.
+  const scopeRef = useRef(cacheScope);
+  useEffect(() => {
+    if (scopeRef.current !== cacheScope) {
+      scopeRef.current = cacheScope;
+      if (userId) {
+        setItems(applyClientFilter(mergeQueueIntoItems(table, userId, loadCache(table, userId, cacheScope))));
+      } else {
+        setItems([]);
+      }
+    }
+  }, [cacheScope, table, userId, applyClientFilter]);
+
   const refetch = useCallback(async () => {
     if (!userId) {
       setItems([]);
@@ -117,23 +150,25 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
     setLoading(true);
     try {
       let query = supabase.from(table).select('*').eq('user_id', userId);
-      if (filter?.value) query = query.eq(filter.column, filter.value);
+      if (filter?.eq?.value) query = query.eq(filter.eq.column, filter.eq.value);
+      if (filter?.or?.length) query = query.or(filter.or.join(','));
       if (orderColumn) query = query.order(orderColumn, { ascending });
       const { data, error } = await withTimeout(query, 15000);
       if (error) throw error;
 
       const fetched = (data || []).map(fromRow);
-      saveCache(table, userId, fetched);
-      setItems(mergeQueueIntoItems(table, userId, fetched));
+      saveCache(table, userId, fetched, cacheScope);
+      setItems(applyClientFilter(mergeQueueIntoItems(table, userId, fetched)));
     } catch (err) {
       // Offline (or Supabase unreachable): fall back to the last
-      // successful fetch instead of wiping the screen, so the
-      // dashboard/analytics/etc. stay browsable offline.
+      // successful fetch for THIS view scope instead of wiping the screen,
+      // so the dashboard/analytics/etc. stay browsable offline without
+      // ever showing another account's rows.
       console.error(`Failed to load ${table} from Supabase, using cached data:`, err.message || err);
-      setItems(mergeQueueIntoItems(table, userId, loadCache(table, userId)));
+      setItems(applyClientFilter(mergeQueueIntoItems(table, userId, loadCache(table, userId, cacheScope))));
     }
     setLoading(false);
-  }, [table, userId, orderColumn, ascending, fromRow, filter]);
+  }, [table, userId, orderColumn, ascending, fromRow, filter, cacheScope, applyClientFilter]);
 
   useEffect(() => {
     refetch();
@@ -270,9 +305,9 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
         throw error;
       }
       const saved = (data || []).map(fromRow);
-      setItems((prev) => [...saved, ...prev]);
+      setItems((prev) => [...applyClientFilter(saved), ...prev]);
     },
-    [table, userId, toRow, fromRow, rowOpts]
+    [table, userId, toRow, fromRow, rowOpts, applyClientFilter]
   );
 
   // Drains this collection's slice of the offline write queue,
@@ -330,8 +365,19 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
 // filter is skipped so ALL of the user's trades are returned and
 // aggregated together — while writes still target the preferred account.
 function useTradesCollection(userId, selectedAccountId, preferredAccountId, onChange) {
+  // Reads are scoped to the concrete selected account via `account_id`.
+  // When viewing "All Accounts" (or no account is selected yet) the read
+  // filter is skipped so ALL of the user's trades are returned together —
+  // while writes still target the preferred account.
   const filter = useMemo(
-    () => (selectedAccountId ? { column: 'account_id', value: selectedAccountId } : null),
+    () =>
+      selectedAccountId
+        ? {
+            eq: { column: 'account_id', value: selectedAccountId },
+            scope: `account:${selectedAccountId}`,
+            clientFilter: (it) => it.accountId === selectedAccountId,
+          }
+        : null,
     [selectedAccountId]
   );
   const rowContext = useMemo(() => ({ accountId: preferredAccountId }), [preferredAccountId]);
@@ -388,13 +434,35 @@ function useStudyCollection(userId) {
   });
 }
 
-function useChallengesCollection(userId) {
+function useChallengesCollection(userId, selectedAccountId) {
+  // Challenges are isolated per selected account, exactly like trades:
+  // reads only return challenges linked to the selected account, plus any
+  // that have no account linked at all ("general" challenges users rely on
+  // staying visible in every single-account view — this preserves the
+  // existing single-account experience). "All Accounts" returns everything.
+  // Writes are stamped with the viewed account so a challenge created while
+  // viewing a specific account is scoped to it (and hidden from other ones).
+  const filter = useMemo(
+    () =>
+      selectedAccountId
+        ? {
+            or: [`account_id.eq.${selectedAccountId}`, 'account_id.is.null'],
+            scope: `account:${selectedAccountId}`,
+            clientFilter: (it) => !it.accountId || it.accountId === selectedAccountId,
+          }
+        : null,
+    [selectedAccountId]
+  );
+  const rowContext = useMemo(() => ({ accountId: selectedAccountId }), [selectedAccountId]);
+
   return useSupabaseCollection('challenges', userId, {
     toRow: toChallengeRow,
     fromRow: fromChallengeRow,
     orderColumn: 'created_at',
     ascending: false,
     label: 'Challenge',
+    filter,
+    rowContext,
   });
 }
 
@@ -415,7 +483,7 @@ export function DataProvider({ children}) {
   const plans = usePlansCollection(userId);
   const reflections = useReflectionsCollection(userId);
   const study = useStudyCollection(userId);
-  const challenges = useChallengesCollection(userId);
+  const challenges = useChallengesCollection(userId, selectedAccountId);
 
   // Offline queue sync: the moment the browser reports connectivity
   // (on mount if already online, and on every subsequent 'online'

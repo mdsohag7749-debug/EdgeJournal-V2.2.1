@@ -60,8 +60,11 @@ export function useAccountsManager(userId) {
   // Account Balance Engine derives every account's equity stats from.
   const [ledger, setLedger] = useState([]);
   const ledgerRef = useRef([]);
-  // Raw selection: a uuid, ALL_ACCOUNTS, or null.
-  const [rawSelection, setRawSelection] = useState(null);
+  // Raw selection: a uuid, ALL_ACCOUNTS, or null. Initialised synchronously
+  // from the persisted per-user selection so the first DataContext render is
+  // already scoped to the remembered account (no brief "all accounts" flash
+  // before the stored selection is re-hydrated in an effect).
+  const [rawSelection, setRawSelection] = useState(() => (userId ? loadJSON(selectedKey(userId), null) : null));
 
   // Mirrors the current selection so refetch/actions can read it without
   // becoming dependents of it (which would otherwise re-trigger refetch).

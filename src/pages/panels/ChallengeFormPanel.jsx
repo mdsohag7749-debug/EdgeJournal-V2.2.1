@@ -23,7 +23,7 @@ const EMPTY = {
 };
 
 export default function ChallengeFormPanel({ open, onClose, onSave, initial }) {
-  const { accounts } = useAccounts();
+  const { accounts, preferredAccountId } = useAccounts();
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState({});
 
@@ -41,9 +41,11 @@ export default function ChallengeFormPanel({ open, onClose, onSave, initial }) {
         minTradingDays: initial.minTradingDays ?? '',
       });
     } else {
-      setForm(EMPTY);
+      // New challenges default to the account currently being viewed so
+      // they land in the same account's data (kept editable in the form).
+      setForm({ ...EMPTY, accountId: preferredAccountId || '' });
     }
-  }, [open, initial]);
+  }, [open, initial, preferredAccountId]);
 
   function set(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
