@@ -1,18 +1,72 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Target } from 'lucide-react';
+
+// Mood bands — derived purely from the selected account's real score.
+// Never any demo/placeholder values.
+const MOODS = [
+  {
+    min: 0,
+    max: 19,
+    emoji: '😢',
+    label: 'No Data Yet',
+    color: '#9a9aa3',
+    bg: 'rgba(154,154,163,0.10)',
+    message: 'Start logging your trades. Every professional trader begins with the first journal.',
+  },
+  {
+    min: 20,
+    max: 39,
+    emoji: '😟',
+    label: 'Needs Focus',
+    color: '#ff4d5e',
+    bg: 'rgba(255,77,94,0.08)',
+    message: 'Your discipline is weak. Focus on following your trading rules.',
+  },
+  {
+    min: 40,
+    max: 59,
+    emoji: '😐',
+    label: 'Improving',
+    color: '#f59e0b',
+    bg: 'rgba(245,158,11,0.08)',
+    message: "You're making progress. Stay consistent and avoid emotional trades.",
+  },
+  {
+    min: 60,
+    max: 79,
+    emoji: '🙂',
+    label: 'Good',
+    color: '#3b82f6',
+    bg: 'rgba(59,130,246,0.08)',
+    gradient: ['#fbbf24', '#3b82f6'],
+    message: "Good discipline. Keep following your plan and trust your edge.",
+  },
+  {
+    min: 80,
+    max: 89,
+    emoji: '😎',
+    label: 'Excellent',
+    color: '#2fd66e',
+    bg: 'rgba(47,214,110,0.08)',
+    message: "Excellent discipline. You're trading like a professional.",
+  },
+  {
+    min: 90,
+    max: 100,
+    emoji: '🏆🔥',
+    label: 'Elite Trader',
+    color: '#10b981',
+    bg: 'rgba(16,185,129,0.08)',
+    gradient: ['#34d399', '#fbbf24'],
+    message: "Outstanding discipline. You're operating with institutional consistency.",
+  },
+];
 
 export default function DisciplineScoreWidget({ radarScores }) {
   const entry = (radarScores || []).find((r) => r.subject === 'Discipline');
   const score = entry ? entry.score : 0;
 
-  const label =
-    score >= 85 ? 'Elite Discipline'
-    : score >= 70 ? 'Strong'
-    : score >= 50 ? 'Developing'
-    : 'Needs Focus';
-
-  const color = score >= 85 ? 'var(--win)' : score >= 70 ? '#10b981' : score >= 50 ? '#f59e0b' : 'var(--loss)';
-  const bg = score >= 85 ? 'rgba(47,214,110,0.08)' : score >= 70 ? 'rgba(16,185,129,0.08)' : score >= 50 ? 'rgba(245,158,11,0.08)' : 'rgba(255,77,94,0.08)';
+  const mood = MOODS.find((m) => score >= m.min && score <= m.max) || MOODS[0];
 
   const r = 30;
   const circ = 2 * Math.PI * r;
@@ -38,33 +92,66 @@ export default function DisciplineScoreWidget({ radarScores }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.2 }}
       className="card card-lift"
-      style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}
+      style={{
+        padding: 20,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 14,
+        border: '1px solid var(--border)',
+        borderTop: `2px solid ${mood.color}`,
+      }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
           <Target size={18} color="#f59e0b" /> Discipline Score
         </h3>
-        <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 999, background: bg, color }}>
-          {label}
-        </span>
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={mood.label}
+            initial={{ scale: 0.6, opacity: 0, y: -6 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.6, opacity: 0, y: 6 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              padding: '4px 10px',
+              borderRadius: 999,
+              background: mood.bg,
+              color: mood.color,
+              border: `1px solid ${mood.color}22`,
+            }}
+          >
+            {mood.emoji} {mood.label}
+          </motion.span>
+        </AnimatePresence>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-        <div style={{ position: 'relative', width: 110, height: 110 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 22 }}>
+        <div style={{ position: 'relative', width: 110, height: 110, flexShrink: 0 }}>
           <svg width="110" height="110" viewBox="0 0 80 80">
+            <defs>
+              <linearGradient id="moodRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={mood.gradient?.[0] || mood.color} />
+                <stop offset="100%" stopColor={mood.gradient?.[1] || mood.color} />
+              </linearGradient>
+            </defs>
             <circle cx="40" cy="40" r={r} fill="none" stroke="var(--border)" strokeWidth="7" />
             <circle
               cx="40"
               cy="40"
               r={r}
               fill="none"
-              stroke={color}
+              stroke={mood.gradient ? 'url(#moodRingGrad)' : mood.color}
               strokeWidth="7"
               strokeLinecap="round"
               strokeDasharray={circ}
               strokeDashoffset={offset}
               transform="rotate(-90 40 40)"
-              style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+              style={{
+                transition: 'stroke-dashoffset 0.8s ease, stroke 0.5s ease',
+                filter: `drop-shadow(0 0 4px ${mood.color}66)`,
+              }}
             />
           </svg>
           <div
@@ -77,14 +164,70 @@ export default function DisciplineScoreWidget({ radarScores }) {
               justifyContent: 'center',
             }}
           >
-            <span className="mono" style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>
-              {score}
-            </span>
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={score}
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.5, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+                className="mono"
+                style={{ fontSize: 26, fontWeight: 800, lineHeight: 1, color: mood.color }}
+              >
+                {score}
+              </motion.span>
+            </AnimatePresence>
             <span style={{ fontSize: 10, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               / 100
             </span>
           </div>
         </div>
+
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={mood.label}
+            initial={{ scale: 0.4, rotate: -25, opacity: 0 }}
+            animate={{ scale: 1, rotate: 0, opacity: 1 }}
+            exit={{ scale: 0.4, rotate: 25, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 16 }}
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 32,
+              background: mood.bg,
+              border: `1px solid ${mood.color}33`,
+              boxShadow: `0 0 18px ${mood.color}40`,
+              flexShrink: 0,
+            }}
+          >
+            {mood.emoji}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <div style={{ minHeight: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.p
+            key={mood.message}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3 }}
+            style={{
+              fontSize: 12.5,
+              color: 'var(--text-muted)',
+              textAlign: 'center',
+              margin: 0,
+              lineHeight: 1.5,
+            }}
+          >
+            {mood.message}
+          </motion.p>
+        </AnimatePresence>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -105,10 +248,6 @@ export default function DisciplineScoreWidget({ radarScores }) {
           </div>
         ))}
       </div>
-
-      <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', marginTop: 2 }}>
-        Derived from plan adherence &amp; risk-checklist execution.
-      </p>
     </motion.div>
   );
 }

@@ -165,10 +165,11 @@ export function computeDashboardStats(trades) {
   // Radar Scores (0-100) — Institutional Performance Radar. Every score
   // is derived from real trading data (never placeholders): plan
   // adherence + risk-checklist adherence feed Discipline and Risk
-  // Management; win rate / R:R feed Execution; self-assessed ratings +
+  // Management; win rate + R:R feed Execution; self-assessed ratings +
   // win-rate feed Psychology; daily win % feeds Consistency; profit
-  // factor + win rate feed Profitability. Each is clamped to 20–100.
-  const clampScore = (v) => Math.round(Math.min(100, Math.max(20, v)));
+  // factor + win rate feed Profitability. Each is clamped to 0–100 so an
+  // account with no data reports a true 0, never a fake default floor.
+  const clampScore = (v) => Math.round(Math.min(100, Math.max(0, v)));
 
   // Real data-drove pieces (no defaults):
   const totalRated = sorted.filter((t) => Number(t.rating) > 0).length;
