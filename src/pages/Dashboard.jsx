@@ -3,7 +3,10 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
+import { useAccounts } from '../context/AccountContext';
 import { computeDashboardStats } from '../lib/calculations';
+import { computeChallengeMetrics } from '../lib/challengeStats';
+import { formatMoney } from '../lib/utils';
 import AccountSwitcher from '../components/accounts/AccountSwitcher';
 import KpiCardsGrid from '../components/dashboard/KpiCardsGrid';
 import EquityAndPnLCharts from '../components/dashboard/EquityAndPnLCharts';
@@ -14,11 +17,12 @@ import RecentTradesTable from '../components/dashboard/RecentTradesTable';
 import TradingInsightsWidget from '../components/dashboard/TradingInsightsWidget';
 import DayTradesModal from '../components/dashboard/DayTradesModal';
 import TradeFormPanel from './panels/TradeFormPanel';
-import { Plus, Download, Calendar, Filter, Sparkles, User, Bell } from 'lucide-react';
+import { Plus, Download, Calendar, Filter, Sparkles, User, Bell, Trophy, TrendingUp, ArrowUpRight, ArrowDownRight, AlertTriangle, XCircle, CheckCircle } from 'lucide-react';
 
 export default function Dashboard({ onNavigate }) {
-  const { trades } = useData();
+  const { trades, challenges } = useData();
   const { user } = useAuth();
+  const { accounts, selectedAccountId } = useAccounts();
   const navigate = useNavigate();
   const [dateRange, setDateRange] = useState('ALL'); // 'ALL' | '30D' | 'MONTH' | 'WEEK'
   const [tradePanelOpen, setTradePanelOpen] = useState(false);
@@ -42,6 +46,27 @@ export default function Dashboard({ onNavigate }) {
   }, [trades.items, dateRange]);
 
   const stats = useMemo(() => computeDashboardStats(filteredTrades), [filteredTrades]);
+
+  const selectedAccount = selectedAccountId
+    ? accounts.find((a) => a.id === selectedAccountId)
+    : accounts.find((a) => a.isDefault) || accounts[0] || null;
+
+  const accountTrades = useMemo(() => {
+    if (!selectedAccount) return trades.items;
+    return trades.items.filter((t) => t.accountId === selectedAccount.id);
+  }, [trades.items, selectedAccount]);
+
+  const activeChallenges = useMemo(() => {
+    return challenges.items.filter((c) => c.status === 'active' || c.status === 'paused');
+  }, [challenges.items]);
+
+  const challengeStats = useMemo(() => {
+    return activeChallenges.map((c) => {
+      const acc = c.accountId ? accounts.find((a) => a.id === c.accountId) : selectedAccount;
+      const cTrades = c.accountId ? accountTrades.filter((t) => t.accountId === c.accountId) : accountTrades;
+      return { ...c, ...computeChallengeMetrics(c, cTrades, acc) };
+    });
+  }, [activeChallenges, accounts, accountTrades, selectedAccount]);
 
   function handleSaveTrade(form) {
     if (editingTrade) trades.update(editingTrade.id, form);
@@ -147,6 +172,123 @@ export default function Dashboard({ onNavigate }) {
 
       {/* Row 1: KPI Cards Grid */}
       <KpiCardsGrid stats={stats} />
+
+      {/* Row 1.5: Active Challenge Widget */}
+      {challengeStats.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="card"
+          style={{ padding: 20, border: '1px solid var(--border)' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Trophy size={16} color="var(--red)" /> Active Challenges
+            </h3>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => navigate('/challenges')}
+              style={{ fontSize: 12 }}
+            >
+              View All
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+            {challengeStats.map((c) => {
+              const statusStyle =
+                c.status === 'completed'
+                  ? { bg: 'rgba(47,214,110,0.12)', color: 'var(--win)' }
+                  : c.status === 'failed'
+                  ? { bg: 'rgba(255,77,94,0.12)', color: 'var(--loss)' }
+                  : c.status === 'pass'
+                  ? { bg: 'rgba(47,214,110,0.12)', color: 'var(--win)' }
+                  : c.status === 'warning'
+                  ? { bg: 'rgba(245,158,11,0.12)', color: '#f59e0b' }
+                  : { bg: 'var(--red-dim)', color: 'var(--red)' };
+              return (
+                <div
+                  key={c.id}
+                  style={{
+                    padding: 14,
+                    background: 'var(--card-hover)',
+                    borderRadius: 12,
+                    border: '1px solid var(--border)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10,
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+                    <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: statusStyle.bg, color: statusStyle.color }}>
+                      {c.status.toUpperCase()}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5 }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Balance</span>
+                    <span className="mono" style={{ fontWeight: 600 }}>{formatMoney(c.currentBalance)}</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5 }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Profit</span>
+                      <span className="mono" style={{ color: c.netPnl >= 0 ? 'var(--win)' : 'var(--loss)' }}>
+                        {formatMoney(c.netPnl)}
+                      </span>
+                    </div>
+                    <div style={{ height: 6, background: 'var(--bg)', borderRadius: 999, overflow: 'hidden' }}>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(100, c.profitProgress * 100)}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                        style={{
+                          height: '100%',
+                          background: c.profitProgress >= 1 ? 'var(--win)' : c.profitProgress >= 0.7 ? '#f59e0b' : 'var(--red)',
+                          borderRadius: 999,
+                        }}
+                      />
+                    </div>
+                    {c.profitTarget > 0 && (
+                      <span style={{ fontSize: 10.5, color: 'var(--text-faint)' }}>
+                        {formatMoney(Math.max(0, c.profitRemaining))} to target
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5 }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Drawdown</span>
+                    <span className="mono" style={{ color: c.maxDDProgress >= 1 ? 'var(--loss)' : c.maxDDProgress >= 0.7 ? '#f59e0b' : 'var(--text)' }}>
+                      {formatMoney(Math.max(0, c.maxDDRemaining))} left
+                    </span>
+                  </div>
+                  <div style={{ height: 6, background: 'var(--bg)', borderRadius: 999, overflow: 'hidden' }}>
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(100, c.maxDDProgress * 100)}%` }}
+                      transition={{ duration: 0.8, ease: 'easeOut' }}
+                      style={{
+                        height: '100%',
+                        background: c.maxDDProgress >= 1 ? 'var(--loss)' : c.maxDDProgress >= 0.7 ? '#f59e0b' : 'var(--red)',
+                        borderRadius: 999,
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-faint)' }}>
+                    <span>
+                      {c.minTradingDays > 0 ? `${c.tradingDaysCompleted} / ${c.minTradingDays} days` : `${c.tradingDaysCompleted} trading day${c.tradingDaysCompleted === 1 ? '' : 's'}`}
+                    </span>
+                    {c.daysRemaining !== null && c.daysRemaining >= 0 && (
+                      <span>{c.daysRemaining} day{c.daysRemaining === 1 ? '' : 's'} left</span>
+                    )}
+                    {c.daysRemaining !== null && c.daysRemaining < 0 && (
+                      <span style={{ color: 'var(--loss)' }}>{Math.abs(c.daysRemaining)}d overdue</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
 
       {/* Row 2: Equity Curve, Daily PnL & Distribution */}
       <EquityAndPnLCharts stats={stats} />

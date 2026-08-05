@@ -9,6 +9,7 @@ import { toGoalRow, fromGoalRow } from '../lib/goalsApi';
 import { toPlanRow, fromPlanRow } from '../lib/plansApi';
 import { toReflectionRow, fromReflectionRow } from '../lib/reflectionsApi';
 import { toStudyRow, fromStudyRow } from '../lib/studyApi';
+import { toChallengeRow, fromChallengeRow } from '../lib/challengesApi';
 import {
   isOnline,
   isNetworkError,
@@ -387,7 +388,17 @@ function useStudyCollection(userId) {
   });
 }
 
-export function DataProvider({ children }) {
+function useChallengesCollection(userId) {
+  return useSupabaseCollection('challenges', userId, {
+    toRow: toChallengeRow,
+    fromRow: fromChallengeRow,
+    orderColumn: 'created_at',
+    ascending: false,
+    label: 'Challenge',
+  });
+}
+
+export function DataProvider({ children}) {
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const { selectedAccountId, preferredAccountId, tradeChanged, reloadLedger } = useAccounts();
@@ -404,6 +415,7 @@ export function DataProvider({ children }) {
   const plans = usePlansCollection(userId);
   const reflections = useReflectionsCollection(userId);
   const study = useStudyCollection(userId);
+  const challenges = useChallengesCollection(userId);
 
   // Offline queue sync: the moment the browser reports connectivity
   // (on mount if already online, and on every subsequent 'online'
@@ -413,7 +425,7 @@ export function DataProvider({ children }) {
   // covers the case where the browser never fires 'online'/'offline'
   // reliably but connectivity is actually back.
   const syncingRef = useRef(false);
-  const syncFns = [trades.syncPending, goals.syncPending, plans.syncPending, reflections.syncPending, study.syncPending];
+  const syncFns = [trades.syncPending, goals.syncPending, plans.syncPending, reflections.syncPending, study.syncPending, challenges.syncPending];
 
   useEffect(() => {
     if (!userId) return undefined;
@@ -463,6 +475,7 @@ export function DataProvider({ children }) {
     plans.refetch();
     reflections.refetch();
     study.refetch();
+    challenges.refetch();
     setModelsState(loadJSON(KEYS.models, DEFAULT_MODELS));
     setRiskCriteriaState(loadJSON(KEYS.riskCriteria, DEFAULT_RISK_CRITERIA));
     setChecklistCriteriaState(loadJSON(KEYS.checklistCriteria, DEFAULT_CHECKLIST_CRITERIA));
@@ -476,6 +489,7 @@ export function DataProvider({ children }) {
     plans,
     reflections,
     study,
+    challenges,
     models,
     setModels: setModelsState,
     riskCriteria,

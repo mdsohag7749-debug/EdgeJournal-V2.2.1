@@ -12,6 +12,7 @@ import {
   ChevronsRight,
   TrendingUp,
   User,
+  Trophy,
 } from 'lucide-react';
 
 const NAV = [
@@ -21,6 +22,7 @@ const NAV = [
   { id: 'reflections', label: 'Reflections', icon: MessageSquareText },
   { id: 'study', label: 'Study', icon: GraduationCap },
   { id: 'goals', label: 'Goals', icon: Target },
+  { id: 'challenges', label: 'Challenges', icon: Trophy },
   { id: 'analytics', label: 'Analytics', icon: Activity },
   { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'profile', label: 'Profile', icon: User },

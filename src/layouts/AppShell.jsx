@@ -47,17 +47,26 @@ function AppShellContent() {
   const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 760);
   const location = useLocation();
   const navigate = useNavigate();
-  const { trades, goals, plans, reflections, study } = useData();
+  const { trades, goals, plans, reflections, study, challenges } = useData();
 
   // Show the full-screen loader only on the very first data resolution.
   // After the app has loaded once, later re-loads (e.g. switching
   // accounts or a background refetch) update in place instead of flashing
   // a loader screen — this is what made navigation feel laggy/stuck.
-  const anyLoading = trades.loading || goals.loading || plans.loading || reflections.loading || study.loading;
+  const anyLoading = trades.loading || goals.loading || plans.loading || reflections.loading || study.loading || challenges.loading;
   const [initialized, setInitialized] = useState(false);
   useEffect(() => {
     if (!anyLoading) setInitialized(true);
   }, [anyLoading]);
+
+  // Watchdog: if a first fetch hangs (Supabase unreachable but the
+  // request never rejects), the shell must NOT trap the user on the
+  // loading screen forever. Force past the gate after 15s so the app
+  // renders with whatever is already cached locally.
+  useEffect(() => {
+    const t = setTimeout(() => setInitialized(true), 15000);
+    return () => clearTimeout(t);
+  }, []);
 
   const activeRoute = routes.find((r) => r.path === location.pathname) || defaultRoute;
 
@@ -67,7 +76,7 @@ function AppShellContent() {
   }
 
   if (!initialized && anyLoading) {
-    return <LoadingScreen message="Loading your trades, goals, plans, reflections, and study notes…" />;
+    return <LoadingScreen message="Loading your trades, goals, plans, reflections, study notes, and challenges…" />;
   }
 
   return (

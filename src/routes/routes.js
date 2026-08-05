@@ -14,6 +14,7 @@ const TradingJournal = lazy(() => import('../pages/TradingJournal'));
 const Reflections = lazy(() => import('../pages/Reflections'));
 const Study = lazy(() => import('../pages/Study'));
 const Goals = lazy(() => import('../pages/Goals'));
+const Challenges = lazy(() => import('../pages/Challenges'));
 const Analytics = lazy(() => import('../pages/Analytics'));
 const System = lazy(() => import('../pages/System'));
 const Profile = lazy(() => import('../pages/Profile'));
@@ -58,6 +59,13 @@ export const routes = [
     Component: Goals,
     title: 'Goals',
     subtitle: 'Set targets and track your progress toward them',
+  },
+  {
+    id: 'challenges',
+    path: '/challenges',
+    Component: Challenges,
+    title: 'Challenges',
+    subtitle: 'Track prop firm challenge progress from real trades',
   },
   {
     id: 'analytics',
