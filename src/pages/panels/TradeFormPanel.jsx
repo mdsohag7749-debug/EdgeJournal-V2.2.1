@@ -152,7 +152,7 @@ function ChecklistBlock({ title, criteria, values, onChange }) {
       </button>
       {open && (
         <div style={{ padding: '4px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {criteria.length === 0 && <p style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>No criteria defined yet. Add some in the System tab.</p>}
+          {criteria.length === 0 && <p style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>No criteria defined yet. Add some in Settings &rarr; System.</p>}
           {criteria.map((c) => (
             <label key={c} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, cursor: 'pointer' }}>
               <input
@@ -255,7 +255,7 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
         </>
       }
     >
-      <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: 28 }}>
+      <div className="trade-form-grid" style={{ display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: 28 }}>
         {/* Left column: trade mechanics */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="field">

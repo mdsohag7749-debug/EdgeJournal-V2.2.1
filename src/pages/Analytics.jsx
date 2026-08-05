@@ -63,9 +63,9 @@ function PerformanceBarChart({ data, xKey }) {
     <div style={{ width: '100%', height: 240 }}>
       <ResponsiveContainer>
         <BarChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-          <CartesianGrid stroke="rgba(0,0,0,0.06)" vertical={false} />
-          <XAxis dataKey={xKey} tick={{ fill: '#9CA3AF', fontSize: 11 }} axisLine={{ stroke: 'rgba(0,0,0,0.1)' }} tickLine={false} />
-          <YAxis tick={{ fill: '#9CA3AF', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatMoneyShort(v)} width={64} />
+          <CartesianGrid stroke="var(--border)" vertical={false} />
+          <XAxis dataKey={xKey} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border-strong)' }} tickLine={false} />
+          <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatMoneyShort(v)} width={64} />
           <Tooltip content={<MoneyBarTooltip />} />
           <Bar dataKey="netPnl" radius={[4, 4, 0, 0]}>
             {data.map((d, i) => (

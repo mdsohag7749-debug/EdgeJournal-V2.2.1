@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import TradeFormPanel from './panels/TradeFormPanel';
 import Lightbox from '../components/Lightbox';
 import { TradeScreenshotGallery } from '../components/TradeScreenshots';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { formatDate, formatMoney, pnlClass, resultTagClass } from '../lib/utils';
-import { Plus, ChevronDown, Pencil, Trash2, BookOpen, Star } from 'lucide-react';
+import { formatDate, formatMoney, pnlClass, resultTagClass, directionTagClass } from '../lib/utils';
+import { Plus, ChevronDown, Pencil, Trash2, BookOpen, Star, Search, X, Filter } from 'lucide-react';
 
 export default function TradingJournal() {
   const { trades, plans } = useData();
@@ -15,7 +15,55 @@ export default function TradingJournal() {
   const [lightbox, setLightbox] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
 
-  const sorted = [...trades.items].sort((a, b) => (b.date + (b.entryTime || '')).localeCompare(a.date + (a.entryTime || '')));
+  // Search + filters (Task 7 polish)
+  const [query, setQuery] = useState('');
+  const [dirFilter, setDirFilter] = useState('All');
+  const [resultFilter, setResultFilter] = useState('All');
+  const [modelFilter, setModelFilter] = useState('All');
+
+  const models = useMemo(() => {
+    const set = new Set();
+    trades.items.forEach((t) => t.model && set.add(t.model));
+    return ['All', ...Array.from(set).sort()];
+  }, [trades.items]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return trades.items
+      .filter((t) => (dirFilter === 'All' ? true : t.direction === dirFilter))
+      .filter((t) => (resultFilter === 'All' ? true : t.result === resultFilter))
+      .filter((t) => (modelFilter === 'All' ? true : t.model === modelFilter))
+      .filter((t) => {
+        if (!q) return true;
+        return [
+          t.instrument,
+          t.direction,
+          t.result,
+          t.model,
+          t.protocol,
+          t.session,
+          t.tradeGrade,
+          t.emotion,
+          t.notes,
+          t.confluences,
+          t.lessonsLearned,
+          t.tradeManagement,
+        ]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q));
+      })
+      .sort((a, b) => (b.date + (b.entryTime || '')).localeCompare(a.date + (a.entryTime || '')));
+  }, [trades.items, query, dirFilter, resultFilter, modelFilter]);
+
+  const hasFilters = query.trim() !== '' || dirFilter !== 'All' || resultFilter !== 'All' || modelFilter !== 'All';
+  const total = trades.items.length;
+
+  function clearFilters() {
+    setQuery('');
+    setDirFilter('All');
+    setResultFilter('All');
+    setModelFilter('All');
+  }
 
   function openNew() {
     setEditing(null);
@@ -40,24 +88,119 @@ export default function TradingJournal() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', marginTop: 4 }}>Every trade, logged and reviewable</p>
+          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', marginTop: 4 }}>
+            Every trade, logged and reviewable · <strong style={{ color: 'var(--text)' }}>{filtered.length}</strong> of {total} trades
+          </p>
         </div>
         <button className="btn btn-accent" onClick={openNew}>
           <Plus size={16} /> Log Trade
         </button>
       </div>
 
-      {sorted.length === 0 ? (
+      {/* Search + filter toolbar */}
+      <div className="card" style={{ padding: 12 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: '1 1 240px', minWidth: 200 }}>
+            <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', pointerEvents: 'none' }} />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search pair, notes, model, grade, emotion…"
+              style={{
+                width: '100%',
+                background: 'var(--bg-elevated)',
+                border: '1.5px solid var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--text)',
+                padding: '9px 12px 9px 34px',
+                fontSize: 13.5,
+              }}
+            />
+            {query && (
+              <button
+                onClick={() => setQuery('')}
+                aria-label="Clear search"
+                style={{
+                  position: 'absolute',
+                  right: 6,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-faint)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: 4,
+                }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <select
+            value={dirFilter}
+            onChange={(e) => setDirFilter(e.target.value)}
+            style={{ background: 'var(--bg-elevated)', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text)', padding: '9px 12px', fontSize: 13.5 }}
+          >
+            <option value="All">Direction: All</option>
+            <option value="Buy">Direction: Buy</option>
+            <option value="Sell">Direction: Sell</option>
+          </select>
+
+          <select
+            value={resultFilter}
+            onChange={(e) => setResultFilter(e.target.value)}
+            style={{ background: 'var(--bg-elevated)', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text)', padding: '9px 12px', fontSize: 13.5 }}
+          >
+            <option value="All">Result: All</option>
+            <option value="Win">Result: Win</option>
+            <option value="Loss">Result: Loss</option>
+            <option value="BE">Result: BE</option>
+          </select>
+
+          <select
+            value={modelFilter}
+            onChange={(e) => setModelFilter(e.target.value)}
+            style={{ background: 'var(--bg-elevated)', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text)', padding: '9px 12px', fontSize: 13.5, maxWidth: 220 }}
+          >
+            {models.map((m) => (
+              <option key={m} value={m}>
+                {m === 'All' ? 'Model: All' : m}
+              </option>
+            ))}
+          </select>
+
+          {hasFilters && (
+            <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Filter size={13} /> Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {total === 0 ? (
         <div className="empty-state">
           <BookOpen size={26} style={{ marginBottom: 10, color: 'var(--text-faint)' }} />
           <h3>No trades logged yet</h3>
           <p>Log your first trade to start building your track record.</p>
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="empty-state">
+          <Search size={26} style={{ marginBottom: 10, color: 'var(--text-faint)' }} />
+          <h3>No trades match your filters</h3>
+          <p>Try adjusting the search or clearing the filters.</p>
+          <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ marginTop: 14 }}>
+            <X size={14} /> Clear Filters
+          </button>
+        </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {sorted.map((t) => {
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {filtered.map((t) => {
             const isOpen = !!expanded[t.id];
             const plan = planLabel(t.planId);
             return (
@@ -68,17 +211,18 @@ export default function TradingJournal() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '14px 20px',
+                    padding: '16px 20px',
                     cursor: 'pointer',
                     gap: 14,
                     flexWrap: 'wrap',
+                    borderBottom: isOpen ? '1px solid var(--border)' : 'none',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 13, color: 'var(--text-muted)', minWidth: 84 }}>{formatDate(t.date)}</span>
                     <span style={{ fontWeight: 700, fontSize: 14, minWidth: 44 }}>{t.instrument}</span>
                     {t.direction && (
-                      <span className={`tag ${t.direction === 'Buy' ? 'tag-win' : 'tag-loss'}`}>{t.direction}</span>
+                      <span className={`tag ${directionTagClass(t.direction)}`}>{t.direction}</span>
                     )}
                     <span className={`mono ${pnlClass(t.netPnl)}`} style={{ fontWeight: 700, fontSize: 14, minWidth: 90 }}>
                       {formatMoney(t.netPnl)}
@@ -108,7 +252,7 @@ export default function TradingJournal() {
                 </div>
 
                 {isOpen && (
-                  <div style={{ padding: '4px 20px 20px', borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+                  <div style={{ padding: '4px 20px 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: 20 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 14 }}>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                         <MiniStat label="Direction" value={t.direction} />

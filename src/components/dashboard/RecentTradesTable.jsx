@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { ListOrdered, Image, ExternalLink, ArrowRight } from 'lucide-react';
-import { formatDate, formatMoney, pnlClass, resultTagClass } from '../../lib/utils';
+import { formatDate, formatMoney, pnlClass, resultTagClass, directionTagClass } from '../../lib/utils';
 
 export default function RecentTradesTable({ trades, onNavigate, onSelectTrade }) {
   const recent = [...trades].sort((a, b) => (b.date + (b.entryTime || '')).localeCompare(a.date + (a.entryTime || ''))).slice(0, 6);
@@ -60,7 +60,7 @@ export default function RecentTradesTable({ trades, onNavigate, onSelectTrade })
                   <td style={{ padding: '12px 10px 12px 0', color: 'var(--text-muted)', minWidth: 84 }}>{formatDate(t.date)}</td>
                   <td style={{ padding: '12px 10px', fontWeight: 700 }}>{t.instrument}</td>
                   <td style={{ padding: '12px 10px' }}>
-                    <span className={`tag ${t.direction === 'Buy' ? 'tag-win' : 'tag-loss'}`}>{t.direction}</span>
+                    <span className={`tag ${directionTagClass(t.direction)}`}>{t.direction}</span>
                   </td>
                   <td style={{ padding: '12px 10px', color: 'var(--text-muted)' }}>{t.model || '—'}</td>
                   <td style={{ padding: '12px 10px', fontWeight: 600 }}>{t.rr ? `${t.rr}R` : '—'}</td>

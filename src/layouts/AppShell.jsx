@@ -44,7 +44,7 @@ export default function AppShell() {
 // shell behind the first Supabase fetch for each so pages never render
 // a misleading empty state before real data arrives.
 function AppShellContent() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 760);
   const location = useLocation();
   const navigate = useNavigate();
   const { trades, goals, plans, reflections, study } = useData();
@@ -80,7 +80,7 @@ function AppShellContent() {
           collapsed={collapsed}
           onToggleCollapsed={() => setCollapsed((c) => !c)}
         />
-        <main style={{ flex: 1, minWidth: 0, padding: '28px 32px 60px' }}>
+        <main className="app-main" style={{ flex: 1, minWidth: 0, padding: '28px 32px 60px' }}>
           {!activeRoute.hideHeader && <Header title={activeRoute.title} subtitle={activeRoute.subtitle} />}
           <Suspense fallback={<LoadingScreen message="Loading page..." />}>
             <AnimatePresence mode="wait">

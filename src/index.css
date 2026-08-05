@@ -344,6 +344,97 @@ button:focus-visible {
   scrollbar-width: thin;
 }
 
+/* ---------- Responsive polish (v2.2.3) ---------- */
+/* Keeps the existing design; only collapses grids and tightens spacing
+   on small screens so nothing overflows. */
+
+.app-main {
+  transition: padding 0.2s ease;
+}
+
+@media (max-width: 900px) {
+  .app-main {
+    padding: 20px 18px 56px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-main {
+    padding: 16px 12px 48px !important;
+  }
+}
+
+/* Collapse 2/3/4-col form rows to a single column on phones. */
+@media (max-width: 640px) {
+  .field-row,
+  .cols-2,
+  .cols-3,
+  .cols-4 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Goals grid: 2 -> 1 columns on phones. */
+@media (max-width: 700px) {
+  .goals-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Trade form main split: stack the left/right columns. */
+@media (max-width: 880px) {
+  .trade-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Settings: rail stacks above content and buttons become a horizontal
+   scrollable strip so they never get squeezed. */
+@media (max-width: 820px) {
+  .settings-layout {
+    flex-direction: column !important;
+  }
+  .settings-rail {
+    width: 100% !important;
+    flex-direction: row !important;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+  .settings-rail > button {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+/* Calendar heatmap legend wraps instead of overflowing. */
+.heatmap-legend {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .heatmap-legend {
+    gap: 10px 14px;
+  }
+}
+
+/* Recharts containers never force horizontal page scroll. */
+.responsive-chart {
+  min-width: 0;
+}
+
+/* Stat/count card grids (Study / Reflections) collapse gracefully. */
+@media (max-width: 760px) {
+  .stat-count-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+@media (max-width: 440px) {
+  .stat-count-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* ---------- Dashboard V2.2.1 (premium foundation) ---------- */
 /* Scoped to .dash- prefixed classes only — does not affect any other page. */
 

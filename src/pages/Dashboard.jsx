@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { computeDashboardStats } from '../lib/calculations';
@@ -18,6 +19,7 @@ import { Plus, Download, Calendar, Filter, Sparkles, User, Bell } from 'lucide-r
 export default function Dashboard({ onNavigate }) {
   const { trades } = useData();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [dateRange, setDateRange] = useState('ALL'); // 'ALL' | '30D' | 'MONTH' | 'WEEK'
   const [tradePanelOpen, setTradePanelOpen] = useState(false);
   const [editingTrade, setEditingTrade] = useState(null);
@@ -124,10 +126,10 @@ export default function Dashboard({ onNavigate }) {
 
           <button
             className="btn btn-ghost btn-sm"
-            onClick={() => onNavigate('system')}
+            onClick={() => navigate('/settings?section=backup')}
             style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            <Download size={14} /> Import
+            <Download size={14} /> Import / Backup
           </button>
 
           <button

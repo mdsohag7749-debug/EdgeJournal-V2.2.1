@@ -76,7 +76,7 @@ export default function BreakdownGrids({ stats }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: 16 }}>
         {activeTab === 'pairs' && (
           <>
             <BreakdownTable items={stats.topWinningPairs} title="Top Winning Pairs" icon={Trophy} color="var(--win)" />

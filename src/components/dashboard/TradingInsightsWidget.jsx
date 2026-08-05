@@ -21,7 +21,7 @@ export default function TradingInsightsWidget({ insights }) {
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Automated Pattern Analysis</span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: 12 }}>
         {insights.map((item, idx) => {
           let bg = 'rgba(59, 130, 246, 0.08)';
           let border = '1px solid rgba(59, 130, 246, 0.2)';

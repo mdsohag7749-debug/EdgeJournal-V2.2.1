@@ -54,6 +54,14 @@ export function resultTagClass(result) {
   return 'tag-be';
 }
 
+// Buy = green (bullish), Sell = red (bearish). The `.tag` class uppercases
+// the text, so this renders as BUY / SELL everywhere it's used.
+export function directionTagClass(direction) {
+  if (direction === 'Buy') return 'tag-win';
+  if (direction === 'Sell') return 'tag-loss';
+  return 'tag-neutral';
+}
+
 // Resolves a promise but rejects with a timeout error if it doesn't
 // settle within `ms`. Keeps a hanging network request from leaving the
 // app stuck on a loading screen forever — the caller treats the

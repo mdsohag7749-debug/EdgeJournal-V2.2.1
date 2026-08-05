@@ -106,7 +106,7 @@ export default function Goals() {
           <p>Set a new goal to start tracking progress.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
+        <div className="goals-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
           {filtered.map((g) => {
             const progress = goalProgress(g);
             return (

@@ -200,7 +200,7 @@ export default function CalendarHeatmapWidget({ dayMap, onSelectDay }) {
                   aspectRatio: '1 / 1',
                   background: 'rgba(255, 255, 255, 0.01)',
                   borderRadius: 8,
-                  border: '1px solid rgba(255, 255, 255, 0.03)',
+                  border: '1px solid var(--border)',
                 }}
               />
             );
@@ -317,7 +317,7 @@ export default function CalendarHeatmapWidget({ dayMap, onSelectDay }) {
       )}
 
       {/* Heatmap Color Legend */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: 'var(--text-muted)', paddingTop: 4 }}>
+      <div className="heatmap-legend" style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: 'var(--text-muted)', paddingTop: 4 }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ width: 12, height: 12, borderRadius: 3, background: 'rgba(47, 214, 110, 0.45)', border: '1px solid rgba(47, 214, 110, 0.7)' }} /> High Profit
         </span>

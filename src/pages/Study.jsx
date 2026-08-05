@@ -70,7 +70,7 @@ export default function Study() {
           <p>Document your chart study and session observations here.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+        <div className="stat-count-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
           {filtered.map((s) => (
             <div key={s.id} className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
               {s.chart && (

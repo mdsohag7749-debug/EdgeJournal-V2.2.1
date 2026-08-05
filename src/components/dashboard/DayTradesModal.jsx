@@ -1,5 +1,5 @@
 import SidePanel from '../SidePanel';
-import { formatDate, formatMoney, pnlClass, resultTagClass } from '../../lib/utils';
+import { formatDate, formatMoney, pnlClass, resultTagClass, directionTagClass } from '../../lib/utils';
 import { BookOpen } from 'lucide-react';
 
 export default function DayTradesModal({ open, date, trades, onClose, onSelectTrade }) {
@@ -43,8 +43,9 @@ export default function DayTradesModal({ open, date, trades, onClose, onSelectTr
                 <span className={`tag ${resultTagClass(t.result)}`}>{t.result}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13 }}>
-                <span style={{ color: 'var(--text-muted)' }}>
-                  {t.direction} · {t.model || 'No model'}
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  {t.direction && <span className={`tag ${directionTagClass(t.direction)}`}>{t.direction}</span>}
+                  <span style={{ color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.model || 'No model'}</span>
                 </span>
                 <span className={`mono ${pnlClass(t.netPnl)}`} style={{ fontWeight: 700 }}>
                   {formatMoney(t.netPnl)}

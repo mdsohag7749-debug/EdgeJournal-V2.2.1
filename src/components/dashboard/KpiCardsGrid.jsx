@@ -140,7 +140,7 @@ export default function KpiCardsGrid({ stats }) {
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(210px, 100%), 1fr))',
         gap: 16,
       }}
     >

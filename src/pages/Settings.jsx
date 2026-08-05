@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import {
   User,
   Palette,
@@ -73,11 +74,28 @@ const SECTIONS = [
 ];
 
 export default function Settings({ defaultSection = 'accounts' }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sectionFromUrl = searchParams.get('section');
   const [active, setActive] = useState(defaultSection);
 
   useEffect(() => {
-    if (SECTIONS.some((s) => s.key === defaultSection)) setActive(defaultSection);
-  }, [defaultSection]);
+    if (SECTIONS.some((s) => s.key === sectionFromUrl)) {
+      setActive(sectionFromUrl);
+    } else if (SECTIONS.some((s) => s.key === defaultSection)) {
+      setActive(defaultSection);
+    }
+  }, [defaultSection, sectionFromUrl]);
+
+  function selectSection(key) {
+    setActive(key);
+    const next = new URLSearchParams(searchParams);
+    if (SECTIONS.some((s) => s.key === key)) {
+      next.set('section', key);
+    } else {
+      next.delete('section');
+    }
+    setSearchParams(next, { replace: true });
+  }
 
   const activeSection = SECTIONS.find((s) => s.key === active) || SECTIONS[2];
 
@@ -90,16 +108,16 @@ export default function Settings({ defaultSection = 'accounts' }) {
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <div className="settings-layout" style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         {/* Section rail */}
-        <div style={{ width: 220, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div className="settings-rail" style={{ width: 220, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
           {SECTIONS.map((sec) => {
             const Icon = sec.icon;
             const isActive = sec.key === active;
             return (
               <button
                 key={sec.key}
-                onClick={() => setActive(sec.key)}
+                onClick={() => selectSection(sec.key)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -167,7 +185,7 @@ function SectionAppearance() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10 }}>Theme</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(200px, 100%), 1fr))', gap: 12 }}>
               {Object.values(THEME_PRESETS).map((t) => {
                 const isActive = theme === t.id;
                 return (
@@ -574,7 +592,7 @@ function SectionSystem() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <ScrollCard>
         <SectionTitle icon={SlidersHorizontal} title="System" description="Configure the trading models and checklists used throughout your journal." />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))', gap: 16 }}>
           <EditableList title="Trading Models" description="Used in the Trade Log dropdown." items={models} onChange={setModels} />
           <EditableList title="Risk Management Checklist" description="Criteria shown in the trade log's risk checklist." items={riskCriteria} onChange={setRiskCriteria} />
           <EditableList title="Trade Checklist" description="Criteria shown in the trade log's execution checklist." items={checklistCriteria} onChange={setChecklistCriteria} />
