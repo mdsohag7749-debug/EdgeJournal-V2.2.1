@@ -1,6 +1,9 @@
+import { motion, useReducedMotion } from 'framer-motion';
+
 // Placeholder social sign-in row. Intentionally disabled — these are
 // visual placeholders for a future Supabase/OAuth integration and do not
-// wire up any provider yet.
+// wire up any provider yet. They get the same premium motion treatment as
+// the primary button (lift on hover, springy press) so the row feels alive.
 
 function GoogleMark() {
   return (
@@ -21,15 +24,34 @@ function GithubMark() {
   );
 }
 
+function SocialButton({ children, name, mark }) {
+  const reduceMotion = useReducedMotion();
+  return (
+    <motion.button
+      type="button"
+      className="btn btn-ghost auth-social-btn"
+      disabled
+      title="Coming soon"
+      aria-label={`${name} sign in (coming soon)`}
+      whileHover={reduceMotion ? undefined : { y: -1.5 }}
+      whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+      transition={reduceMotion ? undefined : { type: 'spring', stiffness: 420, damping: 24 }}
+    >
+      {mark}
+      <span>{children}</span>
+    </motion.button>
+  );
+}
+
 export default function SocialButtons() {
   return (
     <div className="auth-social-row">
-      <button type="button" className="btn btn-ghost" disabled title="Coming soon">
-        <GoogleMark /> Google
-      </button>
-      <button type="button" className="btn btn-ghost" disabled title="Coming soon">
-        <GithubMark /> GitHub
-      </button>
+      <SocialButton name="Google" mark={<GoogleMark />}>
+        Google
+      </SocialButton>
+      <SocialButton name="GitHub" mark={<GithubMark />}>
+        GitHub
+      </SocialButton>
     </div>
   );
 }

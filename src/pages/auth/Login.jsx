@@ -117,20 +117,35 @@ export default function Login() {
             aria-live="polite"
           >
             <motion.div
-              className="auth-mark"
-              initial={{ scale: 0.9, opacity: 0 }}
+              className="auth-success-logo"
+              initial={{ scale: reduceMotion ? 1 : 0.82, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: reduceMotion ? 0 : 0.4, ease: 'easeOut' }}
+              transition={{
+                duration: reduceMotion ? 0 : 0.45,
+                ease: [0.22, 1, 0.36, 1],
+                delay: reduceMotion ? 0 : 0.1,
+              }}
             >
-              <TrendingUp size={26} color="#fff" />
+              <motion.div
+                className="auth-mark"
+                initial={{ scale: 0.92 }}
+                animate={{ scale: [1, 1.06, 1] }}
+                transition={
+                  reduceMotion
+                    ? { duration: 0 }
+                    : { duration: 1.1, times: [0, 0.55, 1], ease: 'easeInOut', delay: 0.3 }
+                }
+              >
+                <TrendingUp size={26} color="#fff" />
+              </motion.div>
+              <motion.span
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: reduceMotion ? 0 : 0.35, delay: reduceMotion ? 0 : 0.22 }}
+              >
+                EdgeJournal
+              </motion.span>
             </motion.div>
-            <motion.span
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: reduceMotion ? 0 : 0.35, delay: reduceMotion ? 0 : 0.1 }}
-            >
-              EdgeJournal
-            </motion.span>
           </motion.div>
         )}
       </AnimatePresence>

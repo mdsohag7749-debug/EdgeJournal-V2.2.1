@@ -640,12 +640,24 @@ button:focus-visible {
   pointer-events: none;
 }
 
-/* Candlestick silhouettes — purely decorative, sub-8% opacity. */
+/* Candlestick silhouettes — purely decorative, sub-8% opacity.
+   A wide track scrolls right-to-left infinitely for a seamless
+   market-chart atmosphere. No labels, no axes, no prices. */
 .auth-candles {
   position: absolute;
   inset: 0;
-  opacity: 0.55;
+  overflow: hidden;
   pointer-events: none;
+  opacity: 0.5;
+}
+.auth-candle-track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+  animation: auth-candle-scroll 22s linear infinite;
+  will-change: transform;
 }
 .auth-candle {
   position: absolute;
@@ -662,13 +674,18 @@ button:focus-visible {
   margin-top: 1px;
 }
 .auth-candle-body.up {
-  background: rgba(47, 214, 110, 0.09);
+  background: rgba(47, 214, 110, 0.07);
 }
 .auth-candle-body.down {
-  background: rgba(255, 77, 94, 0.09);
+  background: rgba(255, 77, 94, 0.07);
 }
-.auth-candle-body.neutral {
-  background: rgba(255, 255, 255, 0.09);
+@keyframes auth-candle-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
 }
 
 /* Floating particles. */
@@ -692,18 +709,30 @@ button:focus-visible {
     opacity: 0;
     transform: translate3d(0, 0, 0);
   }
-  12% {
-    opacity: 0.35;
+  15% {
+    opacity: var(--po, 0.35);
   }
-  50% {
-    transform: translate3d(8px, -34px, 0);
+  35% {
+    transform: translate3d(
+      calc(var(--dx, 0px) * 0.55),
+      calc(var(--dy, 0px) * 0.35),
+      0
+    );
   }
-  88% {
-    opacity: 0.3;
+  65% {
+    transform: translate3d(var(--dx, 0px), var(--dy, 0px), 0);
+  }
+  85% {
+    opacity: calc(var(--po, 0.35) * 0.4);
+    transform: translate3d(
+      calc(var(--dx, 0px) * 0.25),
+      calc(var(--dy, 0px) * 0.7),
+      0
+    );
   }
   100% {
     opacity: 0;
-    transform: translate3d(-6px, -64px, 0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -834,24 +863,28 @@ button:focus-visible {
   opacity: 0.35;
 }
 
-/* Sign-in button: lift + glow on hover, arrow slides, press scale. */
+/* Sign-in button: hover glow, lift, soft shadow, smooth animation, click scale. */
 .auth-submit-btn {
   position: relative;
   overflow: hidden;
-  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease,
-    background 0.22s ease, border-color 0.22s ease;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease,
+    background 0.25s ease, border-color 0.25s ease;
 }
 .auth-submit-btn:hover {
-  transform: translateY(-2px);
-  background: linear-gradient(135deg, #b00020, #780000);
-  border-color: rgba(176, 0, 32, 0.5);
-  box-shadow: 0 12px 32px -10px rgba(176, 0, 32, 0.6), 0 0 0 1px rgba(176, 0, 32, 0.5);
+  transform: translateY(-3px);
+  background: linear-gradient(135deg, #c1121f, #780000);
+  border-color: rgba(176, 0, 32, 0.6);
+  box-shadow:
+    0 16px 40px -12px rgba(176, 0, 32, 0.55),
+    0 0 24px rgba(176, 0, 32, 0.35),
+    0 0 0 1px rgba(176, 0, 32, 0.4);
 }
 .auth-submit-btn:active {
-  transform: translateY(-2px) scale(0.97);
+  transform: translateY(-1px) scale(0.97);
+  transition-duration: 0.08s;
 }
 .auth-submit-btn svg {
-  transition: transform 0.2s ease;
+  transition: transform 0.25s ease;
 }
 .auth-submit-btn:hover svg:last-child {
   transform: translateX(4px);
@@ -888,14 +921,351 @@ button:focus-visible {
 
 /* Respect users who prefer reduced motion. */
 @media (prefers-reduced-motion: reduce) {
-  .auth-aurora,
-  .auth-grid,
-  .auth-candles,
-  .auth-particle,
+.auth-aurora,
+.auth-vignette,
+.auth-grid,
+.auth-lights,
+.auth-light,
+.auth-candles,
+.auth-candle-track,
+.auth-candle,
+.auth-particle,
   .auth-card-glow::before,
   .auth-card-glow::after,
-  .auth-card::after {
+  .auth-card::after,
+  .auth-ripple,
+  .auth-shake-once,
+  .auth-error-text,
+  .auth-form-panel .auth-submit-btn::before,
+  .auth-form-panel form > *,
+  .auth-form-panel .card > * {
     animation: none !important;
     transition: none !important;
   }
+  .auth-form-panel form > *,
+  .auth-form-panel .card > * {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ---------- Premium auth motion pass (v2.3) ---------- */
+/* Depth, easing and micro-interaction upgrade for the auth shell.
+   Keeps the auth-* scope and only animates transform / opacity / filter.
+   Layer stack inside .auth-brand-panel (front to back):
+     1 content  -> 6 particles -> 5 candles -> 4 grid -> 3 lights
+     -> 2 vignette -> 1 aurora */
+
+/* Layer 2 — soft vignette for depth against the aurora. */
+.auth-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 92% at 50% 46%, transparent 52%, rgba(0, 0, 0, 0.62) 100%);
+  pointer-events: none;
+}
+
+/* Layer 3 — floating radial lights (big soft RGB blooms at different speeds). */
+.auth-lights {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.auth-light {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(179, 0, 32, 0.34), transparent 62%);
+  filter: blur(64px);
+  opacity: 0;
+  animation-name: auth-light-drift;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+@keyframes auth-light-drift {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  35% {
+    opacity: 1;
+    transform: translate3d(26px, -22px, 0) scale(1.16);
+  }
+  70% {
+    opacity: 0.45;
+    transform: translate3d(-20px, 16px, 0) scale(0.92);
+  }
+}
+
+/* Layer 6 — particles: inherited keyframe plus per-particle duration/size/
+   opacity set inline from AuthLayout (30 particles, transform/opacity only). */
+.auth-particles {
+  z-index: 1;
+}
+
+/* Ambient breathing glow behind the card: 8s dark-red -> crimson -> dark-red.
+   Two overlapping radial blooms crossfade for an RGB light-bar feel. */
+.auth-card-glow::before {
+  animation-duration: 8s;
+  background: radial-gradient(55% 60% at 50% 42%, rgba(120, 0, 0, 0.62), rgba(120, 0, 0, 0.16) 62%, transparent 78%);
+}
+.auth-card-glow::after {
+  animation-duration: 8s;
+  background: radial-gradient(55% 60% at 50% 42%, rgba(193, 18, 31, 0.52), rgba(176, 0, 32, 0.2) 62%, transparent 78%);
+}
+
+/* Mouse-follow light: softer, larger and only visible while hovered. The
+   transform itself is driven per-frame by the eased rAF loop in AuthLayout. */
+.auth-card::after {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(193, 18, 31, 0.12), transparent 62%);
+  transform: translate(calc(var(--mx, -999px) - 160px), calc(var(--my, -999px) - 160px));
+  transition: opacity 0.4s ease;
+  opacity: 0;
+}
+.auth-card:hover::after {
+  opacity: 1;
+}
+
+/* ---- Quote block: mark, word-by-word entrance, divider, author line ---- */
+.auth-quote-block {
+  position: relative;
+}
+.auth-quote-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  margin-bottom: 16px;
+  background: rgba(176, 0, 32, 0.16);
+  border: 1px solid rgba(176, 0, 32, 0.34);
+  color: #ff4d5e;
+  box-shadow: 0 0 22px rgba(176, 0, 32, 0.28), inset 0 0 12px rgba(176, 0, 32, 0.18);
+}
+.auth-quote-word {
+  display: inline-block;
+  margin-right: 0.26em;
+}
+.auth-quote-divider {
+  width: 36px;
+  height: 2px;
+  border-radius: 2px;
+  margin: 18px 0 10px;
+  background: linear-gradient(90deg, #b00020, rgba(176, 0, 32, 0));
+}
+.auth-quote-author {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* ---- Staggered card entrance (header, then each form row in sequence) ---- */
+.auth-form-panel .card > *,
+.auth-form-panel form > * {
+  animation: auth-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.auth-form-panel .card > :first-child {
+  animation-delay: 0.34s;
+}
+.auth-form-panel .card > :nth-child(2) {
+  animation-delay: 0.42s;
+}
+.auth-form-panel form > :nth-child(1) {
+  animation-delay: 0.5s;
+}
+.auth-form-panel form > :nth-child(2) {
+  animation-delay: 0.6s;
+}
+.auth-form-panel form > :nth-child(3) {
+  animation-delay: 0.7s;
+}
+.auth-form-panel form > :nth-child(4) {
+  animation-delay: 0.8s;
+}
+.auth-form-panel form > :nth-child(5) {
+  animation-delay: 0.9s;
+}
+.auth-form-panel form > :nth-child(6) {
+  animation-delay: 1s;
+}
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- Button ripple (span spawned by AuthButton, transform/opacity only) ---- */
+.auth-ripple-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+.auth-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 65%);
+  transform: scale(0);
+  animation: auth-ripple 0.55s ease-out forwards;
+  will-change: transform, opacity;
+}
+@keyframes auth-ripple {
+  to {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+/* Button gradient shift + arrow nudge while hovered (complements the
+   framer-motion lift/press handled in AuthButton). */
+.auth-form-panel .auth-submit-btn:hover svg:last-child {
+  transform: translateX(4px);
+}
+
+/* ---- Inputs: hover tint, focus glow, icon animation, error shake ---- */
+.auth-form-panel .field input:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(20, 20, 30, 0.9);
+}
+.auth-form-panel .field input:focus {
+  border-color: rgba(193, 18, 31, 0.75);
+  box-shadow: 0 0 0 4px rgba(193, 18, 31, 0.16), 0 0 26px rgba(193, 18, 31, 0.16);
+}
+.auth-form-panel .auth-input-icon,
+.auth-form-panel .auth-input-toggle {
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.auth-form-panel .auth-input-wrap:focus-within .auth-input-icon {
+  color: var(--red);
+  transform: translateY(-50%) scale(1.1);
+}
+.auth-form-panel .auth-input-wrap .auth-input-toggle:hover {
+  color: var(--red);
+}
+.auth-form-panel .auth-input-wrap .auth-input-toggle:hover svg {
+  transform: scale(1.1);
+}
+
+/* Invalid field state (driven by the `error` prop on FormField/PasswordField). */
+.field-invalid input {
+  border-color: rgba(255, 77, 94, 0.7) !important;
+  box-shadow: 0 0 0 4px rgba(255, 77, 94, 0.14), 0 0 22px rgba(255, 77, 94, 0.14) !important;
+}
+@keyframes auth-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-9px);
+  }
+  40% {
+    transform: translateX(8px);
+  }
+  60% {
+    transform: translateX(-6px);
+  }
+  80% {
+    transform: translateX(5px);
+  }
+}
+.auth-shake-once {
+  animation: auth-shake 0.4s ease;
+}
+
+/* Page-level error message shakes on appearance (it mounts when an error is set). */
+.auth-form-panel .auth-error-text {
+  display: block;
+  animation: auth-shake 0.4s ease;
+}
+
+/* ---- Micro interactions: checkbox, forgot link, social buttons, divider ---- */
+.auth-check-row input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.auth-check-row input[type='checkbox']:hover {
+  transform: scale(1.12);
+}
+.auth-check-row input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px var(--red-glow);
+}
+.auth-form-panel a {
+  position: relative;
+}
+.auth-form-panel a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  height: 1px;
+  width: 100%;
+  background: var(--red);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.auth-form-panel a:hover::after {
+  transform: scaleX(1);
+}
+
+.auth-social-btn {
+  opacity: 0.72;
+}
+.auth-social-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.auth-social-btn:disabled:hover {
+  border-color: var(--border);
+}
+.auth-social-btn svg {
+  transition: transform 0.2s ease;
+}
+.auth-social-btn:hover svg {
+  transform: translateY(-1px) scale(1.12);
+}
+
+.auth-divider {
+  transition: color 0.2s ease;
+}
+.auth-divider:hover {
+  color: var(--text-muted);
+}
+
+/* ---- Post-login success overlay: grouped logo, mark pulse, fade ---- */
+.auth-success-overlay .auth-success-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.auth-success-overlay .auth-success-logo .auth-mark {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  background: rgba(176, 0, 32, 0.18);
+  border: 1px solid rgba(176, 0, 32, 0.42);
+  box-shadow: 0 0 48px rgba(176, 0, 32, 0.4), inset 0 0 22px rgba(176, 0, 32, 0.2);
+}
+.auth-success-overlay span {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: -0.01em;
 }
