@@ -8,6 +8,7 @@ import {
   Target,
   Activity,
   SlidersHorizontal,
+  Settings,
   ChevronsLeft,
   ChevronsRight,
   TrendingUp,
@@ -23,6 +24,7 @@ const NAV = [
   { id: 'goals', label: 'Goals', icon: Target },
   { id: 'analytics', label: 'Analytics', icon: Activity },
   { id: 'system', label: 'System', icon: SlidersHorizontal },
+  { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'profile', label: 'Profile', icon: User },
 ];
 

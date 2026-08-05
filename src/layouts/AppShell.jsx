@@ -2,6 +2,7 @@ import { useState, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { DataProvider, useData } from '../context/DataContext';
+import { AccountProvider } from '../context/AccountContext';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import LoadingScreen from '../components/LoadingScreen';
@@ -30,9 +31,11 @@ function PageTransition({ children }) {
 // entirely — see src/App.jsx.
 export default function AppShell() {
   return (
-    <DataProvider>
-      <AppShellContent />
-    </DataProvider>
+    <AccountProvider>
+      <DataProvider>
+        <AppShellContent />
+      </DataProvider>
+    </AccountProvider>
   );
 }
 

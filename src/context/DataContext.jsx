@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { KEYS, loadJSON, saveJSON } from '../lib/storage';
 import { uid } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { useAccounts } from './AccountContext';
 import { toTradeRow, fromTradeRow } from '../lib/tradesApi';
 import { toGoalRow, fromGoalRow } from '../lib/goalsApi';
 import { toPlanRow, fromPlanRow } from '../lib/plansApi';
@@ -86,9 +87,25 @@ function useCollection(key, defaultValue = []) {
 // browsable offline. `syncPending` drains this table's slice of the
 // queue once connectivity returns; the effect in DataProvider below
 // calls it for all five collections.
-function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, ascending = false, label }) {
+//
+// Optional `filter` ({ column, value }) restricts every read to matching
+// rows (e.g. trades scoped to the selected account) and optional
+// `rowContext` is merged into every toRow() call so writes carry the same
+// scope (e.g. account_id). Other collections pass neither and behave
+// exactly as before.
+function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, ascending = false, label, filter, rowContext, onChange }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Latest items, kept in a ref so mutation handlers can hand the balance
+  // engine the pre-change record (e.g. the previous account / PnL of an
+  // edited trade) without turning the collection into a render-loop.
+  const itemsRef = useRef(items);
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  const rowOpts = useCallback((partial) => ({ ...rowContext, partial }), [rowContext]);
 
   const refetch = useCallback(async () => {
     if (!userId) {
@@ -99,6 +116,7 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
     setLoading(true);
     try {
       let query = supabase.from(table).select('*').eq('user_id', userId);
+      if (filter?.value) query = query.eq(filter.column, filter.value);
       if (orderColumn) query = query.order(orderColumn, { ascending });
       const { data, error } = await query;
       if (error) throw error;
@@ -114,7 +132,7 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
       setItems(mergeQueueIntoItems(table, userId, loadCache(table, userId)));
     }
     setLoading(false);
-  }, [table, userId, orderColumn, ascending, fromRow]);
+  }, [table, userId, orderColumn, ascending, fromRow, filter]);
 
   useEffect(() => {
     refetch();
@@ -132,30 +150,45 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
         return optimistic;
       };
 
-      if (!isOnline()) return queueOffline();
+      if (!isOnline()) {
+        const optimistic = queueOffline();
+        onChange?.({ type: 'created', trade: optimistic });
+        return optimistic;
+      }
 
       try {
-        const { data, error } = await supabase.from(table).insert(toRow(item, userId)).select().single();
+        const { data, error } = await supabase.from(table).insert(toRow(item, userId, rowOpts(false))).select().single();
         if (error) throw error;
         const saved = fromRow(data);
-        setItems((prev) => [saved, ...prev]);
+        // A row saved to a different account than the one currently
+        // being viewed shouldn't appear in this (account-scoped) list.
+        const moved = rowContext?.accountId && saved?.accountId && saved.accountId !== rowContext.accountId;
+        setItems((prev) => (moved ? prev : [saved, ...prev]));
+        onChange?.({ type: 'created', trade: saved });
         return saved;
       } catch (err) {
-        if (isNetworkError(err)) return queueOffline();
+        if (isNetworkError(err)) {
+          const optimistic = queueOffline();
+          onChange?.({ type: 'created', trade: optimistic });
+          return optimistic;
+        }
         console.error(`Failed to save ${table.slice(0, -1)} to Supabase:`, err.message || err);
         return null;
       }
     },
-    [table, userId, toRow, fromRow, label]
+    [table, userId, toRow, fromRow, label, rowOpts, onChange]
   );
 
   const update = useCallback(
     async (id, patch) => {
       if (!userId) return;
       const isPendingItem = typeof id === 'string' && id.startsWith('pending_');
+      const previous = itemsRef.current.find((it) => it.id === id);
 
       const queueOffline = () => {
         setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch, _pending: true } : it)));
+        const merged = { ...(previous || {}), ...patch, id };
+        onChange?.({ type: 'updated', trade: merged, previous });
         if (isPendingItem) {
           // Still-unsynced local record: fold the edit into the queued
           // insert rather than creating a separate update entry for an
@@ -171,20 +204,24 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
       try {
         const { data, error } = await supabase
           .from(table)
-          .update(toRow(patch, userId, { partial: true }))
+          .update(toRow(patch, userId, rowOpts(true)))
           .eq('id', id)
           .eq('user_id', userId)
           .select()
           .single();
         if (error) throw error;
         const saved = fromRow(data);
-        setItems((prev) => prev.map((it) => (it.id === id ? saved : it)));
+        // If the trade was moved to a different account than the one
+        // being viewed, drop it from this (account-scoped) list.
+        const moved = rowContext?.accountId && saved?.accountId && saved.accountId !== rowContext.accountId;
+        setItems((prev) => (moved ? prev.filter((it) => it.id !== id) : prev.map((it) => (it.id === id ? saved : it))));
+        onChange?.({ type: 'updated', trade: saved, previous });
       } catch (err) {
         if (isNetworkError(err)) return queueOffline();
         console.error(`Failed to update ${table.slice(0, -1)} in Supabase:`, err.message || err);
       }
     },
-    [table, userId, toRow, fromRow, label]
+    [table, userId, toRow, fromRow, label, rowOpts, onChange]
   );
 
   const remove = useCallback(
@@ -194,6 +231,7 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
 
       const queueOffline = () => {
         setItems((prev) => prev.filter((it) => it.id !== id));
+        onChange?.({ type: 'deleted', trade: { id } });
         if (isPendingItem) {
           // Never made it to the server — just drop the queued insert.
           removeQueuedInsert(table, userId, id);
@@ -208,12 +246,13 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
         const { error } = await supabase.from(table).delete().eq('id', id).eq('user_id', userId);
         if (error) throw error;
         setItems((prev) => prev.filter((it) => it.id !== id));
+        onChange?.({ type: 'deleted', trade: { id } });
       } catch (err) {
         if (isNetworkError(err)) return queueOffline();
         console.error(`Failed to delete ${table.slice(0, -1)} from Supabase:`, err.message || err);
       }
     },
-    [table, userId, label]
+    [table, userId, label, onChange]
   );
 
   // Bulk insert used only by System.jsx's "Import JSON Backup" — a
@@ -222,7 +261,7 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
   const importMany = useCallback(
     async (rows) => {
       if (!userId || !Array.isArray(rows) || rows.length === 0) return;
-      const payload = rows.map((r) => toRow(r, userId));
+      const payload = rows.map((r) => toRow(r, userId, rowOpts(false)));
       const { data, error } = await supabase.from(table).insert(payload).select();
 
       if (error) {
@@ -232,7 +271,7 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
       const saved = (data || []).map(fromRow);
       setItems((prev) => [...saved, ...prev]);
     },
-    [table, userId, toRow, fromRow]
+    [table, userId, toRow, fromRow, rowOpts]
   );
 
   // Drains this collection's slice of the offline write queue,
@@ -248,21 +287,23 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
     for (const entry of queue) {
       try {
         if (entry.type === 'insert') {
-          const { data, error } = await supabase.from(table).insert(toRow(entry.item, userId)).select().single();
+          const { data, error } = await supabase.from(table).insert(toRow(entry.item, userId, rowOpts(false))).select().single();
           if (error) throw error;
           const saved = fromRow(data);
-          setItems((prev) => prev.map((it) => (it.id === entry.tempId ? saved : it)));
+          const moved = rowContext?.accountId && saved?.accountId && saved.accountId !== rowContext.accountId;
+          setItems((prev) => (moved ? prev : prev.map((it) => (it.id === entry.tempId ? saved : it))));
         } else if (entry.type === 'update') {
           const { data, error } = await supabase
             .from(table)
-            .update(toRow(entry.item, userId, { partial: true }))
+            .update(toRow(entry.item, userId, rowOpts(true)))
             .eq('id', entry.itemId)
             .eq('user_id', userId)
             .select()
             .single();
           if (error) throw error;
           const saved = fromRow(data);
-          setItems((prev) => prev.map((it) => (it.id === entry.itemId ? saved : it)));
+          const moved = rowContext?.accountId && saved?.accountId && saved.accountId !== rowContext.accountId;
+          setItems((prev) => (moved ? prev.filter((it) => it.id !== entry.itemId) : prev.map((it) => (it.id === entry.itemId ? saved : it))));
         } else if (entry.type === 'delete') {
           const { error } = await supabase.from(table).delete().eq('id', entry.itemId).eq('user_id', userId);
           if (error) throw error;
@@ -277,18 +318,32 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
     }
 
     return synced;
-  }, [table, userId, toRow, fromRow]);
+  }, [table, userId, toRow, fromRow, rowOpts]);
 
   return { items, add, update, remove, setItems, importMany, refetch, loading, syncPending };
 }
 
-function useTradesCollection(userId) {
+// Trades are scoped to the currently selected account: reads are filtered
+// to that account, and every write is stamped with a concrete account id.
+// When viewing "All Accounts" (or no account is selected yet) the read
+// filter is skipped so ALL of the user's trades are returned and
+// aggregated together — while writes still target the preferred account.
+function useTradesCollection(userId, selectedAccountId, preferredAccountId, onChange) {
+  const filter = useMemo(
+    () => (selectedAccountId ? { column: 'account_id', value: selectedAccountId } : null),
+    [selectedAccountId]
+  );
+  const rowContext = useMemo(() => ({ accountId: preferredAccountId }), [preferredAccountId]);
+
   return useSupabaseCollection('trades', userId, {
     toRow: toTradeRow,
     fromRow: fromTradeRow,
     orderColumn: 'date',
     ascending: false,
     label: 'Trade',
+    filter,
+    rowContext,
+    onChange,
   });
 }
 
@@ -335,8 +390,16 @@ function useStudyCollection(userId) {
 export function DataProvider({ children }) {
   const { user } = useAuth();
   const userId = user?.id ?? null;
+  const { selectedAccountId, preferredAccountId, tradeChanged, reloadLedger } = useAccounts();
 
-  const trades = useTradesCollection(userId);
+  // Feeds every trade create/edit/delete (online or offline) into the
+  // Account Balance Engine so each account's equity stats recalculate
+  // immediately — no manual refresh, real trade history only.
+  const handleTradeChange = useCallback((payload) => {
+    tradeChanged(payload);
+  }, [tradeChanged]);
+
+  const trades = useTradesCollection(userId, selectedAccountId, preferredAccountId, handleTradeChange);
   const goals = useGoalsCollection(userId);
   const plans = usePlansCollection(userId);
   const reflections = useReflectionsCollection(userId);
@@ -362,6 +425,10 @@ export function DataProvider({ children }) {
         const results = await Promise.all(syncFns.map((fn) => fn()));
         const total = results.reduce((sum, n) => sum + n, 0);
         if (total > 0) notifySyncComplete(total);
+        // Queued trades that just synced changed real account equity —
+        // rebuild the balance ledger from the now-authoritative trade rows
+        // (this also reconciles pending temp ids with real ids).
+        if (results[0] > 0) reloadLedger();
       } finally {
         syncingRef.current = false;
       }
@@ -376,7 +443,7 @@ export function DataProvider({ children }) {
       clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, ...syncFns]);
+  }, [userId, reloadLedger, ...syncFns]);
 
   const [models, setModelsState] = useState(() => loadJSON(KEYS.models, DEFAULT_MODELS));
   const [riskCriteria, setRiskCriteriaState] = useState(() => loadJSON(KEYS.riskCriteria, DEFAULT_RISK_CRITERIA));

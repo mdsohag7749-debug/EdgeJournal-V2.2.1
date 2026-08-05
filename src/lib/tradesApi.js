@@ -4,6 +4,9 @@
 // only src/context/DataContext.jsx (via these two functions) ever sees
 // a raw `trades` table row.
 
+import { supabase } from './supabase';
+import { ledgerFromRow } from './accountStats';
+
 const TEXT_FIELDS = {
   date: 'date',
   entryTime: 'entry_time',
@@ -51,10 +54,15 @@ function toNumberOrNull(value) {
 // this server-side — this is defense in depth, not the only guard).
 // Pass `{ partial: true }` for update() calls so only the keys present
 // in `trade` are included, instead of overwriting untouched columns
-// with null.
-export function toTradeRow(trade, userId, { partial = false } = {}) {
+// with null. Pass `{ accountId }` as the currently selected account; a
+// trade's own `trade.accountId` (set by the trade form, which defaults
+// to the selection but can differ when editing) always wins, so a trade
+// can be logged to or moved to a different account than the one viewed.
+export function toTradeRow(trade, userId, { partial = false, accountId } = {}) {
   const row = {};
   if (userId) row.user_id = userId;
+  const rowAccountId = trade.accountId || accountId;
+  if (rowAccountId) row.account_id = rowAccountId;
 
   for (const [jsKey, dbKey] of Object.entries(TEXT_FIELDS)) {
     if (!partial || jsKey in trade) {
@@ -77,6 +85,20 @@ export function toTradeRow(trade, userId, { partial = false } = {}) {
 
 // Converts a raw `public.trades` row back into the app-shape trade
 // object every page already expects.
+// Fetches ONLY the columns the Account Balance Engine needs (account, date,
+// entry time, and realized PnL) for the user's complete trade history. Used by
+// src/hooks/useAccounts.js to compute every account's balance from real trades.
+export async function fetchBalanceTrades(userId) {
+  if (!userId) return [];
+  const { data, error } = await supabase
+    .from('trades')
+    .select('id, account_id, date, entry_time, net_pnl')
+    .eq('user_id', userId);
+
+  if (error) throw error;
+  return (data || []).map((row) => ledgerFromRow(row));
+}
+
 export function fromTradeRow(row) {
   if (!row) return null;
   return {
@@ -113,6 +135,7 @@ export function fromTradeRow(row) {
     notes: row.notes || '',
     lessonsLearned: row.lessons_learned || '',
     screenshot: row.screenshot || '',
+    accountId: row.account_id || '',
     createdAt: row.created_at,
   };
 }

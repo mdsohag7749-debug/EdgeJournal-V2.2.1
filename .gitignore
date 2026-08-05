@@ -4,3 +4,4 @@ dev-dist
 .env
 .DS_Store
 *.local
+dev-server.log

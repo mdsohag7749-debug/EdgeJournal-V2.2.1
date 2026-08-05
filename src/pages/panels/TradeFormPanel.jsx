@@ -4,6 +4,8 @@ import SidePanel from '../../components/SidePanel';
 import ImageUpload from '../../components/ImageUpload';
 import { TradeScreenshotManager } from '../../components/TradeScreenshots';
 import { useData } from '../../context/DataContext';
+import { useAccounts } from '../../context/AccountContext';
+import { sortTradeAccounts } from '../../components/accounts/accounts';
 import { todayISO } from '../../lib/utils';
 
 const INSTRUMENT_GROUPS = [
@@ -36,6 +38,8 @@ function isBlank(value) {
 // Price + Direction so they can't be entered backwards.
 function validateTrade(form) {
   const errors = {};
+
+  if (!form.accountId) errors.accountId = 'Select an account for this trade';
 
   if (!isBlank(form.riskPercent)) {
     const n = Number(form.riskPercent);
@@ -79,6 +83,7 @@ function validateTrade(form) {
 }
 
 const BLANK = {
+  accountId: '',
   date: todayISO(),
   entryTime: '',
   exitTime: '',
@@ -167,20 +172,22 @@ function ChecklistBlock({ title, criteria, values, onChange }) {
 
 export default function TradeFormPanel({ open, onClose, onSave, initial }) {
   const { models, riskCriteria, checklistCriteria, plans } = useData();
+  const { accounts, preferredAccountId } = useAccounts();
   const [form, setForm] = useState(BLANK);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (open) {
+      const accountId = initial?.accountId || preferredAccountId || '';
       setForm(
         initial
-          ? { ...BLANK, ...initial, riskChecklist: initial.riskChecklist || {}, tradeChecklist: initial.tradeChecklist || {}, mistakes: initial.mistakes || {} }
-          : { ...BLANK, model: models[0] || '' }
+          ? { ...BLANK, ...initial, accountId, riskChecklist: initial.riskChecklist || {}, tradeChecklist: initial.tradeChecklist || {}, mistakes: initial.mistakes || {} }
+          : { ...BLANK, accountId, model: models[0] || '' }
       );
       setErrors({});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initial]);
+  }, [open, initial, preferredAccountId]);
 
   function set(key, value) {
     setForm((f) => {
@@ -251,6 +258,24 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: 28 }}>
         {/* Left column: trade mechanics */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="field">
+            <label>Account *</label>
+            <select
+              value={form.accountId}
+              onChange={(e) => set('accountId', e.target.value)}
+              style={errors.accountId ? { borderColor: 'var(--loss)' } : undefined}
+            >
+              <option value="">Select account</option>
+              {sortTradeAccounts(accounts).map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                  {a.isDefault ? ' · Default' : ''}
+                </option>
+              ))}
+            </select>
+            {errors.accountId && <span className="auth-error-text">{errors.accountId}</span>}
+          </div>
+
           <div className="field-row cols-3">
             <div className="field">
               <label>Date</label>

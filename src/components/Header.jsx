@@ -1,16 +1,12 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Pencil, Check, LogOut } from 'lucide-react';
-import { useData } from '../context/DataContext';
+import { LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import AccountSwitcher from './accounts/AccountSwitcher';
 
 export default function Header({ title, subtitle }) {
-  const { accountName, setAccountName } = useData();
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(accountName);
 
   const today = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
@@ -19,15 +15,10 @@ export default function Header({ title, subtitle }) {
     year: 'numeric',
   });
 
-  function save() {
-    setAccountName(draft.trim() || 'My Trading Account');
-    setEditing(false);
-  }
-
   async function handleLogout() {
     // Real Supabase sign-out. The auth-state listener in AuthContext
-    // will clear the session automatically; we also navigate explicitly
-    // so the redirect to /login happens immediately.
+    // clears the session automatically; we also navigate explicitly so
+    // the redirect to /login happens immediately.
     try {
       await logout();
     } finally {
@@ -70,39 +61,7 @@ export default function Header({ title, subtitle }) {
           {today}
         </span>
 
-        {editing ? (
-          <>
-            <input
-              autoFocus
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && save()}
-              style={{
-                background: 'var(--white)',
-                border: '1.5px solid var(--border-strong)',
-                borderRadius: 10,
-                padding: '8px 12px',
-                color: 'var(--text)',
-                fontSize: 13.5,
-                fontWeight: 600,
-              }}
-            />
-            <button className="btn btn-accent btn-icon btn-sm" onClick={save}>
-              <Check size={14} />
-            </button>
-          </>
-        ) : (
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => {
-              setDraft(accountName);
-              setEditing(true);
-            }}
-          >
-            <span style={{ fontWeight: 700 }}>{accountName}</span>
-            <Pencil size={13} />
-          </button>
-        )}
+        <AccountSwitcher />
 
         <button className="btn btn-ghost btn-sm" onClick={handleLogout} title="Log out">
           <LogOut size={14} />

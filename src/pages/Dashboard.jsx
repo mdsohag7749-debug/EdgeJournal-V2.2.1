@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { computeDashboardStats } from '../lib/calculations';
+import AccountSwitcher from '../components/accounts/AccountSwitcher';
 import KpiCardsGrid from '../components/dashboard/KpiCardsGrid';
 import EquityAndPnLCharts from '../components/dashboard/EquityAndPnLCharts';
 import CalendarHeatmapWidget from '../components/dashboard/CalendarHeatmapWidget';
@@ -15,7 +16,7 @@ import TradeFormPanel from './panels/TradeFormPanel';
 import { Plus, Download, Calendar, Filter, Sparkles, User, Bell } from 'lucide-react';
 
 export default function Dashboard({ onNavigate }) {
-  const { trades, accountName, setAccountName } = useData();
+  const { trades } = useData();
   const { user } = useAuth();
   const [dateRange, setDateRange] = useState('ALL'); // 'ALL' | '30D' | 'MONTH' | 'WEEK'
   const [tradePanelOpen, setTradePanelOpen] = useState(false);
@@ -95,21 +96,7 @@ export default function Dashboard({ onNavigate }) {
             </h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--text-muted)' }}>
               <span style={{ fontWeight: 600, color: 'var(--text)' }}>Account:</span>
-              <input
-                type="text"
-                value={accountName}
-                onChange={(e) => setAccountName(e.target.value)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: '1px dashed var(--border-strong)',
-                  color: 'var(--text-muted)',
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                  width: 140,
-                  outline: 'none',
-                }}
-              />
+              <AccountSwitcher />
             </div>
           </div>
         </div>

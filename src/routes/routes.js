@@ -17,6 +17,7 @@ const Goals = lazy(() => import('../pages/Goals'));
 const Analytics = lazy(() => import('../pages/Analytics'));
 const System = lazy(() => import('../pages/System'));
 const Profile = lazy(() => import('../pages/Profile'));
+const Settings = lazy(() => import('../pages/Settings'));
 
 export const routes = [
   {
@@ -70,6 +71,13 @@ export const routes = [
     path: '/system',
     Component: System,
     title: 'System',
+  },
+  {
+    id: 'settings',
+    path: '/settings',
+    Component: Settings,
+    title: 'Settings',
+    subtitle: 'Manage your accounts and app configuration',
   },
   {
     id: 'profile',
