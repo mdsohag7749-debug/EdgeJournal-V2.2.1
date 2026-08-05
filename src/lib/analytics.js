@@ -44,7 +44,29 @@ const SESSION_WINDOWS = [
   { session: 'New York', start: 13, end: 21 },
   { session: 'After Hours', start: 21, end: 24 },
 ];
-const SESSION_ORDER = ['Asia', 'London', 'New York', 'After Hours', 'Unknown'];
+const SESSION_ORDER = ['Asia', 'London', 'New York', 'London + New York', 'After Hours', 'Unknown'];
+
+// Calendar weekday (Mon–Sun) derived from a 'YYYY-MM-DD' date string.
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const WEEKDAY_ORDER = [...WEEKDAYS.slice(1), WEEKDAYS[0], 'Unknown']; // Mon .. Sun
+const TIMEFRAME_ORDER = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN', 'Unknown'];
+const DIRECTION_ORDER = ['Buy', 'Sell', 'Unknown'];
+
+function toWeekday(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return 'Unknown';
+  return WEEKDAYS[d.getDay()];
+}
+
+function pickBest(groups, metric) {
+  if (!groups.length) return null;
+  return groups.reduce((best, g) => (g[metric] > best[metric] ? g : best));
+}
+
+function pickWorst(groups, metric) {
+  if (!groups.length) return null;
+  return groups.reduce((worst, g) => (g[metric] < worst[metric] ? g : worst));
+}
 
 function sessionFor(entryTime) {
   if (!entryTime) return 'Unknown';
@@ -55,26 +77,62 @@ function sessionFor(entryTime) {
 }
 
 // Groups trades by an arbitrary key, returning per-group trade count,
-// win rate, and net P&L. Used for Monthly/Weekly Performance, Trades by
-// Pair, by Session, and by Strategy alike.
+// win rate, net P&L, average R:R, average win/loss, and profit factor.
+// Used for Monthly/Weekly Performance, Trades by Pair, by Session, by
+// Strategy, by Weekday, by Timeframe, and by Direction alike.
 function groupBy(trades, keyFn, labelFn) {
   const map = {};
   trades.forEach((t) => {
     const key = keyFn(t);
     if (key === null || key === undefined || key === '') return;
     if (!map[key]) {
-      map[key] = { key, label: labelFn ? labelFn(t, key) : key, trades: 0, wins: 0, losses: 0, netPnl: 0 };
+      map[key] = {
+        key,
+        label: labelFn ? labelFn(t, key) : key,
+        trades: 0,
+        wins: 0,
+        losses: 0,
+        netPnl: 0,
+        rrSum: 0,
+        rrCount: 0,
+        winPnlSum: 0,
+        lossPnlSum: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+      };
     }
-    map[key].trades += 1;
-    if (t.result === 'Win') map[key].wins += 1;
-    if (t.result === 'Loss') map[key].losses += 1;
-    map[key].netPnl += Number(t.netPnl) || 0;
+    const g = map[key];
+    const pnl = Number(t.netPnl) || 0;
+    g.trades += 1;
+    g.netPnl += pnl;
+    if (t.result === 'Win') {
+      g.wins += 1;
+      g.winPnlSum += pnl;
+      g.grossProfit += pnl;
+    }
+    if (t.result === 'Loss') {
+      g.losses += 1;
+      g.lossPnlSum += pnl;
+      g.grossLoss += Math.abs(pnl);
+    }
+    const rr = Number(t.rr);
+    if (Number.isFinite(rr) && rr > 0) {
+      g.rrSum += rr;
+      g.rrCount += 1;
+    }
   });
-  return Object.values(map).map((g) => ({
-    ...g,
-    netPnl: Number(g.netPnl.toFixed(2)),
-    winRate: g.wins + g.losses ? (g.wins / (g.wins + g.losses)) * 100 : 0,
-  }));
+  return Object.values(map).map((g) => {
+    const decided = g.wins + g.losses;
+    return {
+      ...g,
+      netPnl: Number(g.netPnl.toFixed(2)),
+      winRate: decided ? (g.wins / decided) * 100 : 0,
+      avgRR: g.rrCount ? g.rrSum / g.rrCount : 0,
+      avgWin: g.wins ? g.winPnlSum / g.wins : 0,
+      avgLoss: g.losses ? g.lossPnlSum / g.losses : 0,
+      profitFactor: g.grossLoss > 0 ? g.grossProfit / g.grossLoss : g.grossProfit > 0 ? Infinity : 0,
+    };
+  });
 }
 
 export function computeAnalytics(trades) {
@@ -159,13 +217,38 @@ export function computeAnalytics(trades) {
   // Trades by Pair (the `instrument` field — e.g. NQ, ES, MNQ).
   const byPair = groupBy(sorted, (t) => t.instrument || 'Unassigned').sort((a, b) => b.trades - a.trades);
 
-  // Trades by Session — derived from entry time-of-day (see sessionFor above).
-  const bySession = groupBy(sorted, (t) => sessionFor(t.entryTime)).sort(
+  // Trades by Session — uses the explicit session field when logged,
+  // otherwise falls back to the entry-time heuristic (see sessionFor above).
+  const bySession = groupBy(sorted, (t) => t.session || sessionFor(t.entryTime)).sort(
     (a, b) => SESSION_ORDER.indexOf(a.key) - SESSION_ORDER.indexOf(b.key)
   );
 
   // Trades by Strategy (the `model` field).
   const byStrategy = groupBy(sorted, (t) => t.model || 'Unassigned').sort((a, b) => b.netPnl - a.netPnl);
+
+  // Trades by Weekday (Mon–Sun), derived from the trade's date.
+  const byWeekday = groupBy(sorted.filter((t) => t.date), (t) => toWeekday(t.date)).sort(
+    (a, b) => WEEKDAY_ORDER.indexOf(a.key) - WEEKDAY_ORDER.indexOf(b.key)
+  );
+
+  // Trades by Timeframe (M1 .. MN), ascending chart-timeframe order.
+  const byTimeframe = groupBy(sorted, (t) => t.timeframe || 'Unknown').sort(
+    (a, b) => TIMEFRAME_ORDER.indexOf(a.key) - TIMEFRAME_ORDER.indexOf(b.key)
+  );
+
+  // Trades by Direction (Buy / Sell).
+  const byDirection = groupBy(sorted, (t) => t.direction || 'Unknown').sort(
+    (a, b) => DIRECTION_ORDER.indexOf(a.key) - DIRECTION_ORDER.indexOf(b.key)
+  );
+
+  // Highlights for each dimension (net P&L driven, trade count for the
+  // "most traded" spotlight).
+  const bestPair = pickBest(byPair, 'netPnl');
+  const worstPair = pickWorst(byPair, 'netPnl');
+  const mostTradedPair = pickBest(byPair, 'trades');
+  const bestSession = pickBest(bySession, 'netPnl');
+  const worstSession = pickWorst(bySession, 'netPnl');
+  const bestDay = pickBest(byWeekday, 'netPnl');
 
   return {
     total,
@@ -190,5 +273,14 @@ export function computeAnalytics(trades) {
     byPair,
     bySession,
     byStrategy,
+    byWeekday,
+    byTimeframe,
+    byDirection,
+    bestPair,
+    worstPair,
+    mostTradedPair,
+    bestSession,
+    worstSession,
+    bestDay,
   };
 }
