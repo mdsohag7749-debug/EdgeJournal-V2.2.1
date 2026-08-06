@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2, User, AtSign, Clock, Camera, Save, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { fetchProfile, updateProfile } from '../lib/profileApi';
+import { updateProfile } from '../lib/profileApi';
 import { uploadAvatar } from '../lib/avatarApi';
 
 // Common IANA timezones, falling back to whatever the browser
@@ -43,39 +43,18 @@ function initials(name, email) {
 const BLANK = { fullName: '', username: '', bio: '', timezone: '' };
 
 export default function Profile() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { user, profile, profileLoading, setProfile } = useAuth();
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [profile, setProfile] = useState(null);
   const [form, setForm] = useState(BLANK);
   const [message, setMessage] = useState(null);
   const avatarInputRef = useRef(null);
 
   useEffect(() => {
-    let isMounted = true;
-    if (!user?.id) {
-      setLoading(false);
-      return;
+    if (profile) {
+      setForm({ fullName: profile.fullName, username: profile.username, bio: profile.bio, timezone: profile.timezone });
     }
-    setLoading(true);
-    fetchProfile(user.id)
-      .then((p) => {
-        if (!isMounted) return;
-        setProfile(p);
-        setForm(p ? { fullName: p.fullName, username: p.username, bio: p.bio, timezone: p.timezone } : BLANK);
-      })
-      .catch((err) => {
-        if (!isMounted) return;
-        setMessage({ type: 'error', text: err.message || 'Could not load your profile.' });
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, [user?.id]);
+  }, [profile]);
 
   function set(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -133,7 +112,7 @@ export default function Profile() {
     }
   }
 
-  if (loading) {
+  if (profileLoading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-muted)', padding: '40px 0' }}>
         <Loader2 size={18} className="auth-spin" color="var(--red)" />

@@ -1,10 +1,18 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { fetchProfile } from '../lib/profileApi';
 
 // Real Supabase authentication. Session persistence, auto-login on
 // refresh, and the auth-state listener are all handled here in one
 // place so every consumer (ProtectedRoute, Header, auth pages) just
 // reads `isAuthenticated` / `isLoading` and calls the methods below.
+//
+// It also owns the single shared source of truth for the signed-in
+// user's profile row (fullName, username, email, avatarUrl, bio,
+// timezone). Every consumer — Dashboard, Sidebar, Header, Profile,
+// Settings — reads the exact same `profile` object from here, so any
+// update (e.g. uploading a new photo) propagates instantly to every
+// visible component without a refresh.
 
 const AuthContext = createContext(undefined);
 
@@ -15,6 +23,8 @@ export function AuthProvider({ children }) {
   // this instead of redirecting to /login prematurely, which is what
   // makes "auto login" on page refresh actually work.
   const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -41,6 +51,32 @@ export function AuthProvider({ children }) {
       subscription.subscription.unsubscribe();
     };
   }, []);
+
+  // Load the signed-in user's profile whenever the auth user changes.
+  // Cleared on sign-out so no stale avatar leaks across users.
+  const userId = session?.user?.id;
+  useEffect(() => {
+    let isMounted = true;
+    if (!userId) {
+      setProfile(null);
+      setProfileLoading(false);
+      return;
+    }
+    setProfileLoading(true);
+    fetchProfile(userId)
+      .then((p) => {
+        if (isMounted) setProfile(p);
+      })
+      .catch(() => {
+        if (isMounted) setProfile(null);
+      })
+      .finally(() => {
+        if (isMounted) setProfileLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
 
   async function login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -75,6 +111,9 @@ export function AuthProvider({ children }) {
     user: session?.user ?? null,
     isAuthenticated: !!session,
     isLoading,
+    profile,
+    profileLoading,
+    setProfile,
     login,
     register,
     logout,

@@ -2,6 +2,32 @@ export function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
 }
 
+// Returns the time-of-day greeting for the given IANA timezone, falling
+// back to the browser's local timezone when none is provided. Periods:
+// Morning 05:00–11:59, Afternoon 12:00–16:59, Evening 17:00–20:59,
+// Night 21:00–04:59.
+export function timeGreeting(timezone) {
+  let hour;
+  try {
+    if (timezone) {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        hour: 'numeric',
+        hour12: false,
+      }).formatToParts(new Date());
+      hour = Number(parts.find((p) => p.type === 'hour')?.value);
+    }
+  } catch (e) {
+    hour = undefined;
+  }
+  if (Number.isNaN(hour)) hour = new Date().getHours();
+  hour = (hour || 0) % 24; // normalize (e.g. some engines report midnight as 24)
+  if (hour >= 5 && hour < 12) return { label: 'Morning', emoji: '☀️' };
+  if (hour >= 12 && hour < 17) return { label: 'Afternoon', emoji: '🌤️' };
+  if (hour >= 17 && hour < 21) return { label: 'Evening', emoji: '🌆' };
+  return { label: 'Night', emoji: '🌙' };
+}
+
 export function formatMoney(n) {
   const v = Number(n) || 0;
   const sign = v > 0 ? '+' : v < 0 ? '-' : '';

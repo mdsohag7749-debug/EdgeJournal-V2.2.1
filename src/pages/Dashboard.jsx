@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useAccounts } from '../context/AccountContext';
 import { computeDashboardStats, computeDisciplineScore } from '../lib/calculations';
 import { computeChallengeMetrics } from '../lib/challengeStats';
-import { formatMoney } from '../lib/utils';
+import { formatMoney, timeGreeting } from '../lib/utils';
 import AccountSwitcher from '../components/accounts/AccountSwitcher';
 import KpiCardsGrid from '../components/dashboard/KpiCardsGrid';
 import EquityAndPnLCharts from '../components/dashboard/EquityAndPnLCharts';
@@ -18,11 +18,11 @@ import RecentTradesTable from '../components/dashboard/RecentTradesTable';
 import TradingInsightsWidget from '../components/dashboard/TradingInsightsWidget';
 import DayTradesModal from '../components/dashboard/DayTradesModal';
 import TradeFormPanel from './panels/TradeFormPanel';
-import { Plus, Download, Calendar, Filter, Sparkles, User, Bell, Trophy, TrendingUp, ArrowUpRight, ArrowDownRight, AlertTriangle, XCircle, CheckCircle } from 'lucide-react';
+import { Plus, Download, Calendar, Filter, User, Bell, Trophy, TrendingUp, ArrowUpRight, ArrowDownRight, AlertTriangle, XCircle, CheckCircle } from 'lucide-react';
 
 export default function Dashboard({ onNavigate }) {
   const { trades, challenges, models, riskCriteria, checklistCriteria } = useData();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { accounts, selectedAccountId } = useAccounts();
   const navigate = useNavigate();
   const [dateRange, setDateRange] = useState('ALL'); // 'ALL' | '30D' | 'MONTH' | 'WEEK'
@@ -91,6 +91,23 @@ export default function Dashboard({ onNavigate }) {
 
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Trader';
 
+  // Time-based greeting. Computed from the profile timezone when set,
+  // otherwise the browser's local timezone, and re-evaluated automatically
+  // whenever the hour rolls over so the greeting stays current.
+  const [greeting, setGreeting] = useState(() => timeGreeting(profile?.timezone));
+  useEffect(() => {
+    let t;
+    function tick() {
+      setGreeting(timeGreeting(profile?.timezone));
+      const now = new Date();
+      const nextHour = new Date(now);
+      nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+      t = setTimeout(tick, Math.max(1000, nextHour.getTime() - now.getTime() + 1000));
+    }
+    tick();
+    return () => clearTimeout(t);
+  }, [profile?.timezone]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Top Header Controls Bar */}
@@ -122,13 +139,19 @@ export default function Dashboard({ onNavigate }) {
               justifyContent: 'center',
               color: '#3b82f6',
               fontWeight: 700,
+              overflow: 'hidden',
+              flexShrink: 0,
             }}
           >
-            <User size={20} />
+            {profile?.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <User size={20} />
+            )}
           </div>
           <div>
             <h2 style={{ fontSize: 18, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-              Welcome back, {userName} <Sparkles size={16} color="#f59e0b" />
+              Good {greeting.label}, {userName} <span style={{ fontSize: 16 }}>{greeting.emoji}</span>
             </h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--text-muted)' }}>
               <span style={{ fontWeight: 600, color: 'var(--text)' }}>Account:</span>

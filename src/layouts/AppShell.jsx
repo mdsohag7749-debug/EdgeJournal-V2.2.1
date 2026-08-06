@@ -91,27 +91,27 @@ function AppShellContent() {
         />
         <main className="app-main" style={{ flex: 1, minWidth: 0, padding: '28px 32px 60px' }}>
           {!activeRoute.hideHeader && <Header title={activeRoute.title} subtitle={activeRoute.subtitle} />}
-          <Suspense fallback={<LoadingScreen message="Loading page..." />}>
-            <AnimatePresence mode="wait">
-              <Routes location={location} key={location.pathname}>
-                {routes.map(({ path, Component }) => (
-                  <Route
-                    key={path}
-                    path={path}
-                    element={
-                      <PageTransition>
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              {routes.map(({ path, Component }) => (
+                <Route
+                  key={path}
+                  path={path}
+                  element={
+                    <PageTransition>
+                      <Suspense fallback={<LoadingScreen message="Loading page..." />}>
                         <Component onNavigate={handleNavigate} />
-                      </PageTransition>
-                    }
-                  />
-                ))}
-                {/* Alias: login redirects here per spec; Dashboard itself
-                    still lives at "/" so nothing about its route changes. */}
-                <Route path="/dashboard" element={<Navigate to={defaultRoute.path} replace />} />
-                <Route path="*" element={<Navigate to={defaultRoute.path} replace />} />
-              </Routes>
-            </AnimatePresence>
-          </Suspense>
+                      </Suspense>
+                    </PageTransition>
+                  }
+                />
+              ))}
+              {/* Alias: login redirects here per spec; Dashboard itself
+                  still lives at "/" so nothing about its route changes. */}
+              <Route path="/dashboard" element={<Navigate to={defaultRoute.path} replace />} />
+              <Route path="*" element={<Navigate to={defaultRoute.path} replace />} />
+            </Routes>
+          </AnimatePresence>
         </main>
       </div>
       <SyncPendingIndicator />

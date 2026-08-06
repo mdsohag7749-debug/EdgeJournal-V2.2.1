@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import {
   User,
@@ -25,7 +25,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme, THEME_PRESETS, ACCENT_PRESETS } from '../context/ThemeContext';
 import AccountsManager from '../components/accounts/AccountsManager';
 import { exportAllData, downloadJSONFile, importAllData, estimateStorageBytes } from '../lib/storage';
-import { fetchProfile, updateProfile } from '../lib/profileApi';
+import { updateProfile } from '../lib/profileApi';
 import { uploadAvatar } from '../lib/avatarApi';
 
 const COMMON_TIMEZONES = [
@@ -144,16 +144,26 @@ export default function Settings({ defaultSection = 'accounts' }) {
         </div>
 
         {/* Content */}
-        <motion.div layout style={{ flex: 1, minWidth: 0, maxWidth: 1200 }}>
-          {activeSection.key === 'profile' && <SectionProfile />}
-          {activeSection.key === 'appearance' && <SectionAppearance />}
-          {activeSection.key === 'accounts' && <AccountsManager />}
-          {activeSection.key === 'notifications' && <SectionNotifications />}
-          {activeSection.key === 'security' && <SectionSecurity />}
-          {activeSection.key === 'system' && <SectionSystem />}
-          {activeSection.key === 'backup' && <SectionBackup />}
-          {activeSection.key === 'about' && <SectionAbout />}
-        </motion.div>
+        <div style={{ flex: 1, minWidth: 0, maxWidth: 1200 }}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection.key}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 6 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              {activeSection.key === 'profile' && <SectionProfile />}
+              {activeSection.key === 'appearance' && <SectionAppearance />}
+              {activeSection.key === 'accounts' && <AccountsManager />}
+              {activeSection.key === 'notifications' && <SectionNotifications />}
+              {activeSection.key === 'security' && <SectionSecurity />}
+              {activeSection.key === 'system' && <SectionSystem />}
+              {activeSection.key === 'backup' && <SectionBackup />}
+              {activeSection.key === 'about' && <SectionAbout />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
@@ -257,36 +267,18 @@ function SectionAppearance() {
 
 // ---------------------------------------------------------------- Profile
 function SectionProfile() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { user, profile, profileLoading, setProfile } = useAuth();
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState('');
   const [form, setForm] = useState({ fullName: '', username: '', bio: '', timezone: '' });
   const [message, setMessage] = useState(null);
   const avatarInputRef = useRef(null);
 
   useEffect(() => {
-    let isMounted = true;
-    if (!user?.id) {
-      setLoading(false);
-      return;
+    if (profile) {
+      setForm({ fullName: profile.fullName, username: profile.username, bio: profile.bio, timezone: profile.timezone });
     }
-    setLoading(true);
-    fetchProfile(user.id)
-      .then((p) => {
-        if (!isMounted) return;
-        setAvatarUrl(p?.avatarUrl || '');
-        setForm(p ? { fullName: p.fullName, username: p.username, bio: p.bio, timezone: p.timezone } : { fullName: '', username: '', bio: '', timezone: '' });
-      })
-      .catch((err) => {
-        if (isMounted) setMessage({ type: 'error', text: err.message || 'Could not load your profile.' });
-      })
-      .finally(() => isMounted && setLoading(false));
-    return () => {
-      isMounted = false;
-    };
-  }, [user?.id]);
+  }, [profile]);
 
   function set(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -303,12 +295,13 @@ function SectionProfile() {
     setSaving(true);
     setMessage(null);
     try {
-      await updateProfile(user.id, {
+      const updated = await updateProfile(user.id, {
         fullName: form.fullName,
         username: cleanUsername,
         bio: form.bio,
         timezone: form.timezone,
       });
+      setProfile(updated);
       setMessage({ type: 'success', text: 'Profile updated.' });
     } catch (err) {
       const isUniqueViolation = err?.code === '23505';
@@ -326,7 +319,7 @@ function SectionProfile() {
     setMessage(null);
     try {
       const updated = await uploadAvatar(user.id, file);
-      setAvatarUrl(updated.avatarUrl || '');
+      setProfile(updated);
       setMessage({ type: 'success', text: 'Profile photo updated.' });
     } catch (err) {
       setMessage({ type: 'error', text: err.message || 'Could not upload your photo.' });
@@ -335,7 +328,7 @@ function SectionProfile() {
     }
   }
 
-  if (loading) {
+  if (profileLoading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-muted)', padding: '20px 0' }}>
         <Loader2 size={18} className="auth-spin" color="var(--red)" />
@@ -366,8 +359,8 @@ function SectionProfile() {
               overflow: 'hidden',
             }}
           >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            {profile?.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               (form.fullName || user?.email || 'T')[0].toUpperCase()
             )}
