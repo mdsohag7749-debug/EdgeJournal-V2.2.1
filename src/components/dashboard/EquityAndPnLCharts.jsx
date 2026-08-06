@@ -30,6 +30,19 @@ function ChartTooltip({ active, payload, label }) {
   );
 }
 
+// Dark tooltip for the trade-count breakdown. Uses the theme's dark card
+// colors so hovering the sector never shows the light/white Recharts
+// default tooltip box.
+function CountTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="card" style={{ padding: '8px 12px', fontSize: 12.5, background: 'var(--card-hover)', border: '1px solid var(--border)' }}>
+      <div style={{ color: 'var(--text-muted)', marginBottom: 2 }}>{label}</div>
+      <div style={{ fontWeight: 700 }}>{payload[0].value} trades</div>
+    </div>
+  );
+}
+
 export default function EquityAndPnLCharts({ stats }) {
   const [activeTab, setActiveTab] = useState('doughnut'); // 'doughnut' | 'pairs'
 
@@ -70,7 +83,7 @@ export default function EquityAndPnLCharts({ stats }) {
                 <CartesianGrid stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="date" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border-strong)' }} tickLine={false} />
                 <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatMoneyShort(v)} />
-                <Tooltip content={<ChartTooltip />} />
+                <Tooltip content={<ChartTooltip />} cursor={false} />
                 <Area
                   type="monotone"
                   dataKey="equity"
@@ -111,7 +124,7 @@ export default function EquityAndPnLCharts({ stats }) {
                 <CartesianGrid stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="date" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border-strong)' }} tickLine={false} />
                 <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatMoneyShort(v)} />
-                <Tooltip content={<ChartTooltip />} />
+                <Tooltip content={<ChartTooltip />} cursor={false} />
                 <Bar dataKey="pnl" radius={[4, 4, 0, 0]}>
                   {stats.dailyPnLData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.pnl >= 0 ? '#2fd66e' : '#ff4d5e'} />
@@ -167,7 +180,7 @@ export default function EquityAndPnLCharts({ stats }) {
                       <Cell key={`pie-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatFormatter={(val, name) => [`${val} trades`, name]} />
+                  <Tooltip content={<CountTooltip />} cursor={false} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -183,7 +196,7 @@ export default function EquityAndPnLCharts({ stats }) {
                 <CartesianGrid stroke="var(--border)" horizontal={false} />
                 <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickFormatter={(v) => formatMoneyShort(v)} />
                 <YAxis dataKey="label" type="category" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip content={<ChartTooltip />} />
+                <Tooltip content={<ChartTooltip />} cursor={false} />
                 <Bar dataKey="netPnl" radius={[0, 4, 4, 0]}>
                   {pairData.map((entry, index) => (
                     <Cell key={`pair-${index}`} fill={entry.netPnl >= 0 ? '#2fd66e' : '#ff4d5e'} />

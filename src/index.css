@@ -144,6 +144,37 @@ button:focus-visible {
   border-color: var(--border-strong);
 }
 
+/* Recharts hover surfaces must never flash light/white. The Recharts
+   default tooltip ships with a white background, so any tooltip (custom
+   or default) and its cursor/hover wrapper stay on the dark theme. SVG
+   chart shapes also get no browser-default focus outline. */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-sector,
+.recharts-bar,
+.recharts-cell,
+.recharts-pie,
+.recharts-layer,
+.recharts-tooltip-wrapper,
+.recharts-tooltip-cursor,
+.recharts-default-tooltip,
+.recharts-tooltip-item,
+.recharts-wrapper svg,
+.recharts-wrapper svg * {
+  outline: none;
+}
+.recharts-default-tooltip,
+.recharts-tooltip-wrapper {
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+}
+.recharts-default-tooltip * {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+
 .tag {
   display: inline-flex;
   align-items: center;
