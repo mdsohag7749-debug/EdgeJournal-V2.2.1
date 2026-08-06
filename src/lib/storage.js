@@ -10,6 +10,7 @@ export const KEYS = {
   riskCriteria: `${PREFIX}risk_criteria`,
   checklistCriteria: `${PREFIX}checklist_criteria`,
   accountName: `${PREFIX}account_name`,
+  tags: `${PREFIX}tags`,
 };
 
 export function loadJSON(key, fallback) {
@@ -62,6 +63,7 @@ export function exportAllData(liveTrades, liveGoals, livePlans, liveReflections,
     riskCriteria: loadJSON(KEYS.riskCriteria, []),
     checklistCriteria: loadJSON(KEYS.checklistCriteria, []),
     accountName: loadJSON(KEYS.accountName, 'My Trading Account'),
+    tags: loadJSON(KEYS.tags, []),
   };
   return data;
 }
@@ -89,4 +91,5 @@ export function importAllData(data) {
   if (Array.isArray(data.riskCriteria)) saveJSON(KEYS.riskCriteria, data.riskCriteria);
   if (Array.isArray(data.checklistCriteria)) saveJSON(KEYS.checklistCriteria, data.checklistCriteria);
   if (typeof data.accountName === 'string') saveJSON(KEYS.accountName, data.accountName);
+  if (Array.isArray(data.tags)) saveJSON(KEYS.tags, data.tags);
 }

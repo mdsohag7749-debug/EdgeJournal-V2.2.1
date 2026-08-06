@@ -10,6 +10,7 @@ import { toPlanRow, fromPlanRow } from '../lib/plansApi';
 import { toReflectionRow, fromReflectionRow } from '../lib/reflectionsApi';
 import { toStudyRow, fromStudyRow } from '../lib/studyApi';
 import { toChallengeRow, fromChallengeRow } from '../lib/challengesApi';
+import { DEFAULT_TAGS, colorForTag } from '../lib/tags';
 import {
   isOnline,
   isNetworkError,
@@ -532,10 +533,67 @@ export function DataProvider({ children}) {
   );
   const [accountName, setAccountNameState] = useState(() => loadJSON(KEYS.accountName, 'My Trading Account'));
 
+  // Managed tag library — the canonical set of tags users attach to
+  // trades, each with a color. Stored per-browser like models/checklists
+  // (README documents those as localStorage settings); the tags actually
+  // on a trade persist to Supabase via trades.update below.
+  const [tagLibrary, setTagLibrary] = useState(() => loadJSON(KEYS.tags, DEFAULT_TAGS));
+
   useEffect(() => saveJSON(KEYS.models, models), [models]);
   useEffect(() => saveJSON(KEYS.riskCriteria, riskCriteria), [riskCriteria]);
   useEffect(() => saveJSON(KEYS.checklistCriteria, checklistCriteria), [checklistCriteria]);
   useEffect(() => saveJSON(KEYS.accountName, accountName), [accountName]);
+  useEffect(() => saveJSON(KEYS.tags, tagLibrary), [tagLibrary]);
+
+  // Create a tag in the library. Returns the created tag (or null when
+  // the name is blank or already exists, case-insensitively).
+  const createTag = useCallback(
+    (name) => {
+      const trimmed = String(name || '').trim();
+      if (!trimmed) return null;
+      if (tagLibrary.some((t) => t.name.toLowerCase() === trimmed.toLowerCase())) return null;
+      const tag = { id: uid(), name: trimmed, color: colorForTag(trimmed, tagLibrary) };
+      setTagLibrary((prev) => [...prev, tag]);
+      return tag;
+    },
+    [tagLibrary]
+  );
+
+  // Remove a tag from the library AND strip it from every trade that
+  // uses it, so no stale tag strings ever linger on trade rows.
+  const deleteTag = useCallback(
+    (id) => {
+      const tag = tagLibrary.find((t) => t.id === id);
+      setTagLibrary((prev) => prev.filter((t) => t.id !== id));
+      if (tag) {
+        trades.items
+          .filter((t) => Array.isArray(t.tags) && t.tags.includes(tag.name))
+          .forEach((t) => trades.update(t.id, { tags: t.tags.filter((x) => x !== tag.name) }));
+      }
+    },
+    [tagLibrary, trades]
+  );
+
+  // Rename a tag across the library AND across every trade that uses it,
+  // keeping them in sync so chips and searches follow the rename.
+  const renameTag = useCallback(
+    (id, name) => {
+      const trimmed = String(name || '').trim();
+      const tag = tagLibrary.find((t) => t.id === id);
+      if (!tag || !trimmed || trimmed === tag.name) return;
+      if (tagLibrary.some((t) => t.id !== id && t.name.toLowerCase() === trimmed.toLowerCase())) return;
+      const oldName = tag.name;
+      setTagLibrary((prev) => prev.map((t) => (t.id === id ? { ...t, name: trimmed } : t)));
+      trades.items
+        .filter((t) => Array.isArray(t.tags) && t.tags.includes(oldName))
+        .forEach((t) => trades.update(t.id, { tags: t.tags.map((x) => (x === oldName ? trimmed : x)) }));
+    },
+    [tagLibrary, trades]
+  );
+
+  const setTagColor = useCallback((id, color) => {
+    setTagLibrary((prev) => prev.map((t) => (t.id === id ? { ...t, color } : t)));
+  }, []);
 
   const reloadAllFromStorage = useCallback(() => {
     trades.refetch();
@@ -548,6 +606,7 @@ export function DataProvider({ children}) {
     setRiskCriteriaState(loadJSON(KEYS.riskCriteria, DEFAULT_RISK_CRITERIA));
     setChecklistCriteriaState(loadJSON(KEYS.checklistCriteria, DEFAULT_CHECKLIST_CRITERIA));
     setAccountNameState(loadJSON(KEYS.accountName, 'My Trading Account'));
+    setTagLibrary(loadJSON(KEYS.tags, DEFAULT_TAGS));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -566,6 +625,12 @@ export function DataProvider({ children}) {
     setChecklistCriteria: setChecklistCriteriaState,
     accountName,
     setAccountName: setAccountNameState,
+    tagLibrary,
+    setTagLibrary,
+    createTag,
+    deleteTag,
+    renameTag,
+    setTagColor,
     reloadAllFromStorage,
   };
 
