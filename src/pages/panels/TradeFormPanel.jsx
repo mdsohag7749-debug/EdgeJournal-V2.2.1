@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Crosshair,
   Gauge,
+  Plus,
   Ruler,
   ScanLine,
   Sparkles,
@@ -20,6 +21,7 @@ import { TradeScreenshotManager } from '../../components/TradeScreenshots';
 import { useData } from '../../context/DataContext';
 import { useAccounts } from '../../context/AccountContext';
 import { sortTradeAccounts } from '../../components/accounts/accounts';
+import TagChip from '../../components/TagChip';
 import { todayISO, formatMoney } from '../../lib/utils';
 
 const INSTRUMENT_GROUPS = [
@@ -118,48 +120,48 @@ function computeDerived(form) {
   const rewardPerUnit = hasEntry && hasTP ? Math.abs(tp - entry) : 0;
   const rewardPips = rewardPerUnit > 0 && cfg.pip > 0 ? rewardPerUnit / cfg.pip : 0;
   let plannedRR = 0;
-  if (riskValue > 0) {
+  if (riskValue > 0 && riskAmount > 0) {
     plannedRR = (rewardPerUnit > 0 ? rewardPips * cfg.pipValue : 0) / riskValue;
-  } else if (hasEntry && hasSL && hasTP) {
-    const risk = Math.abs(entry - sl);
-    const reward = Math.abs(tp - entry);
-    if (risk > 0) plannedRR = reward / risk;
   }
 
-  // Lot / position size — fully automatic. position size can never drop
-  // to zero: when no balance/risk sizing is available it falls back to the
-  // manual lot size, else a single lot (matching the previous engine), so
-  // the recorded lot, RR and PnL never collapse.
+  // Lot / position size — fully automatic, but ONLY emitted once a stop
+  // distance and a risk budget are both known. Until then the position is
+  // unsized, so lot size, RR, PnL and PnL % stay uncomputed (shown as "—")
+  // rather than silently collapsing to 0.00 or assuming a single lot.
   const manualLot = lot !== null && lot > 0;
   const autoLot = riskValue > 0 && riskAmount > 0 ? riskAmount / riskValue : 0;
-  const qty = manualLot ? lot : autoLot > 0 ? autoLot : 1;
+  const canSize = manualLot || autoLot > 0;
+  const qty = canSize ? (manualLot ? lot : autoLot) : 0;
+
+  // A closed (won/lost) trade is only computable once a lot size is known.
+  const canComputePnL = hasEntry && hasExit && qty > 0;
 
   // Potential profit at the take profit level.
   const potentialProfit = plannedRR > 0 && riskAmount > 0 ? plannedRR * riskAmount : 0;
 
   // PnL ($) — (exit - entry) scaled to the instrument's per-price-point,
   // per-lot dollar value, then multiplied by the position's lot size.
-  // Compos produced from the same cfg.pipValue/pip used to size the position,
-  // so the displayed PnL always matches the calculator and the saved record.
+  // Built from the same cfg.pipValue/pip used to size the position, so the
+  // displayed PnL always matches the calculator and the saved record.
   let pnl = 0;
-  if (hasEntry && hasExit) {
+  if (canComputePnL) {
     const directionMultiplier = form.direction === 'Buy' ? 1 : -1;
     const valuePerPricePoint = cfg.pipValue / cfg.pip; // $ per 1.0 price move, per 1.0 lot
-    const effQty = qty > 0 ? qty : 1; // fall back to 1 lot if never sized
-    pnl = (exit - entry) * directionMultiplier * valuePerPricePoint * effQty;
+    pnl = (exit - entry) * directionMultiplier * valuePerPricePoint * qty;
   }
 
   // PnL (%) vs account balance
   let pnlPct = 0;
-  if (hasBalance) pnlPct = (pnl / balance) * 100;
+  if (canComputePnL && hasBalance) pnlPct = (pnl / balance) * 100;
 
   // Realized R multiple (how many R the trade actually returned)
   let realizedRR = 0;
   if (riskAmount > 0) realizedRR = pnl / riskAmount;
 
-  // Result (auto)
+  // Result (auto) — only once the trade is sized and closed, so an unsized
+  // trade is never mislabeled as a break-even.
   let result = '';
-  if (hasEntry && hasExit) result = pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'BE';
+  if (canComputePnL) result = pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'BE';
 
   // Trade duration (HH:MM)
   let duration = '';
@@ -187,6 +189,7 @@ function computeDerived(form) {
     potentialProfit,
     qty,
     autoLot,
+    canComputePnL,
     pnl,
     pnlPct,
     result,
@@ -281,6 +284,7 @@ const BLANK = {
   notes: '',
   lessonsLearned: '',
   screenshot: '',
+  tags: [],
 };
 
 function Section({ icon, title, accent = { bg: 'rgba(255,255,255,0.06)', fg: 'var(--text-muted)' }, children }) {
@@ -411,7 +415,7 @@ function ChecklistBlock({ title, criteria, values, onChange }) {
 }
 
 export default function TradeFormPanel({ open, onClose, onSave, initial }) {
-  const { models, riskCriteria, checklistCriteria } = useData();
+  const { models, riskCriteria, checklistCriteria, tagLibrary, createTag } = useData();
   const { accounts, preferredAccountId } = useAccounts();
   const [form, setForm] = useState(BLANK);
   const [errors, setErrors] = useState({});
@@ -568,8 +572,8 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
 
               {isClosed ? (
                 <>
-                  <SummaryStat label="PnL $" value={formatMoney(derived.pnl)} color={pnlColor} />
-                  <SummaryStat label="PnL %" value={`${derived.pnlPct >= 0 ? '+' : ''}${derived.pnlPct.toFixed(2)}%`} color={pnlColor} />
+                  <SummaryStat label="PnL $" value={derived.canComputePnL ? formatMoney(derived.pnl) : '—'} color={pnlColor} />
+                  <SummaryStat label="PnL %" value={derived.canComputePnL ? `${derived.pnlPct >= 0 ? '+' : ''}${derived.pnlPct.toFixed(2)}%` : '—'} color={pnlColor} />
                   <SummaryStat label="Duration" value={derived.duration || '—'} color="var(--text-muted)" />
                 </>
               ) : (
@@ -919,6 +923,11 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
                   })}
                 </div>
               </div>
+              <div className="field-row cols-1">
+                <div className="field">
+                  <TagSelect value={form.tags || []} onChange={(v) => set('tags', v)} library={tagLibrary} onCreate={createTag} />
+                </div>
+              </div>
             </Section>
 
             <Section icon={<Ruler size={14} />} title="Media">
@@ -943,5 +952,64 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
         </div>
       </div>
     </SidePanel>
+  );
+}
+
+// Multi-select tag picker for the trade form. Renders the managed tag
+// library as colored chips (toggled on/off) plus an inline input to type
+// a brand-new tag, which also adds it to the library so it's reusable.
+function TagSelect({ value, onChange, library, onCreate }) {
+  const [draft, setDraft] = useState('');
+
+  function toggle(name) {
+    if (value.includes(name)) onChange(value.filter((x) => x !== name));
+    else onChange([...value, name]);
+  }
+
+  function addNew() {
+    const name = draft.trim();
+    if (!name) return;
+    if (!value.includes(name)) onChange([...value, name]);
+    if (!library.some((t) => t.name.toLowerCase() === name.toLowerCase())) onCreate(name);
+    setDraft('');
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <label>Tags</label>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {library.length === 0 && <span style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>No tags yet — type one below to create it.</span>}
+        {library.map((t) => (
+          <TagChip
+            key={t.id}
+            name={t.name}
+            color={t.color}
+            active={value.includes(t.name)}
+            onClick={() => toggle(t.name)}
+          />
+        ))}
+        {value
+          .filter((name) => !library.some((t) => t.name === name))
+          .map((name) => (
+            <TagChip key={name} name={name} active onClick={() => toggle(name)} />
+          ))}
+      </div>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addNew();
+            }
+          }}
+          placeholder="Type a tag and press Enter…"
+        />
+        <button className="btn btn-ghost btn-sm" type="button" onClick={addNew} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Plus size={13} /> Add
+        </button>
+      </div>
+    </div>
   );
 }
