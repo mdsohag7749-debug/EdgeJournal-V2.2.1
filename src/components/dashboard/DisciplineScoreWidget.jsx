@@ -6,85 +6,83 @@ import { Target } from 'lucide-react';
 const MOODS = [
   {
     min: 0,
-    max: 19,
-    emoji: '😢',
-    label: 'No Data Yet',
-    color: '#9a9aa3',
-    bg: 'rgba(154,154,163,0.10)',
-    message: 'Start logging your trades. Every professional trader begins with the first journal.',
-  },
-  {
-    min: 20,
-    max: 39,
-    emoji: '😟',
-    label: 'Needs Focus',
+    max: 29,
+    emoji: '😞',
+    label: 'Poor',
     color: '#ff4d5e',
     bg: 'rgba(255,77,94,0.08)',
-    message: 'Your discipline is weak. Focus on following your trading rules.',
+    message: 'Discipline needs work. Return to your rules and review every deviation from plan.',
   },
   {
-    min: 40,
-    max: 59,
-    emoji: '😐',
-    label: 'Improving',
+    min: 30,
+    max: 49,
+    emoji: '😕',
+    label: 'Needs Work',
     color: '#f59e0b',
     bg: 'rgba(245,158,11,0.08)',
-    message: "You're making progress. Stay consistent and avoid emotional trades.",
+    message: "You're building discipline. Keep your pre-trade plan and risk checks consistent.",
   },
   {
-    min: 60,
-    max: 79,
+    min: 50,
+    max: 69,
     emoji: '🙂',
-    label: 'Good',
+    label: 'Fair',
     color: '#3b82f6',
     bg: 'rgba(59,130,246,0.08)',
-    gradient: ['#fbbf24', '#3b82f6'],
-    message: "Good discipline. Keep following your plan and trust your edge.",
+    gradient: ['#60a5fa', '#3b82f6'],
+    message: 'Consolidating. Tighten your checklist adherence to turn fair into consistent.',
   },
   {
-    min: 80,
-    max: 89,
-    emoji: '😎',
-    label: 'Excellent',
+    min: 70,
+    max: 84,
+    emoji: '😊',
+    label: 'Good',
     color: '#2fd66e',
     bg: 'rgba(47,214,110,0.08)',
-    message: "Excellent discipline. You're trading like a professional.",
+    gradient: ['#34d399', '#2fd66e'],
+    message: "Good discipline. Keep following your plan and protecting your edge.",
   },
   {
-    min: 90,
+    min: 85,
+    max: 94,
+    emoji: '🔥',
+    label: 'Excellent',
+    color: '#f97316',
+    bg: 'rgba(249,115,22,0.08)',
+    gradient: ['#fb923c', '#f97316'],
+    message: "Excellent discipline. You're executing like a professional.",
+  },
+  {
+    min: 95,
     max: 100,
-    emoji: '🏆🔥',
-    label: 'Elite Trader',
+    emoji: '👑',
+    label: 'Elite Discipline',
     color: '#10b981',
     bg: 'rgba(16,185,129,0.08)',
     gradient: ['#34d399', '#fbbf24'],
-    message: "Outstanding discipline. You're operating with institutional consistency.",
+    message: "Elite discipline. You're operating with institutional consistency.",
   },
 ];
 
-export default function DisciplineScoreWidget({ radarScores }) {
-  const entry = (radarScores || []).find((r) => r.subject === 'Discipline');
-  const score = entry ? entry.score : 0;
+export default function DisciplineScoreWidget({ score = 0, metrics = [] }) {
+  const s = Math.max(0, Math.min(100, Number(score) || 0));
 
-  const mood = MOODS.find((m) => score >= m.min && score <= m.max) || MOODS[0];
+  const mood = MOODS.find((m) => s >= m.min && s <= m.max) || MOODS[0];
 
   const r = 30;
   const circ = 2 * Math.PI * r;
-  const offset = circ * (1 - score / 100);
+  const offset = circ * (1 - s / 100);
 
-  // Checklist metrics — derived from the existing radar scores (no new logic).
-  const radarMap = {};
-  (radarScores || []).forEach((r) => {
-    radarMap[r.subject] = r.score;
-  });
-  const metrics = [
-    { label: 'Plan Following', value: radarMap.Discipline ?? 0 },
-    { label: 'Risk Management', value: radarMap['Risk Management'] ?? 0 },
-    { label: 'Consistency', value: radarMap.Consistency ?? 0 },
-    { label: 'Execution', value: radarMap.Execution ?? 0 },
-    { label: 'Emotional Control', value: radarMap.Psychology ?? 0 },
-    { label: 'Review', value: radarMap.Profitability ?? 0 },
-  ];
+  const scoreMetrics = metrics.length
+    ? metrics
+    : [
+        { label: 'Plan Following', value: 0 },
+        { label: 'Risk Management', value: 0 },
+        { label: 'Consistency', value: 0 },
+        { label: 'Execution', value: 0 },
+        { label: 'Emotional Control', value: 0 },
+        { label: 'Review & Reflection', value: 0 },
+      ];
 
   return (
     <motion.div
@@ -166,7 +164,7 @@ export default function DisciplineScoreWidget({ radarScores }) {
           >
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span
-                key={score}
+                key={s}
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.5, opacity: 0 }}
@@ -174,7 +172,7 @@ export default function DisciplineScoreWidget({ radarScores }) {
                 className="mono"
                 style={{ fontSize: 26, fontWeight: 800, lineHeight: 1, color: mood.color }}
               >
-                {score}
+                {s}
               </motion.span>
             </AnimatePresence>
             <span style={{ fontSize: 10, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -231,7 +229,7 @@ export default function DisciplineScoreWidget({ radarScores }) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {metrics.map((m) => (
+        {scoreMetrics.map((m) => (
           <div key={m.label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5 }}>
               <span style={{ color: 'var(--text-muted)' }}>{m.label}</span>

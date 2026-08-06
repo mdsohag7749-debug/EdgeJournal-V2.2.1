@@ -10,6 +10,7 @@ import EmptyState from '../components/EmptyState';
 import SidePanel from '../components/SidePanel';
 import { loadJSON, saveJSON, downloadJSONFile } from '../lib/storage';
 import { uid, todayISO, formatDate, formatMoney, pnlClass, resultTagClass, directionTagClass } from '../lib/utils';
+import { REVIEW_ITEMS, isClosedTrade, reviewScoreForTrade, reviewStatusForTrade } from '../lib/calculations';
 import {
   Plus,
   ChevronDown,
@@ -133,8 +134,11 @@ function SelectBox({ checked }) {
   return checked ? <CheckSquare size={18} color="var(--red)" /> : <Square size={18} color="var(--text-faint)" />;
 }
 
-const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, plan, onToggle, onEdit, onDelete, onQuickEdit, onToggleFavorite, onToggleSelect, onLightbox }) {
+const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, plan, onToggle, onEdit, onDelete, onQuickEdit, onToggleFavorite, onToggleSelect, onLightbox, onUpdateReview }) {
   const tags = Array.isArray(t.tags) ? t.tags : [];
+  const closed = isClosedTrade(t);
+  const reviewScore = reviewScoreForTrade(t);
+  const reviewStatus = reviewStatusForTrade(t);
   return (
     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
       <div
@@ -161,7 +165,6 @@ const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, 
           </span>
           <span className={`tag ${resultTagClass(t.result)}`}>{t.result}</span>
           {t.model && <span className="tag tag-neutral">{t.model}</span>}
-          {t.protocol && <span className="tag tag-neutral">{t.protocol}</span>}
           {tags.length > 0 && (
             <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {tags.slice(0, 2).map((tag) => (
@@ -175,6 +178,18 @@ const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, 
           {t.rating && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12.5, color: 'var(--text-muted)' }}>
               <Star size={12} fill="var(--red)" color="var(--red)" /> {t.rating}/10
+            </span>
+          )}
+          {closed && (
+            <span
+              className="tag"
+              style={{
+                background: reviewScore === 100 ? 'rgba(47,214,110,0.12)' : 'rgba(245,158,11,0.10)',
+                color: reviewScore === 100 ? 'var(--win)' : '#f59e0b',
+                borderColor: 'transparent',
+              }}
+            >
+              {reviewStatus}
             </span>
           )}
         </div>
@@ -227,6 +242,8 @@ const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, 
             <ChecklistSummary title="Risk Management" values={t.riskChecklist} />
             <ChecklistSummary title="Trade Checklist" values={t.tradeChecklist} />
             <ChecklistSummary title="Mistakes" values={t.mistakes} />
+
+            <ReviewBlock t={t} onChange={(review) => onUpdateReview?.(t.id, review)} />
           </div>
           <div style={{ paddingTop: 14 }}>
             {t.screenshot ? (
@@ -368,7 +385,6 @@ export default function TradingJournal() {
           t.direction,
           t.result,
           t.model,
-          t.protocol,
           t.session,
           t.tradeGrade,
           t.emotion,
@@ -479,6 +495,15 @@ export default function TradingJournal() {
   const toggleFavorite = useCallback(
     (trade) => {
       trades.update(trade.id, { isFavorite: !trade.isFavorite });
+    },
+    [trades.update]
+  );
+
+  // Persist a trade's Review & Reflection checklist reactively — the
+  // discipline engine recalculates from the updated trade automatically.
+  const handleUpdateReview = useCallback(
+    (id, review) => {
+      trades.update(id, { review });
     },
     [trades.update]
   );
@@ -810,6 +835,7 @@ export default function TradingJournal() {
               onToggleFavorite={toggleFavorite}
               onToggleSelect={toggleSelect}
               onLightbox={setLightbox}
+              onUpdateReview={handleUpdateReview}
             />
           ))}
 
@@ -1002,6 +1028,57 @@ function ChecklistSummary({ title, values }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// Post-trade Review & Reflection. A closed trade starts at 0% and each
+// completed item adds 20%; toggling updates the trade reactively so the
+// Discipline Score, badge, emoji and ring recalculate instantly.
+function ReviewBlock({ t, onChange }) {
+  const closed = isClosedTrade(t);
+  const review = t?.review || {};
+  const done = REVIEW_ITEMS.filter((i) => review[i.key]).length;
+  const score = Math.round((done / REVIEW_ITEMS.length) * 100);
+  const status = reviewStatusForTrade(t);
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+        <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+          Review &amp; Reflection
+        </span>
+        <span className="tag" style={{ background: score === 100 ? 'rgba(47,214,110,0.12)' : 'rgba(245,158,11,0.10)', color: score === 100 ? 'var(--win)' : '#f59e0b', borderColor: 'transparent' }}>
+          {score}% · {status}
+        </span>
+      </div>
+
+      {!closed ? (
+        <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: 0 }}>
+          This trade is still open. Close it first, then complete the review to earn Reflection points.
+        </p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ height: 5, background: 'var(--bg)', borderRadius: 999, overflow: 'hidden' }}>
+            <div style={{ width: `${score}%`, height: '100%', background: score >= 80 ? 'var(--win)' : score >= 40 ? '#f59e0b' : 'var(--loss)', borderRadius: 999, transition: 'width 0.3s ease' }} />
+          </div>
+          {REVIEW_ITEMS.map((item) => {
+            const checked = !!review[item.key];
+            return (
+              <label key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, cursor: 'pointer', color: checked ? 'var(--text)' : 'var(--text-muted)' }}>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => onChange({ ...review, [item.key]: !checked })}
+                  style={{ marginTop: 0, accentColor: 'var(--red)' }}
+                />
+                <span>{item.label}</span>
+                <span style={{ marginLeft: 'auto', fontSize: 10.5, color: checked ? 'var(--win)' : 'var(--text-faint)' }}>+20%</span>
+              </label>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

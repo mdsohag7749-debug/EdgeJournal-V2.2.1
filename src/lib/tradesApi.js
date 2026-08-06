@@ -16,7 +16,6 @@ const TEXT_FIELDS = {
   session: 'session',
   timeframe: 'timeframe',
   model: 'model',
-  protocol: 'protocol',
   result: 'result',
   planId: 'plan_id',
   tradeGrade: 'trade_grade',
@@ -84,6 +83,9 @@ export function toTradeRow(trade, userId, { partial = false, accountId } = {}) {
   if (!partial || 'tags' in trade) row.tags = Array.isArray(trade.tags) ? trade.tags : [];
   if (!partial || 'isFavorite' in trade) row.is_favorite = !!trade.isFavorite;
 
+  // review (jsonb) — the closed-trade Review & Reflection checklist.
+  if (!partial || 'review' in trade) row.review = trade.review || {};
+
   return row;
 }
 
@@ -115,7 +117,6 @@ export function fromTradeRow(row) {
     session: row.session || '',
     timeframe: row.timeframe || '',
     model: row.model || '',
-    protocol: row.protocol || '',
     entryPrice: row.entry_price ?? '',
     exitPrice: row.exit_price ?? '',
     contracts: row.contracts ?? '',
@@ -143,6 +144,7 @@ export function fromTradeRow(row) {
     createdAt: row.created_at,
     tags: Array.isArray(row.tags) ? row.tags : [],
     isFavorite: !!row.is_favorite,
+    review: row.review || {},
   };
 }
 

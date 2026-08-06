@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { useAccounts } from '../context/AccountContext';
-import { computeDashboardStats } from '../lib/calculations';
+import { computeDashboardStats, computeDisciplineScore } from '../lib/calculations';
 import { computeChallengeMetrics } from '../lib/challengeStats';
 import { formatMoney } from '../lib/utils';
 import AccountSwitcher from '../components/accounts/AccountSwitcher';
@@ -21,7 +21,7 @@ import TradeFormPanel from './panels/TradeFormPanel';
 import { Plus, Download, Calendar, Filter, Sparkles, User, Bell, Trophy, TrendingUp, ArrowUpRight, ArrowDownRight, AlertTriangle, XCircle, CheckCircle } from 'lucide-react';
 
 export default function Dashboard({ onNavigate }) {
-  const { trades, challenges } = useData();
+  const { trades, challenges, models, riskCriteria, checklistCriteria } = useData();
   const { user } = useAuth();
   const { accounts, selectedAccountId } = useAccounts();
   const navigate = useNavigate();
@@ -47,6 +47,14 @@ export default function Dashboard({ onNavigate }) {
   }, [trades.items, dateRange]);
 
   const stats = useMemo(() => computeDashboardStats(filteredTrades), [filteredTrades]);
+
+  // Discipline Score — computed live from the user's real trades and System
+  // data (trading models + checklists), so editing a checklist, adding a model
+  // or reviewing a trade instantly recalculates it.
+  const discipline = useMemo(
+    () => computeDisciplineScore(filteredTrades, { models, riskCriteria, checklistCriteria }),
+    [filteredTrades, models, riskCriteria, checklistCriteria]
+  );
 
   const selectedAccount = selectedAccountId
     ? accounts.find((a) => a.id === selectedAccountId)
@@ -300,7 +308,7 @@ export default function Dashboard({ onNavigate }) {
       >
         <div className="dash-insight-left">
           <PerformanceRadarChart radarScores={stats.radarScores} />
-          <DisciplineScoreWidget radarScores={stats.radarScores} />
+          <DisciplineScoreWidget score={discipline.score} metrics={discipline.metrics} />
         </div>
         <CalendarHeatmapWidget
           dayMap={stats.dayMap}

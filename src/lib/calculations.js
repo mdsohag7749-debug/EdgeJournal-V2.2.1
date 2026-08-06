@@ -147,7 +147,6 @@ export function computeDashboardStats(trades) {
   const timeframePerformance = groupBy((t) => t.timeframe);
   const directionPerformance = groupBy((t) => t.direction);
   const modelPerformance = groupBy((t) => t.model);
-  const protocolPerformance = groupBy((t) => t.protocol);
 
   const topWinningPairs = [...pairPerformance].filter((p) => p.netPnl > 0).slice(0, 3);
   const topLosingPairs = [...pairPerformance].filter((p) => p.netPnl < 0).reverse().slice(0, 3);
@@ -278,11 +277,130 @@ export function computeDashboardStats(trades) {
     timeframePerformance,
     directionPerformance,
     modelPerformance,
-    protocolPerformance,
     topWinningPairs,
     topLosingPairs,
     dayMap,
     radarScores,
     insights,
   };
+}
+
+const NEGATIVE_EMOTIONS = ['Fear', 'Greed', 'FOMO', 'Revenge', 'Hesitation'];
+const CALM_EMOTIONS = ['Confident', 'Calm'];
+
+// The five review components a closed trade can complete. Each completed
+// item is worth 20% of the trade's Review score (5 × 20% = 100%).
+export const REVIEW_ITEMS = [
+  { key: 'beforeScreenshot', label: 'Before Trade Screenshot' },
+  { key: 'afterScreenshot', label: 'After Trade Screenshot' },
+  { key: 'reviewSummary', label: 'Trade Review Summary' },
+  { key: 'lessonLearned', label: 'Lesson Learned / Mistake' },
+  { key: 'emotionReflection', label: 'Emotion & Psychology Reflection' },
+];
+
+// A trade counts as "closed" (reviewable) once it has an exit outcome.
+export function isClosedTrade(t) {
+  if (!t) return false;
+  if (Number(t.exitPrice) > 0) return true;
+  const r = (t.result || '').toLowerCase();
+  return r === 'win' || r === 'loss' || r === 'be';
+}
+
+// Review score (0–100) for a single trade: completed items ÷ 5 × 100.
+export function reviewScoreForTrade(t) {
+  const review = t?.review || {};
+  const done = REVIEW_ITEMS.filter((i) => review[i.key]).length;
+  return Math.round((done / REVIEW_ITEMS.length) * 100);
+}
+
+export function reviewStatusForTrade(t) {
+  return reviewScoreForTrade(t) === 100 ? 'Reviewed' : 'Pending Review';
+}
+
+// Institutional Discipline Score engine — every metric is derived from the
+// account's real trades + the user's configured System data (trading models,
+// risk checklist, trade checklist). No placeholders, no fake floors:
+// zero trades -> every metric 0.
+export function computeDisciplineScore(trades, { models = [], riskCriteria = [], checklistCriteria = [] } = {}) {
+  const list = Array.isArray(trades) ? trades : [];
+  const total = list.length;
+
+  const configuredModels = (models || []).filter(Boolean);
+  const configuredRisk = (riskCriteria || []).filter(Boolean);
+  const configuredChecklist = (checklistCriteria || []).filter(Boolean);
+
+  const ratio = (n, d) => (d > 0 ? (n / d) * 100 : 0);
+  const clamp = (v) => Math.max(0, Math.min(100, Math.round(v)));
+
+  // A) Plan Following — trades linked to a configured Trading Model count as
+  // planned; trades without a selected model reduce plan adherence.
+  const planned = list.filter((t) => t.model && configuredModels.includes(t.model)).length;
+  const planFollowing = clamp(ratio(planned, total));
+
+  // B) Execution — completed Trade Checklist items vs the configured checklist,
+  // averaged over trades that actually used a checklist (real data only).
+  let execNumer = 0;
+  let execDenom = 0;
+  if (configuredChecklist.length) {
+    list.forEach((t) => {
+      const tc = t.tradeChecklist || {};
+      if (Object.keys(tc).length) {
+        execNumer += configuredChecklist.filter((c) => tc[c]).length;
+        execDenom += configuredChecklist.length;
+      }
+    });
+  }
+  const execution = clamp(ratio(execNumer, execDenom));
+
+  // C) Risk Management — completed Risk Management Checklist items vs the
+  // configured checklist, averaged over trades that used one.
+  let riskNumer = 0;
+  let riskDenom = 0;
+  if (configuredRisk.length) {
+    list.forEach((t) => {
+      const rc = t.riskChecklist || {};
+      if (Object.keys(rc).length) {
+        riskNumer += configuredRisk.filter((c) => rc[c]).length;
+        riskDenom += configuredRisk.length;
+      }
+    });
+  }
+  const riskManagement = clamp(ratio(riskNumer, riskDenom));
+
+  // D) Consistency — percentage of trading days that ended in profit.
+  const dayMap = {};
+  list.forEach((t) => {
+    if (!t.date) return;
+    if (!dayMap[t.date]) dayMap[t.date] = { win: 0 };
+    if ((Number(t.netPnl) || 0) > 0) dayMap[t.date].win += 1;
+  });
+  const days = Object.values(dayMap);
+  const winDays = days.filter((d) => d.win > 0).length;
+  const consistency = clamp(ratio(winDays, days.length));
+
+  // E) Emotional Control — share of emotion-tagged trades logged as calm/confident.
+  const emotionTrades = list.filter((t) => t.emotion && (CALM_EMOTIONS.includes(t.emotion) || NEGATIVE_EMOTIONS.includes(t.emotion)));
+  const calmTrades = emotionTrades.filter((t) => CALM_EMOTIONS.includes(t.emotion)).length;
+  const emotionalControl = clamp(ratio(calmTrades, emotionTrades.length));
+
+  // F) Review & Reflection — average Review score across all closed trades.
+  // A completed trade starts at 0% and only rises as review items are done.
+  const closedTrades = list.filter(isClosedTrade);
+  const reviewReflection = clamp(
+    closedTrades.length ? closedTrades.reduce((s, t) => s + reviewScoreForTrade(t), 0) / closedTrades.length : 0
+  );
+
+  const metrics = [
+    { label: 'Plan Following', value: planFollowing },
+    { label: 'Risk Management', value: riskManagement },
+    { label: 'Consistency', value: consistency },
+    { label: 'Execution', value: execution },
+    { label: 'Emotional Control', value: emotionalControl },
+    { label: 'Review & Reflection', value: reviewReflection },
+  ];
+
+  // Weighted average (equal weight per pillar).
+  const score = clamp(metrics.reduce((s, m) => s + m.value, 0) / metrics.length);
+
+  return { score, metrics, total };
 }

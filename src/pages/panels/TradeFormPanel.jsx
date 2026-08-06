@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Building2,
   Calculator,
+  ChevronDown,
+  ChevronRight,
   Crosshair,
   Gauge,
   Ruler,
@@ -116,12 +118,21 @@ function computeDerived(form) {
   const rewardPerUnit = hasEntry && hasTP ? Math.abs(tp - entry) : 0;
   const rewardPips = rewardPerUnit > 0 && cfg.pip > 0 ? rewardPerUnit / cfg.pip : 0;
   let plannedRR = 0;
-  if (riskValue > 0) plannedRR = (rewardPerUnit > 0 ? rewardPips * cfg.pipValue : 0) / riskValue;
+  if (riskValue > 0) {
+    plannedRR = (rewardPerUnit > 0 ? rewardPips * cfg.pipValue : 0) / riskValue;
+  } else if (hasEntry && hasSL && hasTP) {
+    const risk = Math.abs(entry - sl);
+    const reward = Math.abs(tp - entry);
+    if (risk > 0) plannedRR = reward / risk;
+  }
 
-  // Lot / position size — fully automatic.
+  // Lot / position size — fully automatic. position size can never drop
+  // to zero: when no balance/risk sizing is available it falls back to the
+  // manual lot size, else a single lot (matching the previous engine), so
+  // the recorded lot, RR and PnL never collapse.
   const manualLot = lot !== null && lot > 0;
   const autoLot = riskValue > 0 && riskAmount > 0 ? riskAmount / riskValue : 0;
-  const qty = manualLot ? lot : autoLot > 0 ? autoLot : lot ?? 0;
+  const qty = manualLot ? lot : autoLot > 0 ? autoLot : 1;
 
   // Potential profit at the take profit level.
   const potentialProfit = plannedRR > 0 && riskAmount > 0 ? plannedRR * riskAmount : 0;
@@ -247,7 +258,6 @@ const BLANK = {
   session: '',
   timeframe: '',
   model: '',
-  protocol: 'LRLRC',
   entryPrice: '',
   exitPrice: '',
   contracts: '',
@@ -342,8 +352,66 @@ function SummaryStat({ label, value, color }) {
   );
 }
 
+function ChecklistBlock({ title, criteria, values, onChange }) {
+  const [open, setOpen] = useState(false);
+  const checkedCount = criteria.filter((c) => values[c]).length;
+
+  return (
+    <div className="card" style={{ padding: 0, background: 'var(--card)' }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '13px 16px',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--text)',
+        }}
+      >
+        <span style={{ fontWeight: 600, fontSize: 13.5, display: 'flex', alignItems: 'center', gap: 8 }}>
+          {open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+          {title}
+        </span>
+        <span
+          className="tag"
+          style={{
+            background: checkedCount === criteria.length && criteria.length > 0 ? 'rgba(47,214,110,0.12)' : 'rgba(255,255,255,0.06)',
+            color: checkedCount === criteria.length && criteria.length > 0 ? 'var(--win)' : 'var(--text-muted)',
+            borderColor: 'transparent',
+          }}
+        >
+          {checkedCount}/{criteria.length}
+        </span>
+      </button>
+      {open && (
+        <div style={{ padding: '4px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {criteria.length === 0 && (
+            <p style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>No criteria defined yet. Add some in the System tab.</p>
+          )}
+          {criteria.map((c) => (
+            <label key={c} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={!!values[c]}
+                onChange={(e) => onChange({ ...values, [c]: e.target.checked })}
+                style={{ marginTop: 2, accentColor: 'var(--red)' }}
+              />
+              <span>{c}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function TradeFormPanel({ open, onClose, onSave, initial }) {
-  const { models } = useData();
+  const { models, riskCriteria, checklistCriteria } = useData();
   const { accounts, preferredAccountId } = useAccounts();
   const [form, setForm] = useState(BLANK);
   const [errors, setErrors] = useState({});
@@ -754,6 +822,21 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
                 </div>
               </div>
             </Section>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <ChecklistBlock
+                title="Risk Management Checklist"
+                criteria={riskCriteria}
+                values={form.riskChecklist}
+                onChange={(v) => set('riskChecklist', v)}
+              />
+              <ChecklistBlock
+                title="Trade Checklist"
+                criteria={checklistCriteria}
+                values={form.tradeChecklist}
+                onChange={(v) => set('tradeChecklist', v)}
+              />
+            </div>
           </div>
 
           {/* RIGHT: tags, media, notes */}
