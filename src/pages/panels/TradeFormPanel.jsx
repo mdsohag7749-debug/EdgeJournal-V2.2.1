@@ -38,7 +38,6 @@ const INSTRUMENT_GROUPS = [
 ];
 const SESSIONS = ['Asia', 'London', 'New York', 'London + New York'];
 const EMOTIONS = ['Confident', 'Calm', 'Fear', 'Greed', 'FOMO', 'Revenge', 'Hesitation'];
-const MISTAKES = ['Overtrading', 'Early Entry', 'Late Entry', 'Moved SL', 'Moved TP', 'FOMO', 'Revenge', 'Ignored Plan', 'News Trade'];
 
 // Mistake Tracker — the defined mistake vocabulary for the dedicated Mistakes
 // section. Multiple can be selected per trade and stored in the same
@@ -486,7 +485,6 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
   const [form, setForm] = useState(BLANK);
   const [errors, setErrors] = useState({});
   const [accountBalance, setAccountBalance] = useState('');
-  const [confidence, setConfidence] = useState(3);
   const balanceRef = useRef('');
 
   const derived = useMemo(() => computeDerived({ ...form, accountBalance }), [form, accountBalance]);
@@ -498,7 +496,6 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
       const bal = acc?.currentBalance ?? acc?.startingBalance ?? '';
       balanceRef.current = bal;
       setAccountBalance(bal);
-      setConfidence(Math.min(5, Math.max(1, Math.round((initial?.rating || 6) / 2))));
       setForm(
         initial
           ? { ...BLANK, ...initial, accountId, riskChecklist: initial.riskChecklist || {}, tradeChecklist: initial.tradeChecklist || {}, mistakes: initial.mistakes || {}, psychology: initial.psychology || {} }
@@ -553,7 +550,15 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
 
     const toSave = {
       ...form,
-      rating: confidence * 2,
+      // Rating (1-10, shown as "x/10" in the journal and used by analytics)
+      // is driven by the single Confidence value in Trading Psychology (1-5),
+      // scaled to the same 2-10 range it always used. Neutral 3 voices default
+      // to 6 when the trader hasn't rated Confidence.
+      rating: (() => {
+        const c = Number(form.psychology?.Confidence);
+        const conf = Number.isFinite(c) && c >= 1 && c <= 5 ? c : 3;
+        return Math.max(2, Math.min(10, Math.round(conf * 2)));
+      })(),
       // Derived P&L only belongs on a closed trade; otherwise leave blank
       // (no fabricated 0.00 or recycled stale value).
       netPnl: hasExitOutcome ? Math.round(d.pnl * 100) / 100 : '',
@@ -1018,52 +1023,6 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
                       <option key={em}>{em}</option>
                     ))}
                   </select>
-                </div>
-                <div className="field">
-                  <label>Confidence: {confidence}/5</label>
-                  <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setConfidence(n)}
-                        aria-label={`Confidence ${n}`}
-                        style={{
-                          flex: 1,
-                          padding: '7px 0',
-                          borderRadius: 7,
-                          fontSize: 13,
-                          fontWeight: 700,
-                          background: confidence >= n ? 'rgba(47,214,110,0.14)' : 'var(--bg-elevated)',
-                          color: confidence >= n ? 'var(--win)' : 'var(--text-faint)',
-                          border: confidence >= n ? '1.5px solid rgba(47,214,110,0.35)' : '1.5px solid var(--border)',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="field">
-                <label>Mistake Tags</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {MISTAKES.map((m) => {
-                    const active = !!form.mistakes[m];
-                    return (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => set('mistakes', { ...form.mistakes, [m]: !active })}
-                        className={`tag ${active ? 'tag-red' : 'tag-neutral'}`}
-                        style={{ cursor: 'pointer', fontSize: 11 }}
-                      >
-                        {m}
-                      </button>
-                    );
-                  })}
                 </div>
               </div>
               <div className="field-row cols-1">
