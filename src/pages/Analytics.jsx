@@ -11,6 +11,12 @@ import InstitutionalInsights from '../components/performance/InstitutionalInsigh
 import EmotionAnalytics from '../components/performance/EmotionAnalytics';
 import MistakeAnalytics from '../components/performance/MistakeAnalytics';
 import RuleComplianceAnalytics from '../components/performance/RuleComplianceAnalytics';
+import SmartTradeInsights from '../components/performance/SmartTradeInsights';
+import SetupIntelligence from '../components/performance/SetupIntelligence';
+import SessionAndPairIntelligence from '../components/performance/SessionAndPairIntelligence';
+import RiskExecutionIntelligence from '../components/performance/RiskExecutionIntelligence';
+import PatternDetection from '../components/performance/PatternDetection';
+import Recommendations from '../components/performance/Recommendations';
 import PsychologyInsights from '../components/dashboard/PsychInsights';
 import { formatMoney, formatMoneyShort, pnlClass } from '../lib/utils';
 import {
@@ -294,18 +300,42 @@ export default function Analytics({ onNavigate }) {
       <SectionHeading number="03" title="Institutional Insights" subtitle="Statistically derived edge and risk observations, computed from real history." accent="#16a34a" />
       <InstitutionalInsights />
 
-      {/* SECTION 04 — Psychology (Emotion Analytics + Psychology Insights) */}
-      <SectionHeading number="04" title="Psychology" subtitle="Emotion distribution, trends and statistically derived psychology insights — every emotion metric shown once." accent="#7c3aed" />
+      {/* SECTION 04 — Smart Trade Insights */}
+      <SectionHeading number="04" title="Smart Trade Insights" subtitle="Interpreted observations of your edges and leaks across performance, risk, execution, psychology, mistakes and consistency." accent="#c026d3" />
+      <SmartTradeInsights />
+
+      {/* SECTION 05 — Setup / Model Performance */}
+      <SectionHeading number="05" title="Setup / Model Performance" subtitle="Which trading models are actually paying off — ranked by a balanced score, guarded by minimum sample size." accent="#c026d3" />
+      <SetupIntelligence />
+
+      {/* SECTION 06 — Session & Pair Intelligence */}
+      <SectionHeading number="06" title="Session & Pair Intelligence" subtitle="Contextual edges across trading pairs, sessions and their combination — guarded by minimum sample size." accent="#e07b00" />
+      <SessionAndPairIntelligence />
+
+      {/* SECTION 07 — Risk & Execution Intelligence */}
+      <SectionHeading number="07" title="Risk & Execution Intelligence" subtitle="How your sizing and execution behaviour relate to outcomes — interpreted relationships, guarded by sample size." accent="#e11d48" />
+      <RiskExecutionIntelligence />
+
+      {/* SECTION 08 — Trading Pattern Detection */}
+      <SectionHeading number="08" title="Trading Pattern Detection" subtitle="Repeated behavioural patterns in your trade sequence — descriptive only, never predictive." accent="#0d9488" />
+      <PatternDetection />
+
+      {/* SECTION 09 — Psychology (Emotion Analytics + Psychology Insights) */}
+      <SectionHeading number="09" title="Psychology" subtitle="Emotion distribution, trends and statistically derived psychology insights — every emotion metric shown once." accent="#7c3aed" />
       <EmotionAnalytics />
       <PsychologyInsights />
 
-      {/* SECTION 05 — Mistake Analytics */}
-      <SectionHeading number="05" title="Mistake Analytics" subtitle="What you did wrong, how often, and the real cost — tracked from every logged trade." accent="#dc2626" />
+      {/* SECTION 10 — Mistake Analytics */}
+      <SectionHeading number="07" title="Mistake Analytics" subtitle="What you did wrong, how often, and the real cost — tracked from every logged trade." accent="#dc2626" />
       <MistakeAnalytics />
 
-      {/* SECTION 06 — Rule Compliance */}
-      <SectionHeading number="06" title="Rule Compliance" subtitle="How faithfully you follow your own rules, and the discipline it builds — live from your checklists." accent="#16a34a" />
+{/* SECTION 11 — Rule Compliance */}
+      <SectionHeading number="11" title="Rule Compliance" subtitle="How faithfully you follow your own rules, and the discipline it builds — live from your checklists." accent="#16a34a" />
       <RuleComplianceAnalytics />
+
+      {/* SECTION 12 — Action Recommendations */}
+      <SectionHeading number="12" title="Action Recommendations" subtitle="Practical next steps drawn from your detected patterns — decision support, not a signal generator." accent="#f59e0b" />
+      <Recommendations />
     </div>
   );
 }

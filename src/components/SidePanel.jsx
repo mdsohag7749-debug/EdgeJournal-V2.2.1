@@ -26,8 +26,7 @@ export default function SidePanel({ open, onClose, title, subtitle, width = 'nar
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'rgba(17,24,39,0.35)',
-              backdropFilter: 'blur(2px)',
+              background: 'rgba(17,24,39,0.22)',
             }}
           />
           <motion.div
