@@ -90,23 +90,26 @@ function isBlank(value) {
 function num(value) {
   if (isBlank(value)) return null;
   const n = Number(value);
-  return Number.isNaN(n) ? null : n;
+  // Reject anything that isn't a finite real number (NaN, Infinity, etc.) so
+  // downstream math can never be poisoned by a non-numeric input.
+  return Number.isFinite(n) ? n : null;
 }
 
 // Per-asset pip/point value (USD per 1 pip × 1.0 lot) — the heart of the
 // position size engine. Everything else derives from these two numbers.
 function getLotConfig(instrument, entryPrice) {
-  if (instrument === 'XAUUSD') return { pip: 0.1, pipValue: 10, unit: 'Pips' };
-  if (instrument === 'XAGUSD') return { pip: 0.01, pipValue: 50, unit: 'Pips' };
-  if (INDICES.includes(instrument)) return { pip: 1, pipValue: 1, unit: 'Points' };
-  if (CRYPTO.includes(instrument)) return { pip: 1, pipValue: 1, unit: 'Points' };
+  const instr = typeof instrument === 'string' ? instrument : '';
+  if (instr === 'XAUUSD') return { pip: 0.1, pipValue: 10, unit: 'Pips' };
+  if (instr === 'XAGUSD') return { pip: 0.01, pipValue: 50, unit: 'Pips' };
+  if (INDICES.includes(instr)) return { pip: 1, pipValue: 1, unit: 'Points' };
+  if (CRYPTO.includes(instr)) return { pip: 1, pipValue: 1, unit: 'Points' };
 
   // Forex — standard 100,000-unit lot.
-  if (instrument.endsWith('JPY')) {
-    const usdJpy = instrument === 'USDJPY' && entryPrice > 0 ? entryPrice : DEFAULT_USDJPY;
+  if (instr.endsWith('JPY')) {
+    const usdJpy = instr === 'USDJPY' && entryPrice > 0 ? entryPrice : DEFAULT_USDJPY;
     return { pip: 0.01, pipValue: 1000 / usdJpy, unit: 'Pips' };
   }
-  if (instrument.startsWith('USD') && entryPrice > 0) {
+  if (instr.startsWith('USD') && entryPrice > 0) {
     // USDCAD / USDCHF: $10/pip in the quote currency, converted to USD.
     return { pip: 0.0001, pipValue: 10 / entryPrice, unit: 'Pips' };
   }
