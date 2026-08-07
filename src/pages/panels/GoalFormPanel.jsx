@@ -63,41 +63,41 @@ export default function GoalFormPanel({ open, onClose, onSave, initial }) {
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div className="field">
-          <label>Title</label>
-          <input type="text" value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="e.g. Improve trade win rate to 60%" />
+          <label htmlFor="goal-title">Title</label>
+          <input id="goal-title" type="text" value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="e.g. Improve trade win rate to 60%" />
         </div>
 
         <div className="field-row cols-2">
           <div className="field">
-            <label>Period</label>
-            <select value={form.period} onChange={(e) => set('period', e.target.value)}>
+            <label htmlFor="goal-period">Period</label>
+            <select id="goal-period" value={form.period} onChange={(e) => set('period', e.target.value)}>
               {PERIODS.map((p) => (
                 <option key={p}>{p}</option>
               ))}
             </select>
           </div>
           <div className="field">
-            <label>Target Date</label>
-            <input type="date" value={form.targetDate} onChange={(e) => set('targetDate', e.target.value)} />
+            <label htmlFor="goal-target-date">Target Date</label>
+            <input id="goal-target-date" type="date" value={form.targetDate} onChange={(e) => set('targetDate', e.target.value)} />
           </div>
         </div>
 
         <div className="field">
-          <label>Description</label>
-          <textarea value={form.description} onChange={(e) => set('description', e.target.value)} />
+          <label htmlFor="goal-description">Description</label>
+          <textarea id="goal-description" value={form.description} onChange={(e) => set('description', e.target.value)} />
         </div>
 
         <div className="field">
-          <label>Success Metrics</label>
-          <textarea value={form.successMetrics} onChange={(e) => set('successMetrics', e.target.value)} placeholder="How will you know you've hit this goal?" />
+          <label htmlFor="goal-success-metrics">Success Metrics</label>
+          <textarea id="goal-success-metrics" value={form.successMetrics} onChange={(e) => set('successMetrics', e.target.value)} placeholder="How will you know you've hit this goal?" />
         </div>
 
         <div className="field">
-          <label>Sub-Checklist Items</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <label id="goal-subitems-label">Sub-Checklist Items</label>
+          <div role="group" aria-labelledby="goal-subitems-label" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {form.subItems.map((it) => (
               <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input type="checkbox" checked={it.done} onChange={() => toggleItem(it.id)} style={{ accentColor: 'var(--red)' }} />
+                <input type="checkbox" checked={it.done} onChange={() => toggleItem(it.id)} aria-label={`Mark "${it.text}" as done`} style={{ accentColor: 'var(--red)' }} />
                 <span style={{ flex: 1, fontSize: 13.5, textDecoration: it.done ? 'line-through' : 'none', color: it.done ? 'var(--text-faint)' : 'var(--text)' }}>
                   {it.text}
                 </span>
@@ -109,10 +109,12 @@ export default function GoalFormPanel({ open, onClose, onSave, initial }) {
             <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
               <input
                 type="text"
+                id="goal-new-item"
                 value={newItem}
                 onChange={(e) => setNewItem(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addItem())}
                 placeholder="Add a step..."
+                aria-label="New sub-checklist item text"
                 style={{ flex: 1 }}
               />
               <button type="button" className="btn btn-ghost btn-icon" onClick={addItem} aria-label="Add item">

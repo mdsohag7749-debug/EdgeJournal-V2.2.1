@@ -24,10 +24,10 @@ function BreakdownTable({ items, title, icon: Icon, color }) {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
           <thead>
             <tr style={{ color: 'var(--text-muted)', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
-              <th style={{ paddingBottom: 8 }}>Name</th>
-              <th style={{ paddingBottom: 8 }}>Trades</th>
-              <th style={{ paddingBottom: 8 }}>Win %</th>
-              <th style={{ paddingBottom: 8 }}>Net P&L</th>
+              <th scope="col" style={{ paddingBottom: 8 }}>Name</th>
+              <th scope="col" style={{ paddingBottom: 8 }}>Trades</th>
+              <th scope="col" style={{ paddingBottom: 8 }}>Win %</th>
+              <th scope="col" style={{ paddingBottom: 8 }}>Net P&L</th>
             </tr>
           </thead>
           <tbody>
@@ -58,11 +58,11 @@ export default function BreakdownGrids({ stats }) {
       transition={{ duration: 0.3, delay: 0.25 }}
       style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
           <Layers size={18} color="#6366f1" /> Edge Performance Breakdowns
         </h3>
-        <div style={{ display: 'flex', gap: 4, background: 'var(--card-hover)', padding: 3, borderRadius: 6 }}>
+        <div style={{ display: 'flex', gap: 4, background: 'var(--card-hover)', padding: 3, borderRadius: 6, flexWrap: 'wrap' }}>
           {['pairs', 'sessions', 'timeframes', 'direction', 'models'].map((t) => (
             <button
               key={t}

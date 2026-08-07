@@ -1,20 +1,40 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 export default function Lightbox({ src, onClose }) {
+  const closeRef = useRef(null);
+  const lastFocused = useRef(null);
+
   useEffect(() => {
+    if (!src) return;
+    lastFocused.current = document.activeElement;
+    closeRef.current?.focus();
     function onKey(e) {
-      if (e.key === 'Escape') onClose?.();
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose?.();
+        return;
+      }
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        closeRef.current?.focus();
+      }
     }
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      lastFocused.current?.focus?.();
+    };
+  }, [src, onClose]);
 
   if (!src) return null;
 
   return createPortal(
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Image preview"
       onClick={onClose}
       style={{
         position: 'fixed',
@@ -28,6 +48,7 @@ export default function Lightbox({ src, onClose }) {
       }}
     >
       <button
+        ref={closeRef}
         className="btn btn-ghost btn-icon"
         onClick={onClose}
         style={{ position: 'absolute', top: 20, right: 20, background: 'rgba(255,255,255,0.06)' }}

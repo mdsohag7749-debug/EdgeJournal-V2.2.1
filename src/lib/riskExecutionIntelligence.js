@@ -24,6 +24,8 @@
 // strength (magnitude) of the observed relationship.
 
 import { applyFocusFilter } from './performanceInsights';
+import { memoizeByArgs } from './memoize';
+import { MISTAKE_NAMES, SESSION_WINDOWS } from './utils';
 
 export const MIN_LIMITED = 3;
 export const MIN_EMERGING = 5;
@@ -35,30 +37,15 @@ const N = (v) => {
 };
 const clamp = (v) => Math.max(0, Math.min(100, Math.round(v)));
 
-const MISTAKE_KEYS = [
-  'Late Entry',
-  'Early Exit',
-  'Moved Stop Loss',
-  'No Stop Loss',
-  'Over Risk',
-  'Counter Trend',
-  'News Chase',
-  'Over Trading',
-  'Missed Plan',
-  'Revenge Trade',
-  'FOMO Entry',
-  'Impatience',
-];
-
 const hasMistakes = (t) => {
   const m = t.mistakes;
   if (!m || typeof m !== 'object') return false;
-  return MISTAKE_KEYS.some((k) => m[k]);
+  return MISTAKE_NAMES.some((k) => m[k]);
 };
 const mistakesOf = (t) => {
   const m = t.mistakes;
   if (!m || typeof m !== 'object') return [];
-  return MISTAKE_KEYS.filter((k) => m[k]);
+  return MISTAKE_NAMES.filter((k) => m[k]);
 };
 
 const mean = (xs) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0);
@@ -102,7 +89,7 @@ function groupOutcomes(trades) {
   };
 }
 
-export function computeRiskExecutionIntelligence(trades, period = 'all') {
+export function computeRiskExecutionIntelligenceUncached(trades, period = 'all') {
   const focused = period === 'all' ? trades : applyFocusFilter(trades, period);
   const decided = focused.filter((t) => t.result === 'Win' || t.result === 'Loss');
   const decidedCount = decided.length;
@@ -157,7 +144,7 @@ export function computeRiskExecutionIntelligence(trades, period = 'all') {
   const mistakeTrades = decided.filter((t) => hasMistakes(t));
   const clean = groupOutcomes(cleanTrades);
   const mistaken = groupOutcomes(mistakeTrades);
-  const perMistake = MISTAKE_KEYS.map((name) => {
+  const perMistake = MISTAKE_NAMES.map((name) => {
     const set = decided.filter((t) => mistakesOf(t).includes(name));
     return { name, ...groupOutcomes(set) };
   }).filter((m) => m.count > 0).sort((a, b) => b.count - a.count);
@@ -182,12 +169,6 @@ export function computeRiskExecutionIntelligence(trades, period = 'all') {
     .sort((a, b) => b.avgRisk - a.avgRisk);
 
   // -- 6. RISK + SESSION -----------------------------------------------------
-  const SESSION_WINDOWS = [
-    { session: 'Asia', start: 0, end: 8 },
-    { session: 'London', start: 8, end: 13 },
-    { session: 'New York', start: 13, end: 21 },
-    { session: 'After Hours', start: 21, end: 24 },
-  ];
   const sessionFor = (t) => {
     if (t.session) return t.session;
     const hour = parseInt((t.entryTime || '').split(':')[0], 10);
@@ -362,3 +343,5 @@ export function computeRiskExecutionIntelligence(trades, period = 'all') {
     minReliable: MIN_RELIABLE,
   };
 }
+
+export const computeRiskExecutionIntelligence = memoizeByArgs(computeRiskExecutionIntelligenceUncached);

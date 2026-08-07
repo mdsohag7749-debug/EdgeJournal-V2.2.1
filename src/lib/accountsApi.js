@@ -6,6 +6,7 @@
 // and the global provider in src/context/AccountContext.jsx.
 
 import { supabase } from './supabase';
+import { uid } from './utils';
 
 const TEXT_FIELDS = {
   name: 'name',
@@ -168,4 +169,43 @@ export async function ensureDefaultAccount(userId) {
   if (error) throw error;
   if (!accountId) return null;
   return fetchAccount(userId, accountId);
+}
+
+// Restores accounts from a backup. Accounts are restored with their
+// ORIGINAL ids (so trades/challenges referencing them keep working), via
+// an idempotent upsert keyed on `id` — re-importing the same backup never
+// creates duplicates, and existing accounts are refreshed in place rather
+// than deleted. Only the restorable, non-derived fields are written
+// (`current_balance` is deliberately excluded — it is recomputed from real
+// trade history by the Account Balance Engine).
+//
+// The default flag is intentionally not written in the bulk upsert: the
+// accounts table enforces at most one default per user (partial unique
+// index), so blindly restoring a "default" flag would let a backup's
+// default collide with an already-existing default during a merge. The
+// app's ensure_default_account() runtime migration reconciles the default
+// right after load. Returns the saved rows.
+export async function restoreAccounts(userId, accounts) {
+  if (!userId || !Array.isArray(accounts) || accounts.length === 0) return [];
+
+  const valid = accounts
+    .filter((a) => a && typeof a === 'object')
+    .map((a) => ({
+      id: a.id || uid(),
+      user_id: userId,
+      name: typeof a.name === 'string' && a.name.trim() ? a.name : 'My Trading Account',
+      broker: a.broker == null ? null : String(a.broker),
+      account_type: a.accountType == null ? null : String(a.accountType),
+      platform: a.platform == null ? null : String(a.platform),
+      starting_balance: toNumberOrNull(a.startingBalance),
+      currency: typeof a.currency === 'string' && a.currency ? a.currency : 'USD',
+      status: ['active', 'inactive', 'archived'].includes(a.status) ? a.status : 'active',
+      is_default: false,
+    }));
+
+  if (valid.length === 0) return [];
+
+  const { data, error } = await supabase.from('accounts').upsert(valid, { onConflict: 'id' }).select();
+  if (error) throw error;
+  return (data || []).map(fromAccountRow);
 }

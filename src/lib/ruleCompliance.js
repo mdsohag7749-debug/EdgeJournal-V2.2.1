@@ -18,30 +18,10 @@
 //   - weekly/monthly      compliancePct bucketed by calendar week / month
 //   - trend               asymmetric weekly compliance series for a sparkline
 
-// Monday (YYYY-MM-DD) of the week containing `dateStr` — used to bucketed
-// compliance into calendar weeks without pulling in a date library.
-function mondayKey(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  if (isNaN(d)) return null;
-  const day = d.getDay(); // 0 = Sun .. 6 = Sat
-  const diff = (day === 0 ? -6 : 1) - day;
-  d.setDate(d.getDate() + diff);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+import { mondayKey, monthLabel, weekLabel } from './utils';
 
 function monthKey(dateStr) {
   return (dateStr || '').slice(0, 7);
-}
-
-function monthLabel(key) {
-  const d = new Date(key + '-01T00:00:00');
-  return isNaN(d) ? key : d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
-}
-
-function weekLabel(key) {
-  if (!key) return key;
-  const d = new Date(key + 'T00:00:00');
-  return isNaN(d) ? key : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 // Number of mistakes (rule breaks) logged on a trade — any truthy entry in the

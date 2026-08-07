@@ -16,6 +16,8 @@
 // expectation, so it is never praised for raw P&L alone.
 
 import { applyFocusFilter } from './performanceInsights';
+import { memoizeByArgs } from './memoize';
+import { SESSION_WINDOWS } from './utils';
 
 export const MIN_LIMITED = 3;
 export const MIN_EMERGING = 5;
@@ -28,12 +30,6 @@ const N = (v) => {
 };
 const clamp = (v) => Math.max(0, Math.min(100, Math.round(v)));
 
-const SESSION_WINDOWS = [
-  { session: 'Asia', start: 0, end: 8 },
-  { session: 'London', start: 8, end: 13 },
-  { session: 'New York', start: 13, end: 21 },
-  { session: 'After Hours', start: 21, end: 24 },
-];
 function sessionOf(t) {
   if (t.session) return t.session;
   const hour = parseInt((t.entryTime || '').split(':')[0], 10);
@@ -122,7 +118,7 @@ function makeRow(key, label, tradeArr) {
 
 // Builds rows for pairs, sessions and combos; each carries the trade array for
 // the insight generator via a lookup on the same key space.
-export function computeSessionPairIntelligence(trades, period = 'all') {
+export function computeSessionPairIntelligenceUncached(trades, period = 'all') {
   const focused = period === 'all' ? trades : applyFocusFilter(trades, period);
   const decidedCount = focused.filter((t) => t.result === 'Win' || t.result === 'Loss').length;
 
@@ -280,3 +276,5 @@ export function computeSessionPairIntelligence(trades, period = 'all') {
     minReliable: MIN_RELIABLE,
   };
 }
+
+export const computeSessionPairIntelligence = memoizeByArgs(computeSessionPairIntelligenceUncached);

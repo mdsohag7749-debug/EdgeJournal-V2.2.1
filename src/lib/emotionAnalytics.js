@@ -9,6 +9,8 @@
 //     (1–5) -> per-emotion averages, most common emotion, confidence mean,
 //              fear / greed frequency, distribution, and monthly trend.
 
+import { monthLabel } from './utils';
+
 const PSYCH_KEYS = [
   'Confidence',
   'Patience',
@@ -56,11 +58,6 @@ function frequency(trades, key) {
   if (!rated.length) return null;
   const present = rated.filter((t) => toNum(t.psychology?.[key]) >= 4).length;
   return (present / rated.length) * 100;
-}
-
-function monthLabel(key) {
-  const d = new Date(key + '-01T00:00:00');
-  return isNaN(d) ? key : d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
 }
 
 export function computeEmotionAnalytics(trades) {

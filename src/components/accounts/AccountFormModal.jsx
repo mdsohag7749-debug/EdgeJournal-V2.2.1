@@ -147,8 +147,9 @@ export default function AccountFormModal({ open, mode, account, isFirst = false,
 
             <div className="scroll-thin" style={{ flex: 1, overflowY: 'auto', padding: '22px 24px' }}>
               <div className="field" style={{ marginBottom: 16 }}>
-                <label>Account Name *</label>
+                <label htmlFor="account-name">Account Name *</label>
                 <input
+                  id="account-name"
                   autoFocus
                   type="text"
                   value={form.name}
@@ -161,8 +162,8 @@ export default function AccountFormModal({ open, mode, account, isFirst = false,
 
               <div className="field-row cols-2" style={{ marginBottom: 16 }}>
                 <div className="field">
-                  <label>Account Type</label>
-                  <select value={form.accountType} onChange={(e) => set('accountType', e.target.value)}>
+                  <label htmlFor="account-type">Account Type</label>
+                  <select id="account-type" value={form.accountType} onChange={(e) => set('accountType', e.target.value)}>
                     <option value="">Select type</option>
                     {ACCOUNT_TYPES.map((t) => (
                       <option key={t} value={t}>
@@ -172,8 +173,8 @@ export default function AccountFormModal({ open, mode, account, isFirst = false,
                   </select>
                 </div>
                 <div className="field">
-                  <label>Currency</label>
-                  <select value={form.currency} onChange={(e) => set('currency', e.target.value)}>
+                  <label htmlFor="account-currency">Currency</label>
+                  <select id="account-currency" value={form.currency} onChange={(e) => set('currency', e.target.value)}>
                     {CURRENCIES.map((c) => (
                       <option key={c} value={c}>
                         {c}
@@ -185,8 +186,8 @@ export default function AccountFormModal({ open, mode, account, isFirst = false,
 
               <div className="field-row cols-2" style={{ marginBottom: 16 }}>
                 <div className="field">
-                  <label>Broker</label>
-                  <input type="text" list="acct-broker-list" value={form.broker} onChange={(e) => set('broker', e.target.value)} placeholder="e.g. Interactive Brokers" />
+                  <label htmlFor="account-broker">Broker</label>
+                  <input id="account-broker" type="text" list="acct-broker-list" value={form.broker} onChange={(e) => set('broker', e.target.value)} placeholder="e.g. Interactive Brokers" />
                   <datalist id="acct-broker-list">
                     {BROKERS.map((b) => (
                       <option key={b} value={b} />
@@ -194,8 +195,8 @@ export default function AccountFormModal({ open, mode, account, isFirst = false,
                   </datalist>
                 </div>
                 <div className="field">
-                  <label>Platform</label>
-                  <input type="text" list="acct-platform-list" value={form.platform} onChange={(e) => set('platform', e.target.value)} placeholder="e.g. TradingView" />
+                  <label htmlFor="account-platform">Platform</label>
+                  <input id="account-platform" type="text" list="acct-platform-list" value={form.platform} onChange={(e) => set('platform', e.target.value)} placeholder="e.g. TradingView" />
                   <datalist id="acct-platform-list">
                     {PLATFORMS.map((p) => (
                       <option key={p} value={p} />
@@ -206,8 +207,9 @@ export default function AccountFormModal({ open, mode, account, isFirst = false,
 
               <div className="field-row cols-2" style={{ marginBottom: 16 }}>
                 <div className="field">
-                  <label>Starting Balance</label>
+                  <label htmlFor="account-starting-balance">Starting Balance</label>
                   <input
+                    id="account-starting-balance"
                     type="number"
                     step="any"
                     value={form.startingBalance}
@@ -218,8 +220,9 @@ export default function AccountFormModal({ open, mode, account, isFirst = false,
                   {errors.startingBalance && <span className="auth-error-text">{errors.startingBalance}</span>}
                 </div>
                 <div className="field">
-                  <label>Current Balance</label>
+                  <label htmlFor="account-current-balance">Current Balance</label>
                   <input
+                    id="account-current-balance"
                     type="number"
                     step="any"
                     value={form.currentBalance}
@@ -232,8 +235,8 @@ export default function AccountFormModal({ open, mode, account, isFirst = false,
               </div>
 
               <div className="field">
-                <label>Status</label>
-                <select value={form.status} onChange={(e) => set('status', e.target.value)}>
+                <label htmlFor="account-status">Status</label>
+                <select id="account-status" value={form.status} onChange={(e) => set('status', e.target.value)}>
                   {ACCOUNT_STATUSES.filter((s) => s.value !== 'archived').map((s) => (
                     <option key={s.value} value={s.value}>
                       {s.label}

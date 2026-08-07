@@ -114,15 +114,15 @@ export default function SessionAndPairIntelligence() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ textAlign: 'left', color: 'var(--text-muted)', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                {view === 'combo' && <th style={{ padding: '0 10px 10px 0' }}>Pair + Session</th>}
-                {view !== 'combo' && <th style={{ padding: '0 10px 10px 0' }}>{view === 'pair' ? 'Pair' : 'Session'}</th>}
-                <th style={{ padding: '0 10px 10px' }}>Trades</th>
-                <th style={{ padding: '0 10px 10px' }}>Win Rate</th>
-                <th style={{ padding: '0 10px 10px' }}>Expectancy</th>
-                <th style={{ padding: '0 10px 10px' }}>Avg R:R</th>
-                <th style={{ padding: '0 10px 10px' }}>Consistency</th>
-                <th style={{ padding: '0 10px 10px' }}>Net P&L</th>
-                <th style={{ padding: '0' }}>Status</th>
+                {view === 'combo' && <th scope="col" style={{ padding: '0 10px 10px 0' }}>Pair + Session</th>}
+                {view !== 'combo' && <th scope="col" style={{ padding: '0 10px 10px 0' }}>{view === 'pair' ? 'Pair' : 'Session'}</th>}
+                <th scope="col" style={{ padding: '0 10px 10px' }}>Trades</th>
+                <th scope="col" style={{ padding: '0 10px 10px' }}>Win Rate</th>
+                <th scope="col" style={{ padding: '0 10px 10px' }}>Expectancy</th>
+                <th scope="col" style={{ padding: '0 10px 10px' }}>Avg R:R</th>
+                <th scope="col" style={{ padding: '0 10px 10px' }}>Consistency</th>
+                <th scope="col" style={{ padding: '0 10px 10px' }}>Net P&L</th>
+                <th scope="col" style={{ padding: '0' }}>Status</th>
               </tr>
             </thead>
             <tbody>

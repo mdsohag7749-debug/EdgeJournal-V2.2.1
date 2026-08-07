@@ -18,6 +18,8 @@
 // so no fabricated claims are ever rendered.
 
 import { applyFocusFilter } from './performanceInsights';
+import { memoizeByArgs } from './memoize';
+import { SESSION_WINDOWS } from './utils';
 
 export const MIN_SUPPORT = 5;
 export const MIN_GROUP = 4;
@@ -57,12 +59,6 @@ function sortChronological(trades) {
   return [...trades].sort((a, b) => (a.date + ' ' + (a.entryTime || '')).localeCompare(b.date + ' ' + (b.entryTime || '')));
 }
 
-const SESSION_WINDOWS = [
-  { session: 'Asia', start: 0, end: 8 },
-  { session: 'London', start: 8, end: 13 },
-  { session: 'New York', start: 13, end: 21 },
-  { session: 'After Hours', start: 21, end: 24 },
-];
 function sessionOf(t) {
   if (t.session) return t.session;
   const hour = parseInt((t.entryTime || '').split(':')[0], 10);
@@ -485,7 +481,7 @@ function ruleStreak(decided) {
 
 // ---- Entry point -----------------------------------------------------------
 
-export function computeSmartInsights(trades, period = 'all') {
+export function computeSmartInsightsUncached(trades, period = 'all') {
   const focused = applyFocusFilter(trades, period);
   const decided = focused.filter((t) => t.result === 'Win' || t.result === 'Loss');
   const sourceCount = focused.length;
@@ -519,3 +515,5 @@ export function computeSmartInsights(trades, period = 'all') {
 
   return { insights: ordered, decidedCount: decided.length, sourceCount, minSupport: MIN_SUPPORT };
 }
+
+export const computeSmartInsights = memoizeByArgs(computeSmartInsightsUncached);

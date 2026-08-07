@@ -9,20 +9,7 @@
 //     most common mistake, monthly trend, breakdowns by pair and session,
 //     and the single most expensive mistake (worst aggregated net P&L).
 
-const CANONICAL = [
-  'Late Entry',
-  'Early Exit',
-  'Moved Stop Loss',
-  'No Stop Loss',
-  'Over Risk',
-  'Counter Trend',
-  'News Chase',
-  'Over Trading',
-  'Missed Plan',
-  'Revenge Trade',
-  'FOMO Entry',
-  'Impatience',
-];
+import { MISTAKE_NAMES, monthLabel, SESSION_WINDOWS } from './utils';
 
 const toNum = (v) => {
   const n = Number(v);
@@ -33,12 +20,6 @@ function sortChronological(trades) {
   return [...trades].sort((a, b) => (a.date + ' ' + (a.entryTime || '')).localeCompare(b.date + ' ' + (b.entryTime || '')));
 }
 
-const SESSION_WINDOWS = [
-  { session: 'Asia', start: 0, end: 8 },
-  { session: 'London', start: 8, end: 13 },
-  { session: 'New York', start: 13, end: 21 },
-  { session: 'After Hours', start: 21, end: 24 },
-];
 function sessionFor(t) {
   const s = t.session;
   if (s) return s;
@@ -52,12 +33,7 @@ function sessionFor(t) {
 function mistakesOf(t) {
   const m = t.mistakes;
   if (!m || typeof m !== 'object') return [];
-  return CANONICAL.filter((k) => m[k]);
-}
-
-function monthLabel(key) {
-  const d = new Date(key + '-01T00:00:00');
-  return isNaN(d) ? key : d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+  return MISTAKE_NAMES.filter((k) => m[k]);
 }
 
 export function computeMistakeAnalytics(trades) {
@@ -65,7 +41,7 @@ export function computeMistakeAnalytics(trades) {
   const total = sorted.length;
 
   const map = {};
-  CANONICAL.forEach((name) => {
+  MISTAKE_NAMES.forEach((name) => {
     map[name] = { name, count: 0, totalNetPnl: 0 };
   });
   let tradesWithMistakes = 0;
@@ -103,7 +79,7 @@ export function computeMistakeAnalytics(trades) {
     }
   });
 
-  const perMistake = CANONICAL.filter((name) => map[name].count > 0)
+  const perMistake = MISTAKE_NAMES.filter((name) => map[name].count > 0)
     .map((name) => ({ name, count: map[name].count, totalNetPnl: map[name].totalNetPnl }))
     .sort((a, b) => b.count - a.count);
 

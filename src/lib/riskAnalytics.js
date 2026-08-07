@@ -181,7 +181,22 @@ function drawdownMetrics(sortedTrades) {
 
 // ---- Entry point ----------------------------------------------------------
 
+// computeRiskAnalytics() is a pure function of the trades array (it only
+// parses the date strings already in the data — never the wall clock) and its
+// consumers read the result read-only. It is called by both the Risk Analytics
+// widget and Institutional Insights with the same `trades.items` on every
+// Analytics render, so we share ONE computation per distinct array reference.
+// The WeakMap auto-invalidates whenever DataContext hands out a fresh array.
+const riskCache = new WeakMap();
+
 export function computeRiskAnalytics(trades) {
+  if (riskCache.has(trades)) return riskCache.get(trades);
+  const result = computeRiskAnalyticsUncached(trades);
+  riskCache.set(trades, result);
+  return result;
+}
+
+function computeRiskAnalyticsUncached(trades) {
   const sorted = sortChronological(trades);
   const decided = sorted.filter((t) => t.result === 'Win' || t.result === 'Loss');
 

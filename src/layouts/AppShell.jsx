@@ -49,6 +49,19 @@ function AppShellContent() {
   const navigate = useNavigate();
   const { trades, goals, plans, reflections, study, challenges } = useData();
 
+  // Auto-collapse the sidebar on phones/tablets even after the app has
+  // mounted (rotation / window resize), so the nav never consumes the
+  // whole screen. Only auto-COLLAPSES — if the user has manually expanded
+  // the drawer on a small screen it stays expanded until they collapse it.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    function onResize() {
+      if (window.innerWidth < 760) setCollapsed(true);
+    }
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   // Show the full-screen loader only on the very first data resolution.
   // After the app has loaded once, later re-loads (e.g. switching
   // accounts or a background refetch) update in place instead of flashing
@@ -81,6 +94,9 @@ function AppShellContent() {
 
   return (
     <>
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
       <OfflineBanner />
       <div style={{ display: 'flex', minHeight: '100vh' }}>
         <Sidebar
@@ -89,7 +105,7 @@ function AppShellContent() {
           collapsed={collapsed}
           onToggleCollapsed={() => setCollapsed((c) => !c)}
         />
-        <main className="app-main" style={{ flex: 1, minWidth: 0, padding: '28px 32px 60px' }}>
+        <main id="main-content" className="app-main" style={{ flex: 1, minWidth: 0, padding: '28px 32px 60px' }}>
           {!activeRoute.hideHeader && <Header title={activeRoute.title} subtitle={activeRoute.subtitle} />}
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   Building2,
   Calculator,
@@ -13,8 +13,6 @@ import {
   StickyNote,
   Brain,
   Tag,
-  Timer,
-  Wallet,
   AlertTriangle,
 } from 'lucide-react';
 import SidePanel from '../../components/SidePanel';
@@ -24,7 +22,8 @@ import { useData } from '../../context/DataContext';
 import { useAccounts } from '../../context/AccountContext';
 import { sortTradeAccounts } from '../../components/accounts/accounts';
 import TagChip from '../../components/TagChip';
-import { todayISO, formatMoney } from '../../lib/utils';
+import { MISTAKE_NAMES, formatMoney } from '../../lib/utils';
+import { num, BLANK, computeDerived, validateTrade } from '../../lib/tradeCalc';
 
 const INSTRUMENT_GROUPS = [
   {
@@ -38,24 +37,6 @@ const INSTRUMENT_GROUPS = [
 ];
 const SESSIONS = ['Asia', 'London', 'New York', 'London + New York'];
 const EMOTIONS = ['Confident', 'Calm', 'Fear', 'Greed', 'FOMO', 'Revenge', 'Hesitation'];
-
-// Mistake Tracker — the defined mistake vocabulary for the dedicated Mistakes
-// section. Multiple can be selected per trade and stored in the same
-// `mistakes` map, kept in the canonical display order.
-const MISTAKE_NAMES = [
-  'Late Entry',
-  'Early Exit',
-  'Moved Stop Loss',
-  'No Stop Loss',
-  'Over Risk',
-  'Counter Trend',
-  'News Chase',
-  'Over Trading',
-  'Missed Plan',
-  'Revenge Trade',
-  'FOMO Entry',
-  'Impatience',
-];
 
 // Trading Psychology — the 8 institutional emotions tracked on a 1–5 scale
 // for every trade. "pos" emotions score higher = better; "neg" emotions score
@@ -73,242 +54,6 @@ const PSYCH_EMOTIONS = [
   { key: 'Revenge', tone: 'neg' },
   { key: 'Stress', tone: 'neg' },
 ];
-
-// Used to convert JPY-quoted pip values into USD for non-USDJPY JPY pairs
-// (e.g. EURJPY, GBPJPY) when no live feed is available.
-const DEFAULT_USDJPY = 150;
-
-const INDICES = ['US30', 'NAS100', 'SPX500', 'GER40', 'UK100', 'JP225'];
-const CRYPTO = ['BTCUSD', 'ETHUSD', 'SOLUSD'];
-const METALS = ['XAUUSD', 'XAGUSD'];
-
-function isBlank(value) {
-  return value === '' || value === null || value === undefined;
-}
-
-function num(value) {
-  if (isBlank(value)) return null;
-  const n = Number(value);
-  // Reject anything that isn't a finite real number (NaN, Infinity, etc.) so
-  // downstream math can never be poisoned by a non-numeric input.
-  return Number.isFinite(n) ? n : null;
-}
-
-// Per-asset pip/point value (USD per 1 pip × 1.0 lot) — the heart of the
-// position size engine. Everything else derives from these two numbers.
-function getLotConfig(instrument, entryPrice) {
-  const instr = typeof instrument === 'string' ? instrument : '';
-  if (instr === 'XAUUSD') return { pip: 0.1, pipValue: 10, unit: 'Pips' };
-  if (instr === 'XAGUSD') return { pip: 0.01, pipValue: 50, unit: 'Pips' };
-  if (INDICES.includes(instr)) return { pip: 1, pipValue: 1, unit: 'Points' };
-  if (CRYPTO.includes(instr)) return { pip: 1, pipValue: 1, unit: 'Points' };
-
-  // Forex — standard 100,000-unit lot.
-  if (instr.endsWith('JPY')) {
-    const usdJpy = instr === 'USDJPY' && entryPrice > 0 ? entryPrice : DEFAULT_USDJPY;
-    return { pip: 0.01, pipValue: 1000 / usdJpy, unit: 'Pips' };
-  }
-  if (instr.startsWith('USD') && entryPrice > 0) {
-    // USDCAD / USDCHF: $10/pip in the quote currency, converted to USD.
-    return { pip: 0.0001, pipValue: 10 / entryPrice, unit: 'Pips' };
-  }
-  return { pip: 0.0001, pipValue: 10, unit: 'Pips' };
-}
-
-// All live trade math lives here — the trader never calculates anything.
-// Everything updates instantly on every keystroke.
-function computeDerived(form) {
-  const entry = num(form.entryPrice);
-  const exit = num(form.exitPrice);
-  const sl = num(form.stopLoss);
-  const tp = num(form.takeProfit);
-  const riskPct = num(form.riskPercent);
-  const balance = num(form.accountBalance);
-  const lot = num(form.contracts);
-
-  const cfg = getLotConfig(form.instrument, entry || 0);
-
-  const hasEntry = entry !== null;
-  const hasExit = exit !== null;
-  const hasSL = sl !== null;
-  const hasTP = tp !== null;
-  const hasRisk = riskPct !== null && riskPct > 0;
-  const hasBalance = balance !== null && balance > 0;
-
-  // Friendly warnings that never block logging, but keep the user honest.
-  const warnings = [];
-  if (hasEntry && hasSL && Math.abs(entry - sl) < 0.000000001) {
-    warnings.push('Stop Loss cannot be equal to Entry Price.');
-  }
-  if (hasRisk && riskPct <= 0) warnings.push('Risk % must be greater than 0.');
-  if (hasBalance && balance <= 0) warnings.push('Account Balance must be greater than 0.');
-  if (hasEntry && entry <= 0) warnings.push('Entry Price must be greater than 0.');
-  if (hasSL && sl <= 0) warnings.push('Stop Loss must be greater than 0.');
-  if (hasTP && tp <= 0) warnings.push('Take Profit must be greater than 0.');
-
-  // Risk Amount ($) = Balance × Risk %
-  let riskAmount = 0;
-  if (hasRisk && hasBalance) riskAmount = (balance * riskPct) / 100;
-
-  // Stop distance in price, pips/points, and pip value
-  const riskPerUnit = hasEntry && hasSL ? Math.abs(entry - sl) : 0;
-  const stopPips = riskPerUnit > 0 && cfg.pip > 0 ? riskPerUnit / cfg.pip : 0;
-  const riskValue = stopPips * cfg.pipValue;
-  // Planned R:R from SL / TP (and reward distance)
-  const rewardPerUnit = hasEntry && hasTP ? Math.abs(tp - entry) : 0;
-  const rewardPips = rewardPerUnit > 0 && cfg.pip > 0 ? rewardPerUnit / cfg.pip : 0;
-  let plannedRR = 0;
-  if (riskValue > 0) {
-    plannedRR = (rewardPerUnit > 0 ? rewardPips * cfg.pipValue : 0) / riskValue;
-  } else if (hasEntry && hasSL && hasTP) {
-    const risk = Math.abs(entry - sl);
-    const reward = Math.abs(tp - entry);
-    if (risk > 0) plannedRR = reward / risk;
-  }
-
-  // Lot / position size — fully automatic. position size can never drop
-  // to zero: when no balance/risk sizing is available it falls back to the
-  // manual lot size, else a single lot, so the recorded lot, RR and PnL
-  // never collapse.
-  const manualLot = lot !== null && lot > 0;
-  const autoLot = riskValue > 0 && riskAmount > 0 ? riskAmount / riskValue : 0;
-  const qty = manualLot ? lot : autoLot > 0 ? autoLot : 1;
-
-  // Potential profit at the take profit level.
-  const potentialProfit = plannedRR > 0 && riskAmount > 0 ? plannedRR * riskAmount : 0;
-
-  // PnL ($) — (exit - entry) scaled to the instrument's per-price-point,
-  // per-lot dollar value, then multiplied by the position's lot size.
-  // Built from the same cfg.pipValue/pip used to size the position, so the
-  // displayed PnL always matches the calculator and the saved record.
-  let pnl = 0;
-  if (hasEntry && hasExit) {
-    const directionMultiplier = form.direction === 'Buy' ? 1 : -1;
-    const valuePerPricePoint = cfg.pipValue / cfg.pip; // $ per 1.0 price move, per 1.0 lot
-    const effQty = qty > 0 ? qty : 1; // fall back to 1 lot if never sized
-    pnl = (exit - entry) * directionMultiplier * valuePerPricePoint * effQty;
-  }
-
-  // PnL (%) vs account balance
-  let pnlPct = 0;
-  if (hasBalance) pnlPct = (pnl / balance) * 100;
-
-  // Realized R multiple (how many R the trade actually returned)
-  let realizedRR = 0;
-  if (riskAmount > 0) realizedRR = pnl / riskAmount;
-
-  // Result (auto)
-  let result = '';
-  if (hasEntry && hasExit) result = pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'BE';
-
-  // Trade duration (HH:MM)
-  let duration = '';
-  if (form.entryTime && form.exitTime) {
-    const toMin = (t) => {
-      const [h, m] = t.split(':').map(Number);
-      return h * 60 + m;
-    };
-    let diff = toMin(form.exitTime) - toMin(form.entryTime);
-    if (diff < 0) diff += 24 * 60;
-    if (diff > 0) {
-      const h = Math.floor(diff / 60);
-      const m = diff % 60;
-      duration = h > 0 ? `${h}h ${m}m` : `${m}m`;
-    }
-  }
-
-  return {
-    cfg,
-    riskAmount,
-    stopPips,
-    rewardPips,
-    plannedRR,
-    realizedRR,
-    potentialProfit,
-    qty,
-    autoLot,
-    pnl,
-    pnlPct,
-    result,
-    duration,
-    warnings,
-  };
-}
-
-function validateTrade(form) {
-  const errors = {};
-  if (!form.accountId) errors.accountId = 'Select an account for this trade';
-
-  const riskPct = num(form.riskPercent);
-  if (!isBlank(form.riskPercent)) {
-    if (riskPct === null) errors.riskPercent = 'Enter a valid number';
-    else if (riskPct <= 0) errors.riskPercent = 'Must be greater than 0';
-    else if (riskPct > 100) errors.riskPercent = 'Cannot exceed 100%';
-  }
-
-  const lot = num(form.contracts);
-  if (!isBlank(form.contracts) && (lot === null || lot <= 0)) {
-    errors.contracts = 'Enter a valid lot size';
-  }
-
-  const entry = num(form.entryPrice);
-  const entryIsValid = entry !== null;
-
-  const sl = num(form.stopLoss);
-  if (!isBlank(form.stopLoss)) {
-    if (sl === null) errors.stopLoss = 'Enter a valid number';
-    else if (sl <= 0) errors.stopLoss = 'Must be greater than 0';
-    else if (entryIsValid && form.direction === 'Buy' && sl >= entry) errors.stopLoss = 'Must be below Entry for a Buy';
-    else if (entryIsValid && form.direction === 'Sell' && sl <= entry) errors.stopLoss = 'Must be above Entry for a Sell';
-  }
-
-  const tp = num(form.takeProfit);
-  if (!isBlank(form.takeProfit)) {
-    if (tp === null) errors.takeProfit = 'Enter a valid number';
-    else if (tp <= 0) errors.takeProfit = 'Must be greater than 0';
-    else if (entryIsValid && form.direction === 'Buy' && tp <= entry) errors.takeProfit = 'Must be above Entry for a Buy';
-    else if (entryIsValid && form.direction === 'Sell' && tp >= entry) errors.takeProfit = 'Must be below Entry for a Sell';
-  }
-
-  return errors;
-}
-
-const BLANK = {
-  accountId: '',
-  date: todayISO(),
-  entryTime: '',
-  exitTime: '',
-  instrument: 'EURUSD',
-  direction: 'Buy',
-  session: '',
-  timeframe: '',
-  model: '',
-  entryPrice: '',
-  exitPrice: '',
-  contracts: '',
-  stopLoss: '',
-  takeProfit: '',
-  riskPercent: '',
-  rr: '',
-  positionSize: '',
-  netPnl: '',
-  commission: '',
-  result: '',
-  planId: '',
-  rating: 6,
-  riskChecklist: {},
-  tradeChecklist: {},
-  tradeGrade: '',
-  emotion: '',
-  mistakes: {},
-  confluences: '',
-  tradeManagement: '',
-  notes: '',
-  lessonsLearned: '',
-  screenshot: '',
-  tags: [],
-  psychology: {},
-};
 
 function Section({ icon, title, accent = { bg: 'rgba(255,255,255,0.06)', fg: 'var(--text-muted)' }, children }) {
   return (
@@ -399,6 +144,7 @@ function PsychRating({ emotion, value, onChange }) {
               type="button"
               onClick={() => onChange(n)}
               aria-label={`${emotion.key} ${n} of 5`}
+              aria-pressed={active}
               style={{
                 flex: 1,
                 padding: '6px 0',
@@ -424,12 +170,15 @@ function PsychRating({ emotion, value, onChange }) {
 function ChecklistBlock({ title, criteria, values, onChange }) {
   const [open, setOpen] = useState(false);
   const checkedCount = criteria.filter((c) => values[c]).length;
+  const blockId = useRef(`checklist-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Math.random().toString(36).slice(2, 6)}`).current;
 
   return (
     <div className="card" style={{ padding: 0, background: 'var(--card)' }}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls={blockId}
         style={{
           width: '100%',
           display: 'flex',
@@ -443,7 +192,7 @@ function ChecklistBlock({ title, criteria, values, onChange }) {
         }}
       >
         <span style={{ fontWeight: 600, fontSize: 13.5, display: 'flex', alignItems: 'center', gap: 8 }}>
-          {open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+          {open ? <ChevronDown size={15} aria-hidden /> : <ChevronRight size={15} aria-hidden />}
           {title}
         </span>
         <span
@@ -458,7 +207,7 @@ function ChecklistBlock({ title, criteria, values, onChange }) {
         </span>
       </button>
       {open && (
-        <div style={{ padding: '4px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div id={blockId} style={{ padding: '4px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {criteria.length === 0 && (
             <p style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>No criteria defined yet. Add some in the System tab.</p>
           )}
@@ -638,7 +387,7 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 300 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 'min(300px, 100%)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span
                 className="tag"
@@ -688,8 +437,9 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
             <Section icon={<Building2 size={14} />} title="Account">
               <div className="field-row cols-2">
                 <div className="field">
-                  <label>Account *</label>
+                  <label htmlFor="trade-account">Account *</label>
                   <select
+                    id="trade-account"
                     value={form.accountId}
                     onChange={(e) => {
                       const id = e.target.value;
@@ -712,8 +462,8 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
                   {errors.accountId && <span className="auth-error-text">{errors.accountId}</span>}
                 </div>
                 <div className="field">
-                  <label>Broker (optional)</label>
-                  <input type="text" value={selectedAccount?.broker || ''} placeholder="From selected account" readOnly />
+                  <label htmlFor="trade-broker">Broker (optional)</label>
+                  <input id="trade-broker" type="text" value={selectedAccount?.broker || ''} placeholder="From selected account" readOnly />
                 </div>
               </div>
             </Section>
@@ -721,8 +471,8 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
             <Section icon={<Crosshair size={14} />} title="Trade">
               <div className="field-row cols-2">
                 <div className="field">
-                  <label>Pair</label>
-                  <select value={form.instrument} onChange={(e) => set('instrument', e.target.value)}>
+                  <label htmlFor="trade-pair">Pair</label>
+                  <select id="trade-pair" value={form.instrument} onChange={(e) => set('instrument', e.target.value)}>
                     {INSTRUMENT_GROUPS.map((group) => (
                       <optgroup key={group.label} label={group.label}>
                         {group.options.map((i) => (
@@ -735,10 +485,12 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
                   </select>
                 </div>
                 <div className="field">
-                  <label>Direction</label>
-                  <div style={{ display: 'flex', gap: 6, background: 'var(--bg-elevated)', padding: 4, borderRadius: 10, border: '1.5px solid var(--border)' }}>
+                  <label id="trade-direction-label">Direction</label>
+                  <div role="radiogroup" aria-labelledby="trade-direction-label" style={{ display: 'flex', gap: 6, background: 'var(--bg-elevated)', padding: 4, borderRadius: 10, border: '1.5px solid var(--border)' }}>
                     <button
                       type="button"
+                      role="radio"
+                      aria-checked={form.direction === 'Buy'}
                       onClick={() => set('direction', 'Buy')}
                       style={{
                         flex: 1,
@@ -757,6 +509,8 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
                     </button>
                     <button
                       type="button"
+                      role="radio"
+                      aria-checked={form.direction === 'Sell'}
                       onClick={() => set('direction', 'Sell')}
                       style={{
                         flex: 1,
@@ -778,16 +532,16 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
               </div>
               <div className="field-row cols-3">
                 <div className="field">
-                  <label>Date</label>
-                  <input type="date" value={form.date} onChange={(e) => set('date', e.target.value)} />
+                  <label htmlFor="trade-date">Date</label>
+                  <input id="trade-date" type="date" value={form.date} onChange={(e) => set('date', e.target.value)} />
                 </div>
                 <div className="field">
-                  <label>Entry Time</label>
-                  <input type="time" value={form.entryTime} onChange={(e) => set('entryTime', e.target.value)} />
+                  <label htmlFor="trade-entry-time">Entry Time</label>
+                  <input id="trade-entry-time" type="time" value={form.entryTime} onChange={(e) => set('entryTime', e.target.value)} />
                 </div>
                 <div className="field">
-                  <label>Exit Time</label>
-                  <input type="time" value={form.exitTime} onChange={(e) => set('exitTime', e.target.value)} />
+                  <label htmlFor="trade-exit-time">Exit Time</label>
+                  <input id="trade-exit-time" type="time" value={form.exitTime} onChange={(e) => set('exitTime', e.target.value)} />
                 </div>
               </div>
             </Section>
@@ -795,12 +549,13 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
             <Section icon={<ScanLine size={14} />} title="Price">
               <div className="field-row cols-4">
                 <div className="field">
-                  <label>Entry Price</label>
-                  <input type="number" step="any" value={form.entryPrice} onChange={(e) => set('entryPrice', e.target.value)} placeholder="1.25000" />
+                  <label htmlFor="trade-entry-price">Entry Price</label>
+                  <input id="trade-entry-price" type="number" step="any" value={form.entryPrice} onChange={(e) => set('entryPrice', e.target.value)} placeholder="1.25000" />
                 </div>
                 <div className="field">
-                  <label>Stop Loss</label>
+                  <label htmlFor="trade-stop-loss">Stop Loss</label>
                   <input
+                    id="trade-stop-loss"
                     type="number"
                     step="any"
                     value={form.stopLoss}
@@ -811,8 +566,9 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
                   {errors.stopLoss && <span className="auth-error-text">{errors.stopLoss}</span>}
                 </div>
                 <div className="field">
-                  <label>Take Profit</label>
+                  <label htmlFor="trade-take-profit">Take Profit</label>
                   <input
+                    id="trade-take-profit"
                     type="number"
                     step="any"
                     value={form.takeProfit}
@@ -823,8 +579,8 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
                   {errors.takeProfit && <span className="auth-error-text">{errors.takeProfit}</span>}
                 </div>
                 <div className="field">
-                  <label>Exit Price</label>
-                  <input type="number" step="any" value={form.exitPrice} onChange={(e) => set('exitPrice', e.target.value)} placeholder="1.25200" />
+                  <label htmlFor="trade-exit-price">Exit Price</label>
+                  <input id="trade-exit-price" type="number" step="any" value={form.exitPrice} onChange={(e) => set('exitPrice', e.target.value)} placeholder="1.25200" />
                 </div>
               </div>
             </Section>
@@ -833,8 +589,9 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
             <Section icon={<Gauge size={14} />} title="Risk & Position Size">
               <div className="field-row cols-2">
                 <div className="field">
-                  <label>Risk %</label>
+                  <label htmlFor="trade-risk-percent">Risk %</label>
                   <input
+                    id="trade-risk-percent"
                     type="number"
                     step="any"
                     min="0"
@@ -847,8 +604,8 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
                   {errors.riskPercent && <span className="auth-error-text">{errors.riskPercent}</span>}
                 </div>
                 <div className="field">
-                  <label>Account Balance ($)</label>
-                  <input type="number" step="any" value={accountBalance} onChange={(e) => setBalance(e.target.value)} placeholder="10000" />
+                  <label htmlFor="trade-account-balance">Account Balance ($)</label>
+                  <input id="trade-account-balance" type="number" step="any" value={accountBalance} onChange={(e) => setBalance(e.target.value)} placeholder="10000" />
                 </div>
               </div>
 
@@ -996,8 +753,8 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
             <Section icon={<Tag size={14} />} title="Tags">
               <div className="field-row cols-2">
                 <div className="field">
-                  <label>Setup</label>
-                  <select value={form.model} onChange={(e) => set('model', e.target.value)}>
+                  <label htmlFor="trade-setup">Setup</label>
+                  <select id="trade-setup" value={form.model} onChange={(e) => set('model', e.target.value)}>
                     <option value="">Select setup</option>
                     {models.map((m) => (
                       <option key={m}>{m}</option>
@@ -1005,8 +762,8 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
                   </select>
                 </div>
                 <div className="field">
-                  <label>Session</label>
-                  <select value={form.session} onChange={(e) => set('session', e.target.value)}>
+                  <label htmlFor="trade-session">Session</label>
+                  <select id="trade-session" value={form.session} onChange={(e) => set('session', e.target.value)}>
                     <option value="">Select session</option>
                     {SESSIONS.map((s) => (
                       <option key={s}>{s}</option>
@@ -1016,8 +773,8 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
               </div>
               <div className="field-row cols-2">
                 <div className="field">
-                  <label>Emotion</label>
-                  <select value={form.emotion} onChange={(e) => set('emotion', e.target.value)}>
+                  <label htmlFor="trade-emotion">Emotion</label>
+                  <select id="trade-emotion" value={form.emotion} onChange={(e) => set('emotion', e.target.value)}>
                     <option value="">Select emotion</option>
                     {EMOTIONS.map((em) => (
                       <option key={em}>{em}</option>
@@ -1043,12 +800,16 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
             </Section>
 
 <Section icon={<StickyNote size={14} />} title="Notes">
-              <textarea
-                value={form.notes}
-                onChange={(e) => set('notes', e.target.value)}
-                placeholder="Trade notes…"
-                style={{ minHeight: 90 }}
-              />
+              <div className="field">
+                <label htmlFor="trade-notes">Notes</label>
+                <textarea
+                  id="trade-notes"
+                  value={form.notes}
+                  onChange={(e) => set('notes', e.target.value)}
+                  placeholder="Trade notes…"
+                  style={{ minHeight: 90 }}
+                />
+              </div>
             </Section>
           </div>
         </div>
@@ -1078,7 +839,7 @@ function TagSelect({ value, onChange, library, onCreate }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <label>Tags</label>
+      <label htmlFor="trade-tags-input">Tags</label>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {library.length === 0 && <span style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>No tags yet — type one below to create it.</span>}
         {library.map((t) => (
@@ -1098,6 +859,7 @@ function TagSelect({ value, onChange, library, onCreate }) {
       </div>
       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
         <input
+          id="trade-tags-input"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {

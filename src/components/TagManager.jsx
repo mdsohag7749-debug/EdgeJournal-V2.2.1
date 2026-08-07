@@ -159,13 +159,16 @@ export default function TagManager({ open, onClose }) {
                       aria-label={`Set color ${c}`}
                       title={c}
                       style={{
-                        width: 18,
-                        height: 18,
+                        width: 24,
+                        height: 24,
                         borderRadius: '50%',
                         background: c,
                         border: tag.color === c ? '2px solid var(--text)' : '2px solid transparent',
                         cursor: 'pointer',
                         padding: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     />
                   ))}

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Plus, X } from 'lucide-react';
 import SidePanel from '../../components/SidePanel';
 import { useAccounts } from '../../context/AccountContext';
 import { todayISO } from '../../lib/utils';
@@ -122,8 +121,9 @@ export default function ChallengeFormPanel({ open, onClose, onSave, initial }) {
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div className="field">
-          <label>Challenge Name</label>
+          <label htmlFor="challenge-name">Challenge Name</label>
           <input
+            id="challenge-name"
             type="text"
             value={form.name}
             onChange={(e) => set('name', e.target.value)}
@@ -133,8 +133,9 @@ export default function ChallengeFormPanel({ open, onClose, onSave, initial }) {
         </div>
 
         <div className="field">
-          <label>Prop Firm</label>
+          <label htmlFor="challenge-prop-firm">Prop Firm</label>
           <input
+            id="challenge-prop-firm"
             type="text"
             value={form.propFirm}
             onChange={(e) => set('propFirm', e.target.value)}
@@ -145,8 +146,8 @@ export default function ChallengeFormPanel({ open, onClose, onSave, initial }) {
 
         <div className="field-row cols-2">
           <div className="field">
-            <label>Account</label>
-            <select value={form.accountId} onChange={(e) => set('accountId', e.target.value)}>
+            <label htmlFor="challenge-account">Account</label>
+            <select id="challenge-account" value={form.accountId} onChange={(e) => set('accountId', e.target.value)}>
               <option value="">No account</option>
               {accounts.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -156,8 +157,8 @@ export default function ChallengeFormPanel({ open, onClose, onSave, initial }) {
             </select>
           </div>
           <div className="field">
-            <label>Challenge Type</label>
-            <select value={form.challengeType} onChange={(e) => set('challengeType', e.target.value)}>
+            <label htmlFor="challenge-type">Challenge Type</label>
+            <select id="challenge-type" value={form.challengeType} onChange={(e) => set('challengeType', e.target.value)}>
               {CHALLENGE_TYPES.map((t) => (
                 <option key={t} value={t}>
                   {t}
@@ -169,8 +170,9 @@ export default function ChallengeFormPanel({ open, onClose, onSave, initial }) {
 
         <div className="field-row cols-2">
           <div className="field">
-            <label>Starting Balance</label>
+            <label htmlFor="challenge-starting-balance">Starting Balance</label>
             <input
+              id="challenge-starting-balance"
               type="number"
               step="0.01"
               min="0"
@@ -181,8 +183,9 @@ export default function ChallengeFormPanel({ open, onClose, onSave, initial }) {
             {errors.startingBalance && <span style={{ color: 'var(--loss)', fontSize: 12 }}>{errors.startingBalance}</span>}
           </div>
           <div className="field">
-            <label>Profit Target</label>
+            <label htmlFor="challenge-profit-target">Profit Target</label>
             <input
+              id="challenge-profit-target"
               type="number"
               step="0.01"
               min="0"
@@ -196,8 +199,9 @@ export default function ChallengeFormPanel({ open, onClose, onSave, initial }) {
 
         <div className="field-row cols-2">
           <div className="field">
-            <label>Daily Drawdown</label>
+            <label htmlFor="challenge-daily-drawdown">Daily Drawdown</label>
             <input
+              id="challenge-daily-drawdown"
               type="number"
               step="0.01"
               min="0"
@@ -208,8 +212,9 @@ export default function ChallengeFormPanel({ open, onClose, onSave, initial }) {
             {errors.dailyDrawdown && <span style={{ color: 'var(--loss)', fontSize: 12 }}>{errors.dailyDrawdown}</span>}
           </div>
           <div className="field">
-            <label>Maximum Drawdown</label>
+            <label htmlFor="challenge-max-drawdown">Maximum Drawdown</label>
             <input
+              id="challenge-max-drawdown"
               type="number"
               step="0.01"
               min="0"
@@ -223,8 +228,9 @@ export default function ChallengeFormPanel({ open, onClose, onSave, initial }) {
 
         <div className="field-row cols-2">
           <div className="field">
-            <label>Min Trading Days</label>
+            <label htmlFor="challenge-min-days">Min Trading Days</label>
             <input
+              id="challenge-min-days"
               type="number"
               min="0"
               value={form.minTradingDays}
@@ -234,8 +240,8 @@ export default function ChallengeFormPanel({ open, onClose, onSave, initial }) {
             {errors.minTradingDays && <span style={{ color: 'var(--loss)', fontSize: 12 }}>{errors.minTradingDays}</span>}
           </div>
           <div className="field">
-            <label>Status</label>
-            <select value={form.status} onChange={(e) => set('status', e.target.value)}>
+            <label htmlFor="challenge-status">Status</label>
+            <select id="challenge-status" value={form.status} onChange={(e) => set('status', e.target.value)}>
               {CHALLENGE_STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -247,12 +253,12 @@ export default function ChallengeFormPanel({ open, onClose, onSave, initial }) {
 
         <div className="field-row cols-2">
           <div className="field">
-            <label>Start Date</label>
-            <input type="date" value={form.startDate} onChange={(e) => set('startDate', e.target.value)} />
+            <label htmlFor="challenge-start-date">Start Date</label>
+            <input id="challenge-start-date" type="date" value={form.startDate} onChange={(e) => set('startDate', e.target.value)} />
           </div>
           <div className="field">
-            <label>End Date</label>
-            <input type="date" value={form.endDate} onChange={(e) => set('endDate', e.target.value)} />
+            <label htmlFor="challenge-end-date">End Date</label>
+            <input id="challenge-end-date" type="date" value={form.endDate} onChange={(e) => set('endDate', e.target.value)} />
             {errors.endDate && <span style={{ color: 'var(--loss)', fontSize: 12 }}>{errors.endDate}</span>}
           </div>
         </div>

@@ -14,6 +14,7 @@
 // here for account-aware behavior.
 
 import { computeAnalytics } from './analytics';
+import { dateKey } from './utils';
 
 export const FOCUS_PERIODS = [
   { value: 'all', label: 'All Time' },
@@ -23,10 +24,6 @@ export const FOCUS_PERIODS = [
 
 function pad(n) {
   return String(n).padStart(2, '0');
-}
-
-function dateKey(d) {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 // Returns the Monday ('YYYY-MM-DD') of the week containing the given Date.

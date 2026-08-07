@@ -18,10 +18,11 @@ export function SyncPendingIndicator() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
           transition={{ duration: 0.2 }}
+          role="status"
           style={{
             position: 'fixed',
             left: 20,
-            bottom: 20,
+            bottom: 'calc(20px + env(safe-area-inset-bottom))',
             zIndex: 1000,
             display: 'flex',
             alignItems: 'center',

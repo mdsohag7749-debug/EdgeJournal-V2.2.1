@@ -22,9 +22,11 @@ import {
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
-import { useTheme, THEME_PRESETS, ACCENT_PRESETS } from '../context/ThemeContext';
+import { useAccounts } from '../context/AccountContext';
+import { useTheme } from '../context/ThemeContext';
 import AccountsManager from '../components/accounts/AccountsManager';
-import { exportAllData, downloadJSONFile, importAllData, estimateStorageBytes } from '../lib/storage';
+import { exportAllData, downloadJSONFile, importAllData, estimateStorageBytes, validateBackupData } from '../lib/storage';
+import { restoreAccounts } from '../lib/accountsApi';
 import { updateProfile } from '../lib/profileApi';
 import { uploadAvatar } from '../lib/avatarApi';
 
@@ -386,23 +388,23 @@ function SectionProfile() {
 
         <div className="field-row cols-2">
           <div className="field">
-            <label>Full Name</label>
-            <input type="text" value={form.fullName} onChange={(e) => set('fullName', e.target.value)} placeholder="Jane Trader" maxLength={80} />
+            <label htmlFor="settings-full-name">Full Name</label>
+            <input id="settings-full-name" type="text" value={form.fullName} onChange={(e) => set('fullName', e.target.value)} placeholder="Jane Trader" maxLength={80} />
           </div>
           <div className="field">
-            <label>Username</label>
-            <input type="text" value={form.username} onChange={(e) => set('username', e.target.value)} placeholder="janetrader" maxLength={30} autoCapitalize="none" autoCorrect="off" />
+            <label htmlFor="settings-username">Username</label>
+            <input id="settings-username" type="text" value={form.username} onChange={(e) => set('username', e.target.value)} placeholder="janetrader" maxLength={30} autoCapitalize="none" autoCorrect="off" />
           </div>
         </div>
 
         <div className="field">
-          <label>Bio</label>
-          <textarea value={form.bio} onChange={(e) => set('bio', e.target.value)} placeholder="A short line about your trading style, focus, or goals…" style={{ minHeight: 100 }} maxLength={300} />
+          <label htmlFor="settings-bio">Bio</label>
+          <textarea id="settings-bio" value={form.bio} onChange={(e) => set('bio', e.target.value)} placeholder="A short line about your trading style, focus, or goals…" style={{ minHeight: 100 }} maxLength={300} />
         </div>
 
         <div className="field" style={{ maxWidth: 320 }}>
-          <label>Timezone</label>
-          <select value={form.timezone} onChange={(e) => set('timezone', e.target.value)}>
+          <label htmlFor="settings-timezone">Timezone</label>
+          <select id="settings-timezone" value={form.timezone} onChange={(e) => set('timezone', e.target.value)}>
             <option value="">Not set</option>
             {COMMON_TIMEZONES.map((tz) => (
               <option key={tz} value={tz}>
@@ -412,7 +414,7 @@ function SectionProfile() {
           </select>
         </div>
 
-        {message && <p style={{ fontSize: 13, color: message.type === 'success' ? 'var(--win)' : 'var(--loss)' }}>{message.text}</p>}
+        {message && <p role="status" style={{ fontSize: 13, color: message.type === 'success' ? 'var(--win)' : 'var(--loss)' }}>{message.text}</p>}
 
         <div>
           <button className="btn btn-accent" onClick={handleSave} disabled={saving}>
@@ -597,14 +599,38 @@ function SectionSystem() {
 
 // ---------------------------------------------------------------- Backup
 function SectionBackup() {
-  const { trades, goals, plans, reflections, study, reloadAllFromStorage } = useData();
+  const { trades, goals, plans, reflections, study, challenges, reloadAllFromStorage } = useData();
+  const { accounts, refetch: refetchAccounts, reloadLedger } = useAccounts();
+  const { user } = useAuth();
   const fileInputRef = useRef(null);
   const [importMsg, setImportMsg] = useState(null);
+  const [importing, setImporting] = useState(false);
 
   const kb = (estimateStorageBytes() / 1024).toFixed(1);
 
   function handleExport() {
-    const data = exportAllData(trades.items, goals.items, plans.items, reflections.items, study.items);
+    // Accounts travel as the stable, restorable fields only — the derived
+    // balance stats (currentBalance, drawdown, ...) are recomputed from real
+    // trades on restore, never stored in the backup.
+    const accountsData = (accounts || []).map((a) => ({
+      id: a.id,
+      name: a.name,
+      broker: a.broker,
+      accountType: a.accountType,
+      platform: a.platform,
+      startingBalance: a.startingBalance,
+      currency: a.currency,
+      status: a.status,
+      isDefault: a.isDefault,
+    }));
+    const data = exportAllData(
+      trades.items,
+      goals.items,
+      plans.items,
+      reflections.items,
+      study.items,
+      { accounts: accountsData, challenges: challenges.items }
+    );
     const stamp = new Date().toISOString().slice(0, 10);
     downloadJSONFile(data, `edgejournal-backup-${stamp}.json`);
   }
@@ -612,20 +638,41 @@ function SectionBackup() {
   async function handleImportFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setImporting(true);
     try {
       const text = await file.text();
       const data = JSON.parse(text);
+      // Validate the whole backup BEFORE committing anything, so a bad
+      // file is rejected cleanly and can never cause a partial restore or
+      // a misleading "imported successfully" message.
+      validateBackupData(data);
       importAllData(data);
-      reloadAllFromStorage();
+      // Accounts must be restored BEFORE trades/challenges (which point at
+      // them by id), but never wipe existing accounts — restore is a merge.
+      if (user?.id && Array.isArray(data.accounts) && data.accounts.length) {
+        await restoreAccounts(user.id, data.accounts);
+      }
+      if (Array.isArray(data.challenges) && data.challenges.length) await challenges.importMany(data.challenges);
       if (Array.isArray(data.trades) && data.trades.length) await trades.importMany(data.trades);
       if (Array.isArray(data.goals) && data.goals.length) await goals.importMany(data.goals);
       if (Array.isArray(data.plans) && data.plans.length) await plans.importMany(data.plans);
       if (Array.isArray(data.reflections) && data.reflections.length) await reflections.importMany(data.reflections);
       if (Array.isArray(data.study) && data.study.length) await study.importMany(data.study);
+      // Refresh authoritative state (accounts + recompute balances from the
+      // now-imported trade history) plus the local collections.
+      reloadAllFromStorage();
+      await refetchAccounts();
+      reloadLedger();
       setImportMsg({ type: 'success', text: 'Backup imported successfully.' });
     } catch (err) {
-      setImportMsg({ type: 'error', text: 'Could not import this file. Make sure it is a valid EdgeJournal backup JSON.' });
+      setImportMsg({
+        type: 'error',
+        text: err?.message && err.message !== 'Invalid backup file'
+          ? `Could not import this file: ${err.message}`
+          : 'Could not import this file. Make sure it is a valid EdgeJournal backup JSON.',
+      });
     } finally {
+      setImporting(false);
       e.target.value = '';
     }
   }
@@ -640,8 +687,8 @@ function SectionBackup() {
         <button className="btn btn-primary" onClick={handleExport}>
           <Download size={15} /> Export JSON Backup
         </button>
-        <button className="btn btn-ghost" onClick={() => fileInputRef.current?.click()}>
-          <Upload size={15} /> Import JSON Backup
+        <button className="btn btn-ghost" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+          <Upload size={15} /> {importing ? 'Importing…' : 'Import JSON Backup'}
         </button>
         <input ref={fileInputRef} type="file" accept="application/json" onChange={handleImportFile} style={{ display: 'none' }} />
       </div>

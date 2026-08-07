@@ -12,16 +12,9 @@ const LOSS = '#dc2626';
 const BLUE = '#2563eb';
 const VIOLET = '#7c3aed';
 
-const TONES = {
-  pos: 'linear-gradient(180deg, rgba(22,163,74,0.5), rgba(22,163,74,0.0))',
-  neg: 'linear-gradient(180deg, rgba(220,38,38,0.5), rgba(220,38,38,0.0))',
-  neu: 'linear-gradient(180deg, rgba(37,99,235,0.5), rgba(37,99,235,0.0))',
-  violet: 'linear-gradient(180deg, rgba(124,58,237,0.5), rgba(124,58,237,0.0))',
-};
-
 const chipped = { fontSize: 11, fontWeight: 700, letterSpacing: '0.03em', padding: '2px 8px', borderRadius: 8, textTransform: 'uppercase' };
 
-function InsightCard({ icon: Icon, title, value, detail, coverage, tone = 'neu', color, delay = 0 }) {
+function InsightCard({ icon: Icon, title, value, detail, coverage, color, delay = 0 }) {
   return (
     <motion.div
       className="card card-lift"
@@ -82,10 +75,6 @@ function MonthlyTrendChart({ trend }) {
   );
 }
 
-function fmtMoney(v) {
-  return formatMoney(v);
-}
-
 export default function InstitutionalInsights() {
   const { trades } = useData();
   const ins = useMemo(() => computeInstitutionalInsights(trades.items), [trades.items]);
@@ -107,25 +96,25 @@ export default function InstitutionalInsights() {
 
   const cards = [
     {
-      title: 'Highest RR Environment', icon: Activity, tone: 'violet', color: VIOLET,
+      title: 'Highest RR Environment', icon: Activity, color: VIOLET,
       value: i.rrEnvironment?.label || '—',
       detail: i.rrEnvironment ? `${i.rrEnvironment.avgRR.toFixed(2)} avg R:R` : 'Insufficient data',
       coverage: null,
     },
     {
-      title: 'Most Profitable Model', icon: Briefcase, tone: 'win', color: WIN,
+      title: 'Most Profitable Model', icon: Briefcase, color: WIN,
       value: i.bestModel?.label || '—',
-      detail: i.bestModel ? `${fmtMoney(i.bestModel.netPnl)} net` : 'Insufficient data',
+      detail: i.bestModel ? `${formatMoney(i.bestModel.netPnl)} net` : 'Insufficient data',
       coverage: i.bestModel ? `${i.bestModel.trades} trades` : null,
     },
     {
-      title: 'Most Consistent Session', icon: Repeat, tone: 'neu', color: BLUE,
+      title: 'Most Consistent Session', icon: Repeat, color: BLUE,
       value: i.consistent?.label || '—',
       detail: i.consistent ? `${i.consistent.winRate.toFixed(1)}% win rate` : 'Insufficient data',
       coverage: i.consistent ? `${i.consistent.wins + i.consistent.losses} trades` : null,
     },
     {
-      title: 'Monthly Improvement', icon: TrendingUp, tone: ins.trend.direction === 'down' ? 'neg' : 'win', color: ins.trend.direction === 'down' ? LOSS : WIN,
+      title: 'Monthly Improvement', icon: TrendingUp, color: ins.trend.direction === 'down' ? LOSS : WIN,
       value: { up: 'Improving', down: 'Declining', flat: 'Stable', null: 'Insufficient data' }[ins.trend.direction],
       detail: ins.trend.slope !== null ? `${ins.trend.slope >= 0 ? '+' : ''}${ins.trend.slope} pts/month` : 'Need 2+ months of data',
       coverage: null,
@@ -145,7 +134,7 @@ export default function InstitutionalInsights() {
 
       <div className="dash-stats-grid">
         {cards.map((c, idx) => (
-          <InsightCard key={c.title} icon={c.icon} title={c.title} value={c.value} detail={c.detail} coverage={c.coverage} tone={c.tone} color={c.color} delay={Math.min(idx * 0.03, 0.4)} />
+          <InsightCard key={c.title} icon={c.icon} title={c.title} value={c.value} detail={c.detail} coverage={c.coverage} color={c.color} delay={Math.min(idx * 0.03, 0.4)} />
         ))}
       </div>
 

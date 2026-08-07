@@ -51,6 +51,7 @@ export default function TagChip({ name, color, library, onRemove, onClick, activ
     <Wrapper
       type={isButton ? 'button' : undefined}
       onClick={onClick}
+      aria-pressed={isButton && typeof active === 'boolean' ? active : undefined}
       title={title}
       className="tag"
       style={{

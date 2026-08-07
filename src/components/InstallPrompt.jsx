@@ -58,8 +58,8 @@ export default function InstallPrompt() {
           style={{
             position: 'fixed',
             right: 20,
-            bottom: 20,
-            zIndex: 1000,
+            bottom: 'calc(20px + env(safe-area-inset-bottom))',
+            zIndex: 1002,
             display: 'flex',
             alignItems: 'center',
             gap: 12,
@@ -68,7 +68,7 @@ export default function InstallPrompt() {
             border: '1px solid var(--border)',
             borderRadius: 'var(--radius-md)',
             boxShadow: 'var(--shadow-lifted)',
-            maxWidth: 320,
+            maxWidth: 'min(320px, calc(100vw - 40px))',
           }}
         >
           <div

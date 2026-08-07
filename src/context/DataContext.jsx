@@ -27,6 +27,36 @@ import {
 
 const DataContext = createContext(null);
 
+// Load a settings value from localStorage but fall back to `defaultValue`
+// when the stored value is missing OR the wrong type (e.g. a corrupted
+// record or a leftover value from an older schema). Guards against a
+// stored `models`/`tags`/etc. being a string or object, which would
+// otherwise crash `.map`/`.some` when a corrupted-but-valid JSON string is
+// read back from storage.
+function loadArraySetting(key, defaultValue) {
+  const value = loadJSON(key, defaultValue);
+  return Array.isArray(value) ? value : defaultValue;
+}
+
+function loadStringSetting(key, defaultValue) {
+  const value = loadJSON(key, defaultValue);
+  return typeof value === 'string' ? value : defaultValue;
+}
+
+// Returns the set of existing primary-key ids for a user's rows in a
+// table. Used to keep "Import JSON Backup" idempotent — rows already
+// present are not re-inserted. Best-effort: on any failure it returns an
+// empty set so import can still proceed (no data is lost).
+async function getExistingIds(table, userId) {
+  try {
+    const { data, error } = await supabase.from(table).select('id').eq('user_id', userId);
+    if (error) return new Set();
+    return new Set((data || []).map((r) => r.id));
+  } catch (e) {
+    return new Set();
+  }
+}
+
 const DEFAULT_MODELS = ['Breakout', 'Pullback', 'Reversal', 'Range Fade'];
 const DEFAULT_RISK_CRITERIA = [
   'Risk does not exceed max daily loss limit',
@@ -292,15 +322,30 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
     [table, userId, label, onChange]
   );
 
-  // Bulk insert used only by System.jsx's "Import JSON Backup" — a
-  // backup file's array for this collection gets pushed into Supabase
-  // instead of localStorage.
+  // Bulk restore used by Settings' "Import JSON Backup" — a backup file's
+  // array for this collection gets pushed into Supabase instead of
+  // localStorage. Rows keep their ORIGINAL `id` and the insert is
+  // idempotent: rows whose id already exists for this user are skipped, so
+  // re-importing the same backup never creates duplicate records (matching
+  // how the app treat imported ids as the identity of existing rows).
   const importMany = useCallback(
     async (rows) => {
       if (!userId || !Array.isArray(rows) || rows.length === 0) return;
-      const payload = rows.map((r) => toRow(r, userId, rowOpts(false)));
-      const { data, error } = await supabase.from(table).insert(payload).select();
 
+      const existingIds = await getExistingIds(table, userId);
+      const rowsToInsert = rows.filter((r) => r && r.id && !existingIds.has(String(r.id)));
+      const unsaved = rows.filter((r) => r && !r.id);
+      if (rowsToInsert.length === 0 && unsaved.length === 0) return;
+
+      const build = (r) => {
+        const row = toRow(r, userId, rowOpts(false));
+        if (r.id) row.id = String(r.id);
+        return row;
+      };
+      const payload = [...rowsToInsert.map(build), ...unsaved.map(build)];
+      if (payload.length === 0) return;
+
+      const { data, error } = await supabase.from(table).insert(payload).select();
       if (error) {
         console.error(`Failed to import ${table} into Supabase:`, error.message);
         throw error;
@@ -526,18 +571,18 @@ export function DataProvider({ children}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, reloadLedger, ...syncFns]);
 
-  const [models, setModelsState] = useState(() => loadJSON(KEYS.models, DEFAULT_MODELS));
-  const [riskCriteria, setRiskCriteriaState] = useState(() => loadJSON(KEYS.riskCriteria, DEFAULT_RISK_CRITERIA));
+  const [models, setModelsState] = useState(() => loadArraySetting(KEYS.models, DEFAULT_MODELS));
+  const [riskCriteria, setRiskCriteriaState] = useState(() => loadArraySetting(KEYS.riskCriteria, DEFAULT_RISK_CRITERIA));
   const [checklistCriteria, setChecklistCriteriaState] = useState(() =>
-    loadJSON(KEYS.checklistCriteria, DEFAULT_CHECKLIST_CRITERIA)
+    loadArraySetting(KEYS.checklistCriteria, DEFAULT_CHECKLIST_CRITERIA)
   );
-  const [accountName, setAccountNameState] = useState(() => loadJSON(KEYS.accountName, 'My Trading Account'));
+  const [accountName, setAccountNameState] = useState(() => loadStringSetting(KEYS.accountName, 'My Trading Account'));
 
-  // Managed tag library — the canonical set of tags users attach to
+  // Managed tag library — the canonical source of tags users attach to
   // trades, each with a color. Stored per-browser like models/checklists
   // (README documents those as localStorage settings); the tags actually
   // on a trade persist to Supabase via trades.update below.
-  const [tagLibrary, setTagLibrary] = useState(() => loadJSON(KEYS.tags, DEFAULT_TAGS));
+  const [tagLibrary, setTagLibrary] = useState(() => loadArraySetting(KEYS.tags, DEFAULT_TAGS));
 
   useEffect(() => saveJSON(KEYS.models, models), [models]);
   useEffect(() => saveJSON(KEYS.riskCriteria, riskCriteria), [riskCriteria]);
@@ -602,11 +647,11 @@ export function DataProvider({ children}) {
     reflections.refetch();
     study.refetch();
     challenges.refetch();
-    setModelsState(loadJSON(KEYS.models, DEFAULT_MODELS));
-    setRiskCriteriaState(loadJSON(KEYS.riskCriteria, DEFAULT_RISK_CRITERIA));
-    setChecklistCriteriaState(loadJSON(KEYS.checklistCriteria, DEFAULT_CHECKLIST_CRITERIA));
-    setAccountNameState(loadJSON(KEYS.accountName, 'My Trading Account'));
-    setTagLibrary(loadJSON(KEYS.tags, DEFAULT_TAGS));
+    setModelsState(loadArraySetting(KEYS.models, DEFAULT_MODELS));
+    setRiskCriteriaState(loadArraySetting(KEYS.riskCriteria, DEFAULT_RISK_CRITERIA));
+    setChecklistCriteriaState(loadArraySetting(KEYS.checklistCriteria, DEFAULT_CHECKLIST_CRITERIA));
+    setAccountNameState(loadStringSetting(KEYS.accountName, 'My Trading Account'));
+    setTagLibrary(loadArraySetting(KEYS.tags, DEFAULT_TAGS));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

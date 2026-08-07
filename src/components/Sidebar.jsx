@@ -86,7 +86,7 @@ export default function Sidebar({ active, onNavigate, collapsed, onToggleCollaps
         )}
       </div>
 
-      <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, padding: '10px 10px' }}>
+      <nav aria-label="Main navigation" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, padding: '10px 10px' }}>
         {NAV.map((item) => {
           const isActive = active === item.id;
           const Icon = item.icon;
@@ -95,6 +95,7 @@ export default function Sidebar({ active, onNavigate, collapsed, onToggleCollaps
               key={item.id}
               onClick={() => onNavigate(item.id)}
               title={collapsed ? item.label : undefined}
+              aria-current={isActive ? 'page' : undefined}
               whileHover={{ x: isActive ? 0 : 2 }}
               whileTap={{ scale: 0.97 }}
               style={{
@@ -163,6 +164,7 @@ export default function Sidebar({ active, onNavigate, collapsed, onToggleCollaps
         <button
           onClick={onToggleCollapsed}
           className="btn btn-ghost"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           style={{ width: '100%', justifyContent: collapsed ? 'center' : 'flex-start', padding: '9px 12px' }}
         >
           {collapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}

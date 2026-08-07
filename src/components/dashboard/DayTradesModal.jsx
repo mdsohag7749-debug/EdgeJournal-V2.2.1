@@ -21,8 +21,9 @@ export default function DayTradesModal({ open, date, trades, onClose, onSelectTr
           </div>
         ) : (
           trades.map((t) => (
-            <div
+            <button
               key={t.id}
+              type="button"
               onClick={() => {
                 onClose();
                 onSelectTrade(t);
@@ -36,13 +37,17 @@ export default function DayTradesModal({ open, date, trades, onClose, onSelectTr
                 gap: 8,
                 background: 'var(--card)',
                 border: '1px solid var(--border)',
+                font: 'inherit',
+                textAlign: 'left',
+                color: 'inherit',
+                width: '100%',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 <span style={{ fontWeight: 700, fontSize: 14 }}>{t.instrument}</span>
                 <span className={`tag ${resultTagClass(t.result)}`}>{t.result}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13, width: '100%' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                   {t.direction && <span className={`tag ${directionTagClass(t.direction)}`}>{t.direction}</span>}
                   <span style={{ color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.model || 'No model'}</span>
@@ -51,7 +56,7 @@ export default function DayTradesModal({ open, date, trades, onClose, onSelectTr
                   {formatMoney(t.netPnl)}
                 </span>
               </div>
-            </div>
+            </button>
           ))
         )}
       </div>

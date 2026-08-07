@@ -7,7 +7,7 @@
   --border-strong: rgba(255, 255, 255, 0.18);
   --text: #f3f4f6;
   --text-muted: #9ca3af;
-  --text-faint: #6b7280;
+  --text-faint: #7a8190;
 
   --red: #c1121f;
   --red-strong: #780000;
@@ -101,9 +101,32 @@ a {
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
-button:focus-visible {
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
   outline: 2px solid var(--red);
-  outline-offset: 1px;
+  outline-offset: 2px;
+}
+
+/* Keyboard "skip to content" link — hidden by default, appears on focus. */
+.skip-link {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 9999;
+  background: var(--card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: var(--shadow-lifted);
+  transform: translateY(-300%);
+  transition: transform 0.15s ease;
+}
+.skip-link:focus-visible {
+  transform: translateY(0);
 }
 
 /* ---------- shared primitives ---------- */
@@ -381,6 +404,7 @@ button:focus-visible {
 
 .scroll-thin {
   scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ---------- Responsive polish (v2.2.3) ---------- */
@@ -399,7 +423,30 @@ button:focus-visible {
 
 @media (max-width: 600px) {
   .app-main {
-    padding: 16px 12px 48px !important;
+    padding: 16px 12px calc(48px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* The date pill in the page header duplicates the date already shown in
+   the header subtitle, so it is hidden on small screens to stop the
+   header action row from overflowing/wrapping into several rows. */
+@media (max-width: 700px) {
+  .header-date-pill {
+    display: none !important;
+  }
+}
+
+/* Trading Calendar: on phones the 7-day grid is too narrow to keep every
+   cell readable, so the grid keeps a minimum width and scrolls
+   horizontally INSIDE the widget instead of pushing the whole page. */
+.cal-scroll {
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 600px) {
+  .cal-grid {
+    min-width: 520px;
   }
 }
 
@@ -553,10 +600,15 @@ button:focus-visible {
   }
 }
 
-@media (max-width: 720px) {
+/* 2-column stat grid from 960px down so KPI values never truncate at
+   tablet widths where the expanded sidebar eats horizontal space. */
+@media (max-width: 960px) {
   .dash-stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+@media (max-width: 720px) {
   .dash-quick-actions {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1078,6 +1130,13 @@ button:focus-visible {
 
 /* Respect users who prefer reduced motion. */
 @media (prefers-reduced-motion: reduce) {
+  .card-lift,
+  .btn {
+    transition: none !important;
+  }
+  .card-lift:hover {
+    transform: none !important;
+  }
 .auth-aurora,
 .auth-vignette,
 .auth-grid,

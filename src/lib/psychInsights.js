@@ -8,6 +8,8 @@
 // present AND the supporting sample is large enough to be meaningful. No
 // fabricated claims are ever emitted for empty or tiny groups.
 
+import { formatMoneyShort, SESSION_WINDOWS } from './utils';
+
 const N = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
@@ -37,12 +39,6 @@ function weekdayOf(t) {
   return d.toLocaleDateString(undefined, { weekday: 'long' });
 }
 
-const SESSION_WINDOWS = [
-  { session: 'Asia', start: 0, end: 8 },
-  { session: 'London', start: 8, end: 13 },
-  { session: 'New York', start: 13, end: 21 },
-  { session: 'After Hours', start: 21, end: 24 },
-];
 function sessionOf(t) {
   if (t.session) return t.session;
   const hour = parseInt((t.entryTime || '').split(':')[0], 10);
@@ -71,8 +67,8 @@ function confidenceEffect(sorted) {
       type: highPnl > lowPnl ? 'positive' : 'watch',
       title: 'Confidence & Performance',
       claim: highPnl > lowPnl ? 'You trade best when confidence is high.' : 'Your results dip when you lack confidence.',
-      detail: `Avg P&L at high confidence ${fmtMoney(highPnl)} vs ${fmtMoney(lowPnl)} at low confidence.`,
-      metrics: [{ label: 'High conf. P&L', value: fmtMoney(highPnl) }, { label: 'Low conf. P&L', value: fmtMoney(lowPnl) }],
+      detail: `Avg P&L at high confidence ${formatMoneyShort(highPnl)} vs ${formatMoneyShort(lowPnl)} at low confidence.`,
+      metrics: [{ label: 'High conf. P&L', value: formatMoneyShort(highPnl) }, { label: 'Low conf. P&L', value: formatMoneyShort(lowPnl) }],
       sample: high.length + low.length,
     };
   }
@@ -169,8 +165,8 @@ function profitabilityByPatience(sorted) {
       type: best.pnl > 0 ? 'positive' : 'info',
       title: 'State & Profitability',
       claim,
-      detail: `Avg P&L when your ${best.key} is high is ${fmtMoney(best.pnl)} (${best.count} trades).`,
-      metrics: [{ label: 'Best mood', value: best.key }, { label: 'Avg P&L', value: fmtMoney(best.pnl) }],
+      detail: `Avg P&L when your ${best.key} is high is ${formatMoneyShort(best.pnl)} (${best.count} trades).`,
+      metrics: [{ label: 'Best mood', value: best.key }, { label: 'Avg P&L', value: formatMoneyShort(best.pnl) }],
       sample: best.count,
     };
   }
@@ -253,10 +249,4 @@ export function computePsychologyInsights(trades) {
   const insights = candidates.map((c) => ({ ...c, signal: c.type })).sort((a, b) => (rank[a.type] - rank[b.type]) || 0);
 
   return { insights, sourceCount: sorted.length };
-}
-
-function fmtMoney(x) {
-  const v = Number(x) || 0;
-  const sign = v > 0 ? '+' : v < 0 ? '-' : '';
-  return `${sign}$${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }

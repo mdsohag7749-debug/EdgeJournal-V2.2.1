@@ -4,7 +4,46 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EdgeJournal</title>
+    <meta
+      name="description"
+      content="EdgeJournal is a trading journal for tracking trades, reviewing performance, analyzing trading behavior, and improving execution — with pre-market plans, goals, reflections, and study notes."
+    />
+    <meta name="application-name" content="EdgeJournal" />
+    <title>EdgeJournal — Trading Journal</title>
+
+    <!-- Search engines: this is a personal, authenticated trading journal with
+         no public content routes, so public crawling is intentionally declined. -->
+    <meta name="robots" content="noindex, nofollow" />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="EdgeJournal" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="EdgeJournal — Trading Journal" />
+    <meta
+      property="og:description"
+      content="EdgeJournal is a trading journal for tracking trades, reviewing performance, analyzing trading behavior, and improving execution."
+    />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="EdgeJournal — Trading Journal" />
+    <meta
+      name="twitter:description"
+      content="EdgeJournal is a trading journal for tracking trades, reviewing performance, analyzing trading behavior, and improving execution."
+    />
+
+    <!-- Structured data: truthful, minimal WebApplication declaration. No
+         ratings, reviews, pricing, or organization claims are made. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "EdgeJournal",
+        "applicationCategory": "FinanceApplication",
+        "description": "EdgeJournal is a trading journal for tracking trades, reviewing performance, analyzing trading behavior, and improving execution."
+      }
+    </script>
 
     <!-- PWA: manifest + install/theming metadata. Service worker
          registration itself happens in src/main.jsx via

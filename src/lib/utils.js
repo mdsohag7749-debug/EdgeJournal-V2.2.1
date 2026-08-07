@@ -54,13 +54,6 @@ export function formatDate(dateStr) {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export function formatDateShort(dateStr) {
-  if (!dateStr) return '—';
-  const d = new Date(dateStr + 'T00:00:00');
-  if (isNaN(d)) return dateStr;
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
 export function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -86,6 +79,63 @@ export function directionTagClass(direction) {
   if (direction === 'Buy') return 'tag-win';
   if (direction === 'Sell') return 'tag-loss';
   return 'tag-neutral';
+}
+
+// Canonical trading-session windows (entry-hour → session) shared by every
+// analytics module. `sessionOf` helpers in each module keep their own
+// unparseable fallback ('Unknown' vs null); only the table itself is shared.
+export const SESSION_WINDOWS = [
+  { session: 'Asia', start: 0, end: 8 },
+  { session: 'London', start: 8, end: 13 },
+  { session: 'New York', start: 13, end: 21 },
+  { session: 'After Hours', start: 21, end: 24 },
+];
+
+// Canonical mistake vocabulary, shared between the trade form's mistake
+// checkboxes and every analytics module that tallies mistakes — so the form
+// and the analytics can never drift apart. Kept in canonical display order.
+export const MISTAKE_NAMES = [
+  'Late Entry',
+  'Early Exit',
+  'Moved Stop Loss',
+  'No Stop Loss',
+  'Over Risk',
+  'Counter Trend',
+  'News Chase',
+  'Over Trading',
+  'Missed Plan',
+  'Revenge Trade',
+  'FOMO Entry',
+  'Impatience',
+];
+
+// 'YYYY-MM-DD' key for a Date (local calendar).
+export function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Monday ('YYYY-MM-DD') of the week containing `dateStr` — used to bucket
+// trades into calendar weeks without pulling in a date library.
+export function mondayKey(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return null;
+  const day = d.getDay(); // 0 = Sun .. 6 = Sat
+  const diff = (day === 0 ? -6 : 1) - day;
+  d.setDate(d.getDate() + diff);
+  return dateKey(d);
+}
+
+// 'YYYY-MM' → "Mon YYYY" (e.g. "2024-03" → "Mar 2024").
+export function monthLabel(key) {
+  const d = new Date(key + '-01T00:00:00');
+  return isNaN(d) ? key : d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+}
+
+// 'YYYY-MM-DD' → "Mon d" (e.g. "2024-03-05" → "Mar 5").
+export function weekLabel(key) {
+  if (!key) return key;
+  const d = new Date(key + 'T00:00:00');
+  return isNaN(d) ? key : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 // Resolves a promise but rejects with a timeout error if it doesn't

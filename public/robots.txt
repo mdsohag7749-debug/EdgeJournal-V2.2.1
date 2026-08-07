@@ -1,0 +1,5 @@
+# EdgeJournal is a personal, authenticated trading journal. There are no
+# public, indexable content routes (all pages require sign-in), so crawling
+# is intentionally declined site-wide to protect private user data.
+User-agent: *
+Disallow: /

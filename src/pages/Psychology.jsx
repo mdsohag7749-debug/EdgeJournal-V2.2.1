@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useData } from '../context/DataContext';
+import { monthLabel } from '../lib/utils';
 import { computeEmotionAnalytics } from '../lib/emotionAnalytics';
 import { computeMistakeAnalytics } from '../lib/mistakeAnalytics';
 import { computeRuleCompliance } from '../lib/ruleCompliance';
@@ -104,7 +105,7 @@ function Bars({ data, dataKey, xKey, color, height = 220, colored }) {
       <ResponsiveContainer>
         <BarChart data={data} margin={{ top: 5, right: 8, left: -8, bottom: 0 }}>
           <CartesianGrid stroke="var(--border)" vertical={false} />
-          <XAxis dataKey={xKey} tick={{ fill: 'var(--text-muted)', fontSize: 10.5 }} axisLine={{ stroke: 'var(--border-strong)' }} tickLine={false} interval={0} />
+          <XAxis dataKey={xKey} tick={{ fill: 'var(--text-muted)', fontSize: 10.5 }} axisLine={{ stroke: 'var(--border-strong)' }} tickLine={false} minTickGap={24} />
           <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} width={42} />
           <Tooltip content={<TooltipCard />} cursor={{ fill: 'rgba(128,128,128,0.08)' }} />
           <Bar dataKey={dataKey} radius={[4, 4, 0, 0]} barSize={data.length > 8 ? 12 : 22}>
@@ -208,8 +209,7 @@ export default function Psychology({ onNavigate }) {
       .sort()
       .map((m) => {
         const ds = computeDisciplineScore(byMonth[m], { models, riskCriteria, checklistCriteria });
-        const d = new Date(m + '-01T00:00:00');
-        return { label: isNaN(d) ? m : d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' }), score: ds.score };
+        return { label: monthLabel(m), score: ds.score };
       });
   }, [list, models, riskCriteria, checklistCriteria]);
 
@@ -303,7 +303,7 @@ export default function Psychology({ onNavigate }) {
             <span style={{ fontSize: 9, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>/ 100</span>
           </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 220 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 'min(220px, 100%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Brain size={18} color={PURPLE} />
             <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800 }}>Psychology Score</h2>

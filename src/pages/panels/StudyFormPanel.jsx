@@ -46,12 +46,12 @@ export default function StudyFormPanel({ open, onClose, onSave, initial }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="field-row cols-2">
             <div className="field">
-              <label>Date</label>
-              <input type="date" value={form.date} onChange={(e) => set('date', e.target.value)} />
+              <label htmlFor="study-date">Date</label>
+              <input id="study-date" type="date" value={form.date} onChange={(e) => set('date', e.target.value)} />
             </div>
             <div className="field">
-              <label>Session / Type</label>
-              <select value={form.sessionType} onChange={(e) => set('sessionType', e.target.value)}>
+              <label htmlFor="study-session-type">Session / Type</label>
+              <select id="study-session-type" value={form.sessionType} onChange={(e) => set('sessionType', e.target.value)}>
                 {SESSION_TYPES.map((s) => (
                   <option key={s}>{s}</option>
                 ))}
@@ -59,12 +59,12 @@ export default function StudyFormPanel({ open, onClose, onSave, initial }) {
             </div>
           </div>
           <div className="field">
-            <label>Title</label>
-            <input type="text" value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="e.g. London liquidity sweep patterns" />
+            <label htmlFor="study-title">Title</label>
+            <input id="study-title" type="text" value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="e.g. London liquidity sweep patterns" />
           </div>
           <div className="field">
-            <label>Description</label>
-            <textarea value={form.description} onChange={(e) => set('description', e.target.value)} style={{ minHeight: 320 }} />
+            <label htmlFor="study-description">Description</label>
+            <textarea id="study-description" value={form.description} onChange={(e) => set('description', e.target.value)} style={{ minHeight: 320 }} />
           </div>
         </div>
         <div>

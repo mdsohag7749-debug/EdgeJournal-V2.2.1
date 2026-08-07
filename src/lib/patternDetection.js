@@ -30,16 +30,13 @@
 // size of the observed difference.
 
 import { applyFocusFilter } from './performanceInsights';
+import { memoizeByArgs } from './memoize';
+import { MISTAKE_NAMES, SESSION_WINDOWS } from './utils';
 
 export const MIN_OBS = 3;
 export const MIN_EMERGING = 5;
 export const MIN_STRONG = 8;
 
-const MISTAKE_KEYS = [
-  'Late Entry', 'Early Exit', 'Moved Stop Loss', 'No Stop Loss', 'Over Risk',
-  'Counter Trend', 'News Chase', 'Over Trading', 'Missed Plan',
-  'Revenge Trade', 'FOMO Entry', 'Impatience',
-];
 const PSYCH = {
   pos: ['Confidence', 'Patience', 'Focus'],
   neg: ['Fear', 'Greed', 'FOMO', 'Revenge', 'Stress'],
@@ -54,7 +51,7 @@ const N = (v) => {
 const mistakesOf = (t) => {
   const m = t && t.mistakes;
   if (!m || typeof m !== 'object') return [];
-  return MISTAKE_KEYS.filter((k) => m[k]);
+  return MISTAKE_NAMES.filter((k) => m[k]);
 };
 const hasMistake = (t) => mistakesOf(t).length > 0;
 const hasAnyFomoRevenge = (t) => mistakesOf(t).some((k) => ['FOMO Entry', 'Revenge Trade'].includes(k));
@@ -81,12 +78,6 @@ function fomoRevengeRate(list) {
   return list.length ? (list.filter((t) => hasAnyFomoRevenge(t)).length / list.length) * 100 : 0;
 }
 
-const SESSION_WINDOWS = [
-  { session: 'Asia', start: 0, end: 8 },
-  { session: 'London', start: 8, end: 13 },
-  { session: 'New York', start: 13, end: 21 },
-  { session: 'After Hours', start: 21, end: 24 },
-];
 function sessionOf(t) {
   if (t && t.session) return t.session;
   const hour = parseInt((t && t.entryTime || '').split(':')[0], 10);
@@ -102,7 +93,7 @@ function grade(n) {
   return { value: 'Emerging Pattern', confidence: 'Medium' };
 }
 
-export function computePatternDetection(trades, period = 'all') {
+export function computePatternDetectionUncached(trades, period = 'all') {
   const focused = period === 'all' ? trades : applyFocusFilter(trades, period);
   const decided = focused.filter((t) => t.result === 'Win' || t.result === 'Loss');
   const all = focused;
@@ -349,3 +340,5 @@ export function computePatternDetection(trades, period = 'all') {
     minStrong: MIN_STRONG,
   };
 }
+
+export const computePatternDetection = memoizeByArgs(computePatternDetectionUncached);

@@ -74,20 +74,3 @@ export function colorForTag(name, library) {
   for (let i = 0; i < name.length; i += 1) h = (h * 31 + name.charCodeAt(i)) >>> 0;
   return TAG_PALETTE[h % TAG_PALETTE.length];
 }
-
-// Every distinct tag currently used across a set of trades — the union
-// of the library and any stray strings found on trade rows.
-export function collectUsedTags(library, tradeList) {
-  const set = new Set();
-  const order = [];
-  const add = (name) => {
-    if (!name || set.has(name)) return;
-    set.add(name);
-    order.push(name);
-  };
-  (library || []).forEach((t) => add(t.name));
-  (tradeList || []).forEach((t) => {
-    if (Array.isArray(t.tags)) t.tags.forEach(add);
-  });
-  return order;
-}

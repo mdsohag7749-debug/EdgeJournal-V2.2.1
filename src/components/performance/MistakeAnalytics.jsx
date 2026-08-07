@@ -46,7 +46,7 @@ function MistakeBars({ data, xKey, color, height = 240, prefix }) {
       <ResponsiveContainer>
         <BarChart data={data} margin={{ top: 5, right: 10, left: -8, bottom: 0 }}>
           <CartesianGrid stroke="var(--border)" vertical={false} />
-          <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 10.5 }} axisLine={{ stroke: 'var(--border-strong)' }} tickLine={false} interval={0} />
+          <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 10.5 }} axisLine={{ stroke: 'var(--border-strong)' }} tickLine={false} minTickGap={24} />
           <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
           <Tooltip content={<ChartTip prefix={prefix} />} cursor={{ fill: 'rgba(128,128,128,0.08)' }} />
           <Bar dataKey={xKey} fill={color} radius={[4, 4, 0, 0]} />
@@ -69,9 +69,9 @@ function MistakeTable({ rows }) {
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
         <thead>
           <tr style={{ textAlign: 'left', color: 'var(--text-muted)', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-            <th style={{ padding: '0 10px 10px 0' }}>Breakdown</th>
-            <th style={{ padding: '0 10px 10px' }}>Mistakes</th>
-            <th style={{ padding: '0 10px 10px' }}>Net P&L</th>
+            <th scope="col" style={{ padding: '0 10px 10px 0' }}>Breakdown</th>
+            <th scope="col" style={{ padding: '0 10px 10px' }}>Mistakes</th>
+            <th scope="col" style={{ padding: '0 10px 10px' }}>Net P&L</th>
           </tr>
         </thead>
         <tbody>

@@ -4,7 +4,7 @@ import EmptyState from '../EmptyState';
 import { useData } from '../../context/DataContext';
 import { useAccounts } from '../../context/AccountContext';
 import { computeRiskExecutionIntelligence, MIN_LIMITED, MIN_EMERGING, MIN_RELIABLE } from '../../lib/riskExecutionIntelligence';
-import { ShieldAlert, CalendarRange, Gauge, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, Gauge, AlertTriangle } from 'lucide-react';
 
 const PERIODS = [
   { value: 'all', label: 'All Time' },
@@ -40,11 +40,6 @@ function ConfChip({ confidence }) {
 }
 
 const fmt = {
-  mon: (v) => {
-    const n = Number(v) || 0;
-    const sign = n > 0 ? '+' : n < 0 ? '-' : '';
-    return `${sign}$${Math.abs(n).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-  },
   pct: (v) => (v || v === 0 ? v.toFixed(1) + '%' : '—'),
   rr: (v) => (v ? v.toFixed(2) : '—'),
   rp: (v) => (v || v === 0 ? v.toFixed(2) + '%' : '—'),

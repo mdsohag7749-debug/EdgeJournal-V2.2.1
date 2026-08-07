@@ -93,10 +93,10 @@ function RuleTable({ rows }) {
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
         <thead>
           <tr style={{ textAlign: 'left', color: 'var(--text-muted)', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-            <th style={{ padding: '0 10px 10px 0' }}>Rule</th>
-            <th style={{ padding: '0 10px 10px' }}>Followed</th>
-            <th style={{ padding: '0 10px 10px' }}>Broken</th>
-            <th style={{ padding: '0 10px 10px' }}>Compliance</th>
+            <th scope="col" style={{ padding: '0 10px 10px 0' }}>Rule</th>
+            <th scope="col" style={{ padding: '0 10px 10px' }}>Followed</th>
+            <th scope="col" style={{ padding: '0 10px 10px' }}>Broken</th>
+            <th scope="col" style={{ padding: '0 10px 10px' }}>Compliance</th>
           </tr>
         </thead>
         <tbody>

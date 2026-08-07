@@ -108,9 +108,11 @@ function InsightRow({ insight, delay }) {
         </div>
       )}
 
-      <span style={{ position: 'absolute', right: 14, bottom: 10, fontSize: 10.5, color: 'var(--text-faint)' }}>
-        {insight.sample} trade{insight.sample === 1 ? '' : 's'}
-      </span>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: insight.metrics?.length > 0 ? 8 : 12 }}>
+        <span style={{ fontSize: 10.5, color: 'var(--text-faint)' }}>
+          {insight.sample} trade{insight.sample === 1 ? '' : 's'}
+        </span>
+      </div>
     </motion.div>
   );
 }

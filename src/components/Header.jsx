@@ -45,8 +45,9 @@ export default function Header({ title, subtitle }) {
         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', marginTop: 5 }}>{subtitle || today}</p>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <span
+          className="header-date-pill"
           style={{
             fontSize: 12.5,
             color: 'var(--text-faint)',
@@ -56,6 +57,7 @@ export default function Header({ title, subtitle }) {
             border: '1px solid var(--border)',
             borderRadius: 999,
             boxShadow: 'var(--shadow-soft)',
+            whiteSpace: 'nowrap',
           }}
         >
           {today}

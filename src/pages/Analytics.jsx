@@ -40,7 +40,6 @@ import {
 
 const WIN_COLOR = '#16a34a';
 const LOSS_COLOR = '#dc2626';
-const SESSION_COLORS = { Asia: '#7c3aed', London: '#2563eb', 'New York': '#C1121F', 'After Hours': '#9a9aa3', Unknown: '#9a9aa3' };
 
 function MoneyBarTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -95,16 +94,16 @@ function GroupTable({ rows, firstColumnLabel, firstColumnKey = 'label' }) {
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
         <thead>
           <tr style={{ textAlign: 'left', color: 'var(--text-muted)', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-            <th style={{ padding: '0 10px 10px 0' }}>{firstColumnLabel}</th>
-            <th style={{ padding: '0 10px 10px' }}>Trades</th>
-            <th style={{ padding: '0 10px 10px' }}>Win Rate</th>
-            <th style={{ padding: '0 10px 10px' }}>Net P&L</th>
+            <th scope="col" style={{ padding: '0 10px 10px 0' }}>{firstColumnLabel}</th>
+            <th scope="col" style={{ padding: '0 10px 10px' }}>Trades</th>
+            <th scope="col" style={{ padding: '0 10px 10px' }}>Win Rate</th>
+            <th scope="col" style={{ padding: '0 10px 10px' }}>Net P&L</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r) => (
             <tr key={r.key} style={{ borderTop: '1px solid var(--border)' }}>
-              <td style={{ padding: '10px 10px 10px 0', fontWeight: 600 }}>{r[firstColumnKey]}</td>
+              <th scope="row" style={{ padding: '10px 10px 10px 0', fontWeight: 600 }}>{r[firstColumnKey]}</th>
               <td style={{ padding: '10px' }}>{r.trades}</td>
               <td style={{ padding: '10px' }}>{r.winRate.toFixed(1)}%</td>
               <td className={pnlClass(r.netPnl) + ' mono'} style={{ padding: '10px', fontWeight: 600 }}>
@@ -145,7 +144,7 @@ function MetricsTable({ rows, columns }) {
         <thead>
           <tr style={{ textAlign: 'left', color: 'var(--text-muted)', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
             {columns.map((c) => (
-              <th key={c.key} style={{ padding: '0 10px 10px 0' }}>
+              <th key={c.key} scope={c.key === columns[0].key ? 'col' : undefined} style={{ padding: '0 10px 10px 0' }}>
                 {c.label}
               </th>
             ))}
@@ -157,9 +156,9 @@ function MetricsTable({ rows, columns }) {
               {columns.map((c) => {
                 const render = CELL_RENDERERS[c.type] || CELL_RENDERERS.text;
                 return (
-                  <td key={c.key} style={{ padding: '10px 10px 10px 0', fontWeight: c.key === columns[0].key ? 600 : undefined }}>
+                  <th key={c.key} scope={c.key === columns[0].key ? 'row' : undefined} style={{ padding: '10px 10px 10px 0', fontWeight: c.key === columns[0].key ? 600 : undefined, textAlign: 'left' }}>
                     {render(r[c.key])}
-                  </td>
+                  </th>
                 );
               })}
             </tr>
@@ -219,9 +218,13 @@ export default function Analytics({ onNavigate }) {
   const { trades } = useData();
   const a = useMemo(() => computeAnalytics(trades.items), [trades.items]);
 
-  const directionDonut = a.byDirection
-    .filter((d) => d.trades > 0)
-    .map((d) => ({ name: d.label, value: d.trades, color: d.key === 'Buy' ? WIN_COLOR : d.key === 'Sell' ? LOSS_COLOR : '#9a9aa3' }));
+  const directionDonut = useMemo(
+    () =>
+      a.byDirection
+        .filter((d) => d.trades > 0)
+        .map((d) => ({ name: d.label, value: d.trades, color: d.key === 'Buy' ? WIN_COLOR : d.key === 'Sell' ? LOSS_COLOR : '#9a9aa3' })),
+    [a.byDirection]
+  );
 
   if (trades.items.length === 0) {
     return (

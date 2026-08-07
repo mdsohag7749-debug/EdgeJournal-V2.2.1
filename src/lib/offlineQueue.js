@@ -101,10 +101,6 @@ function saveQueue(queue) {
   window.dispatchEvent(new CustomEvent(QUEUE_EVENT, { detail: { queue } }));
 }
 
-export function getQueue() {
-  return loadQueue();
-}
-
 export function getQueueForTable(table, userId) {
   return loadQueue().filter((e) => e.table === table && e.userId === userId);
 }

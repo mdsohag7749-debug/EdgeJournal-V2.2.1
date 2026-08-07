@@ -266,7 +266,7 @@ export default function Profile() {
         </div>
 
         {message && (
-          <p style={{ fontSize: 13, color: message.type === 'success' ? 'var(--win)' : 'var(--loss)' }}>{message.text}</p>
+          <p role="status" style={{ fontSize: 13, color: message.type === 'success' ? 'var(--win)' : 'var(--loss)' }}>{message.text}</p>
         )}
 
         <div style={{ display: 'flex', gap: 12 }}>

@@ -17,7 +17,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
-import { Percent, Gauge, Activity, TrendingUp, TrendingDown, Clock, ChartColumn, SunMoon, CalendarDays, Hourglass, BarChart3, CheckCircle2, Braces } from 'lucide-react';
+import { Percent, Gauge, Activity, TrendingUp, TrendingDown, Clock, ChartColumn, CalendarDays, Hourglass, BarChart3, CheckCircle2, Braces } from 'lucide-react';
 
 const WIN = '#16a34a';
 const LOSS = '#dc2626';
@@ -53,7 +53,7 @@ function Table({ rows, columns, emptyLabel }) {
         <thead>
           <tr style={{ textAlign: 'left', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
             {columns.map((c) => (
-              <th key={c.key} style={{ padding: '0 10px 10px 0' }}>{c.label}</th>
+              <th key={c.key} scope="col" style={{ padding: '0 10px 10px 0' }}>{c.label}</th>
             ))}
           </tr>
         </thead>

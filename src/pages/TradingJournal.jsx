@@ -174,6 +174,17 @@ const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, 
     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
       <div
         onClick={() => (selectionMode ? onToggleSelect(t.id) : onToggle(t.id))}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            selectionMode ? onToggleSelect(t.id) : onToggle(t.id);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-expanded={!selectionMode ? isOpen : undefined}
+        aria-label={`${t.instrument} trade ${formatDate(t.date)}`}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -237,7 +248,7 @@ const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, 
           </button>
           <ChevronDown
             size={16}
-            onClick={() => onToggle(t.id)}
+            aria-hidden="true"
             style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', color: 'var(--text-muted)' }}
           />
         </div>
@@ -762,6 +773,7 @@ export default function TradingJournal() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search pair, tag, notes, model, lesson, account, trade ID…"
+              aria-label="Search trades"
               style={{ ...inputStyle, paddingLeft: 34 }}
             />
             {query && (
@@ -796,7 +808,7 @@ export default function TradingJournal() {
           </button>
 
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <select value={sortKey} onChange={(e) => setSortKey(e.target.value)} style={{ ...selectStyle, maxWidth: 170 }}>
+            <select value={sortKey} onChange={(e) => setSortKey(e.target.value)} aria-label="Sort trades" style={{ ...selectStyle, maxWidth: 170 }}>
               <option value="date">Sort: Date</option>
               <option value="pair">Sort: Pair</option>
               <option value="profit">Sort: Profit</option>
@@ -980,6 +992,7 @@ export default function TradingJournal() {
                 onChange={(e) => setPresetName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && savePreset()}
                 placeholder={presetEditingId ? 'Rename this filter…' : 'Name this filter…'}
+                aria-label={presetEditingId ? 'Rename filter' : 'Name this filter'}
                 style={{ ...inputStyle, flex: '1 1 200px', maxWidth: 280 }}
               />
               <button className="btn btn-ghost btn-sm" onClick={savePreset} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>

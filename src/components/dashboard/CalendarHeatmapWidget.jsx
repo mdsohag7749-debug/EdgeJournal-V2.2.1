@@ -132,25 +132,26 @@ export default function CalendarHeatmapWidget({ dayMap, onSelectDay }) {
       </div>
 
       {/* Weekday header + Week Total column header */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr) 1.15fr', gap: 4 }}>
-        {WEEKDAYS.map((w) => (
-          <div
-            key={w}
-            style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1, paddingBottom: 2 }}
-          >
-            {w}
+      <div className="cal-scroll" style={{ display: 'flex', flexDirection: 'column', gap: 4, overflowX: 'auto' }}>
+        <div className="cal-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr)) 1.15fr', gap: 4 }}>
+          {WEEKDAYS.map((w) => (
+            <div
+              key={w}
+              style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1, paddingBottom: 2 }}
+            >
+              {w}
+            </div>
+          ))}
+          <div style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em', lineHeight: 1, paddingBottom: 2, whiteSpace: 'nowrap' }}>
+            Week Total
           </div>
-        ))}
-        <div style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em', lineHeight: 1, paddingBottom: 2, whiteSpace: 'nowrap' }}>
-          Week Total
         </div>
-      </div>
 
-      {/* Compact weeks grid with per-week total column */}
-      {weeks.map((week) => {
-        const weekStyle = cellStyle({ count: week.count, pnl: week.pnl });
-        return (
-          <div key={week.weekNumber} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr) 1.15fr', gap: 4, alignItems: 'stretch' }}>
+        {/* Compact weeks grid with per-week total column */}
+        {weeks.map((week) => {
+          const weekStyle = cellStyle({ count: week.count, pnl: week.pnl });
+          return (
+            <div key={week.weekNumber} className="cal-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr)) 1.15fr', gap: 4, alignItems: 'stretch' }}>
             {week.cells.map((cell, idx) => {
               if (!cell) {
                 return (
@@ -234,6 +235,7 @@ export default function CalendarHeatmapWidget({ dayMap, onSelectDay }) {
           </div>
         );
       })}
+      </div>
 
       {/* Legend + total trades */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginTop: 2 }}>

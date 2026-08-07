@@ -50,12 +50,12 @@ export default function PlanFormPanel({ open, onClose, onSave, initial }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div className="field-row cols-2">
           <div className="field">
-            <label>Date</label>
-            <input type="date" value={form.date} onChange={(e) => set('date', e.target.value)} />
+            <label htmlFor="plan-date">Date</label>
+            <input id="plan-date" type="date" value={form.date} onChange={(e) => set('date', e.target.value)} />
           </div>
           <div className="field">
-            <label>Bias</label>
-            <select value={form.bias} onChange={(e) => set('bias', e.target.value)}>
+            <label htmlFor="plan-bias">Bias</label>
+            <select id="plan-bias" value={form.bias} onChange={(e) => set('bias', e.target.value)}>
               <option>Bullish</option>
               <option>Bearish</option>
               <option>Neutral</option>
@@ -64,23 +64,23 @@ export default function PlanFormPanel({ open, onClose, onSave, initial }) {
         </div>
 
         <div className="field">
-          <label>Economic Calendar Events</label>
-          <textarea value={form.economicEvents} onChange={(e) => set('economicEvents', e.target.value)} placeholder="e.g. 8:30am CPI, 2:00pm FOMC minutes" />
+          <label htmlFor="plan-events">Economic Calendar Events</label>
+          <textarea id="plan-events" value={form.economicEvents} onChange={(e) => set('economicEvents', e.target.value)} placeholder="e.g. 8:30am CPI, 2:00pm FOMC minutes" />
         </div>
 
         <div className="field">
-          <label>Targets</label>
-          <textarea value={form.targets} onChange={(e) => set('targets', e.target.value)} placeholder="Key levels you're watching today" />
+          <label htmlFor="plan-targets">Targets</label>
+          <textarea id="plan-targets" value={form.targets} onChange={(e) => set('targets', e.target.value)} placeholder="Key levels you're watching today" />
         </div>
 
         <div className="field">
-          <label>Game Plan</label>
-          <textarea value={form.gamePlan} onChange={(e) => set('gamePlan', e.target.value)} style={{ minHeight: 120 }} placeholder="How you plan to execute today" />
+          <label htmlFor="plan-game-plan">Game Plan</label>
+          <textarea id="plan-game-plan" value={form.gamePlan} onChange={(e) => set('gamePlan', e.target.value)} style={{ minHeight: 120 }} placeholder="How you plan to execute today" />
         </div>
 
         <div className="field">
-          <label>Additional Notes</label>
-          <textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} />
+          <label htmlFor="plan-notes">Additional Notes</label>
+          <textarea id="plan-notes" value={form.notes} onChange={(e) => set('notes', e.target.value)} />
         </div>
 
         <ImageUpload label="Daily Chart Screenshot" value={form.dailyChart} onChange={(v) => set('dailyChart', v)} />

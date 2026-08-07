@@ -47,47 +47,47 @@ export default function ReflectionFormPanel({ open, onClose, onSave, initial }) 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div className="field-row cols-2">
           <div className="field">
-            <label>Period</label>
-            <select value={form.period} onChange={(e) => set('period', e.target.value)}>
+            <label htmlFor="reflection-period">Period</label>
+            <select id="reflection-period" value={form.period} onChange={(e) => set('period', e.target.value)}>
               {PERIODS.map((p) => (
                 <option key={p}>{p}</option>
               ))}
             </select>
           </div>
           <div className="field">
-            <label>Date</label>
-            <input type="date" value={form.date} onChange={(e) => set('date', e.target.value)} />
+            <label htmlFor="reflection-date">Date</label>
+            <input id="reflection-date" type="date" value={form.date} onChange={(e) => set('date', e.target.value)} />
           </div>
         </div>
 
         <div className="field">
-          <label>Rating: {form.rating}/10</label>
-          <input type="range" min="1" max="10" value={form.rating} onChange={(e) => set('rating', Number(e.target.value))} style={{ accentColor: 'var(--red)' }} />
+          <label htmlFor="reflection-rating">Rating: {form.rating}/10</label>
+          <input id="reflection-rating" type="range" min="1" max="10" value={form.rating} onChange={(e) => set('rating', Number(e.target.value))} style={{ accentColor: 'var(--red)' }} />
         </div>
 
         <div className="field">
-          <label>Title</label>
-          <input type="text" value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="Give this reflection a title" />
+          <label htmlFor="reflection-title">Title</label>
+          <input id="reflection-title" type="text" value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="Give this reflection a title" />
         </div>
 
         <div className="field">
-          <label>Reflection</label>
-          <textarea value={form.reflection} onChange={(e) => set('reflection', e.target.value)} style={{ minHeight: 110 }} />
+          <label htmlFor="reflection-body">Reflection</label>
+          <textarea id="reflection-body" value={form.reflection} onChange={(e) => set('reflection', e.target.value)} style={{ minHeight: 110 }} />
         </div>
 
         <div className="field">
-          <label>What Went Well</label>
-          <textarea value={form.wentWell} onChange={(e) => set('wentWell', e.target.value)} />
+          <label htmlFor="reflection-went-well">What Went Well</label>
+          <textarea id="reflection-went-well" value={form.wentWell} onChange={(e) => set('wentWell', e.target.value)} />
         </div>
 
         <div className="field">
-          <label>Lessons Learned</label>
-          <textarea value={form.lessons} onChange={(e) => set('lessons', e.target.value)} />
+          <label htmlFor="reflection-lessons">Lessons Learned</label>
+          <textarea id="reflection-lessons" value={form.lessons} onChange={(e) => set('lessons', e.target.value)} />
         </div>
 
         <div className="field">
-          <label>Areas for Improvement</label>
-          <textarea value={form.improvements} onChange={(e) => set('improvements', e.target.value)} />
+          <label htmlFor="reflection-improvements">Areas for Improvement</label>
+          <textarea id="reflection-improvements" value={form.improvements} onChange={(e) => set('improvements', e.target.value)} />
         </div>
       </div>
     </SidePanel>

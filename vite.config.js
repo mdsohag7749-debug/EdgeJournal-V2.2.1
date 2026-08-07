@@ -3,6 +3,15 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  test: {
+    // Tests run in a simulated DOM (jsdom) via Vitest. `npm test` /
+    // `npm run test:run` / `npm run test:coverage` all run Vitest with
+    // this config; the VitePWA plugin below is inert during tests.
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.js'],
+    css: false,
+    include: ['src/**/*.test.{js,jsx}'],
+  },
   plugins: [
     react(),
     VitePWA({

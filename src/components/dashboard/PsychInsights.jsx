@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import EmptyState from '../EmptyState';
 import { useData } from '../../context/DataContext';
 import { computePsychologyInsights } from '../../lib/psychInsights';
-import { TrendingUp, Info, AlertTriangle, Brain, Lightbulb, Activity } from 'lucide-react';
+import { TrendingUp, Info, AlertTriangle, Lightbulb, Activity } from 'lucide-react';
 
 const SIGNAL = {
   positive: { icon: TrendingUp, color: '#16a34a', label: 'Strength' },
@@ -33,7 +33,7 @@ export default function PsychologyInsights() {
           <EmptyState icon={Activity} title="Not enough psychology data" message="Rate your emotions and log mistakes on more trades to surface psychological patterns." />
         </div>
       ) : (
-        <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14, marginTop: 16 }}>
+        <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))', gap: 14, marginTop: 16 }}>
           {insights.map((ins, i) => {
             const S = SIGNAL[ins.type] || SIGNAL.info;
             const Icon = S.icon;

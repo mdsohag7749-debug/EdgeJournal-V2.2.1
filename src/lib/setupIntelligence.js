@@ -24,10 +24,11 @@
 
 import { computeAnalytics } from './analytics';
 import { applyFocusFilter } from './performanceInsights';
+import { memoizeByArgs } from './memoize';
+import { dateKey } from './utils';
 
 export const MIN_EMERGING = 3;
 export const MIN_RELIABLE = 8;
-export const MIN_UNDERPERFORM = 2;
 
 const N = (v) => {
   const n = Number(v);
@@ -35,10 +36,6 @@ const N = (v) => {
 };
 
 const clamp = (v) => Math.max(0, Math.min(100, v));
-
-function dateKey(d) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 
 // Applies the active Analytics-like date scope. 'month' / 'week' delegate to the
 // shared filter; '30' is a local trailing-30-day window.
@@ -84,7 +81,7 @@ function statusConfidence(decided) {
   return 'Limited';
 }
 
-export function computeSetupIntelligence(trades, period = 'all') {
+function computeSetupIntelligenceUncached(trades, period = 'all') {
   const focused = applyPeriod(trades, period);
   const a = computeAnalytics(focused);
   // Drop the "Unassigned" bucket (trades that carry no model/setup) so missing
@@ -210,3 +207,5 @@ function money(x) {
   const sign = v > 0 ? '+' : v < 0 ? '-' : '';
   return `${sign}$${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
+
+export const computeSetupIntelligence = memoizeByArgs(computeSetupIntelligenceUncached);

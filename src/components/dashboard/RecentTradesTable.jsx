@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ListOrdered, Image, ExternalLink, ArrowRight } from 'lucide-react';
+import { ListOrdered, Image, ArrowRight } from 'lucide-react';
 import { formatDate, formatMoney, pnlClass, resultTagClass, directionTagClass } from '../../lib/utils';
 
 export default function RecentTradesTable({ trades, onNavigate, onSelectTrade }) {
@@ -35,14 +35,14 @@ export default function RecentTradesTable({ trades, onNavigate, onSelectTrade })
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ color: 'var(--text-muted)', textAlign: 'left', borderBottom: '1px solid var(--border)', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                <th style={{ padding: '0 10px 10px 0' }}>Date</th>
-                <th style={{ padding: '0 10px 10px' }}>Pair</th>
-                <th style={{ padding: '0 10px 10px' }}>Direction</th>
-                <th style={{ padding: '0 10px 10px' }}>Model</th>
-                <th style={{ padding: '0 10px 10px' }}>R:R</th>
-                <th style={{ padding: '0 10px 10px' }}>Net P&L</th>
-                <th style={{ padding: '0 10px 10px' }}>Status</th>
-                <th style={{ padding: '0 10px 10px' }}>Media</th>
+                <th scope="col" style={{ padding: '0 10px 10px 0' }}>Date</th>
+                <th scope="col" style={{ padding: '0 10px 10px' }}>Pair</th>
+                <th scope="col" style={{ padding: '0 10px 10px' }}>Direction</th>
+                <th scope="col" style={{ padding: '0 10px 10px' }}>Model</th>
+                <th scope="col" style={{ padding: '0 10px 10px' }}>R:R</th>
+                <th scope="col" style={{ padding: '0 10px 10px' }}>Net P&L</th>
+                <th scope="col" style={{ padding: '0 10px 10px' }}>Status</th>
+                <th scope="col" style={{ padding: '0 10px 10px' }}>Media</th>
               </tr>
             </thead>
             <tbody>

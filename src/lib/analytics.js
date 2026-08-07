@@ -11,39 +11,16 @@
 // edited, or removed anywhere else in the app (Trading Journal) — no
 // separate wiring needed here.
 
+import { mondayKey, monthLabel, weekLabel, SESSION_WINDOWS } from './utils';
+
 function sortByDate(trades) {
   return [...trades].sort((a, b) => (a.date + (a.entryTime || '')).localeCompare(b.date + (b.entryTime || '')));
-}
-
-function toDateKey(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-// Monday of the week containing `dateStr` ('YYYY-MM-DD'), as a
-// 'YYYY-MM-DD' key — used to bucket trades into calendar weeks without
-// pulling in a date library.
-function mondayKey(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  if (isNaN(d)) return null;
-  const day = d.getDay(); // 0 = Sun .. 6 = Sat
-  const diff = (day === 0 ? -6 : 1) - day;
-  d.setDate(d.getDate() + diff);
-  return toDateKey(d);
 }
 
 // Buckets a trade's entry time-of-day into a market session. There's
 // no explicit "session" field on a trade — this is a standard-hours
 // heuristic derived from entryTime (24h "HH:MM"), same as any trading
 // journal that infers session from time-of-day.
-const SESSION_WINDOWS = [
-  { session: 'Asia', start: 0, end: 8 },
-  { session: 'London', start: 8, end: 13 },
-  { session: 'New York', start: 13, end: 21 },
-  { session: 'After Hours', start: 21, end: 24 },
-];
 const SESSION_ORDER = ['Asia', 'London', 'New York', 'London + New York', 'After Hours', 'Unknown'];
 
 // Calendar weekday (Mon–Sun) derived from a 'YYYY-MM-DD' date string.
@@ -135,7 +112,24 @@ function groupBy(trades, keyFn, labelFn) {
   });
 }
 
+// computeAnalytics() is a pure function of the trades array (it never reads
+// the wall clock and only parses the date strings already present in the data),
+// and every consumer destructures/reads its result without mutating it. That
+// makes its result memoizable per-array-reference. The Analytics page renders
+// several widgets that all re-derive analytics from the same `trades.items` on
+// every render, so we share ONE computation per distinct array here instead of
+// redundantly recomputing it 5–6 times. A WeakMap keyed on the array reference
+// auto-invalidates whenever DataContext hands out a fresh `trades.items`.
+const resultsCache = new WeakMap();
+
 export function computeAnalytics(trades) {
+  if (resultsCache.has(trades)) return resultsCache.get(trades);
+  const result = computeAnalyticsUncached(trades);
+  resultsCache.set(trades, result);
+  return result;
+}
+
+function computeAnalyticsUncached(trades) {
   const sorted = sortByDate(trades);
   const total = sorted.length;
 
@@ -198,20 +192,14 @@ export function computeAnalytics(trades) {
   const monthlyPerformance = groupBy(
     sorted.filter((t) => t.date),
     (t) => t.date.slice(0, 7),
-    (t, key) => {
-      const d = new Date(key + '-01T00:00:00');
-      return isNaN(d) ? key : d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
-    }
+    (t, key) => monthLabel(key)
   ).sort((a, b) => a.key.localeCompare(b.key));
 
   // Weekly Performance — chronological, one entry per Mon–Sun week.
   const weeklyPerformance = groupBy(
     sorted.filter((t) => t.date),
     (t) => mondayKey(t.date),
-    (t, key) => {
-      const d = new Date(key + 'T00:00:00');
-      return isNaN(d) ? key : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-    }
+    (t, key) => weekLabel(key)
   ).sort((a, b) => a.key.localeCompare(b.key));
 
   // Trades by Pair (the `instrument` field — e.g. NQ, ES, MNQ).

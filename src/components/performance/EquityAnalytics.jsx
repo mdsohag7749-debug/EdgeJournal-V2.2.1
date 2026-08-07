@@ -184,10 +184,10 @@ export default function EquityAnalytics() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ textAlign: 'left', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                    <th style={{ padding: '0 10px 10px 0' }}>Date</th>
-                    <th style={{ padding: '0 10px 10px' }}>Equity</th>
-                    <th style={{ padding: '0 10px 10px' }}>Cumulative P&L</th>
-                    <th style={{ padding: '0 10px 10px' }}>Drawdown</th>
+                    <th scope="col" style={{ padding: '0 10px 10px 0' }}>Date</th>
+                    <th scope="col" style={{ padding: '0 10px 10px' }}>Equity</th>
+                    <th scope="col" style={{ padding: '0 10px 10px' }}>Cumulative P&L</th>
+                    <th scope="col" style={{ padding: '0 10px 10px' }}>Drawdown</th>
                   </tr>
                 </thead>
                 <tbody>

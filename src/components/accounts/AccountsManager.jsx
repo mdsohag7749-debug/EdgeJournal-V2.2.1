@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Plus, Search, ArrowUpDown, Wallet, AlertCircle } from 'lucide-react';
+import { Plus, Search, Wallet, AlertCircle } from 'lucide-react';
 import { useAccounts } from '../../context/AccountContext';
 import AccountCard from './AccountCard';
 import AccountFormModal from './AccountFormModal';
@@ -188,7 +188,7 @@ export default function AccountsManager() {
                     color: 'var(--text)',
                     padding: '9px 12px 9px 34px',
                     fontSize: 13.5,
-                    width: 210,
+                    width: 'min(210px, 100%)',
                   }}
                 />
               </div>

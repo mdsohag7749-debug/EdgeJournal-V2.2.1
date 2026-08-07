@@ -44,7 +44,7 @@ export function estimateStorageBytes() {
   return total;
 }
 
-export function exportAllData(liveTrades, liveGoals, livePlans, liveReflections, liveStudy) {
+export function exportAllData(liveTrades, liveGoals, livePlans, liveReflections, liveStudy, extra = {}) {
   const data = {
     exportedAt: new Date().toISOString(),
     app: 'EdgeJournal',
@@ -64,6 +64,11 @@ export function exportAllData(liveTrades, liveGoals, livePlans, liveReflections,
     checklistCriteria: loadJSON(KEYS.checklistCriteria, []),
     accountName: loadJSON(KEYS.accountName, 'My Trading Account'),
     tags: loadJSON(KEYS.tags, []),
+    // Accounts and challenges live in Supabase too; they're passed in by
+    // Settings' Backup section so a backup is complete and can be fully
+    // restored (accounts first — trades/challenges reference them by id).
+    accounts: Array.isArray(extra.accounts) ? extra.accounts : [],
+    challenges: Array.isArray(extra.challenges) ? extra.challenges : [],
   };
   return data;
 }
@@ -80,8 +85,66 @@ export function downloadJSONFile(data, filename) {
   URL.revokeObjectURL(url);
 }
 
+// Soft ceiling on backup payload size (serialized). Guards against a
+// corrupt or accidentally-huge file being read entirely into memory and
+// pushed at Supabase in one shot.
+export const MAX_IMPORT_BYTES = 50 * 1024 * 1024; // 50 MB
+
+// Validates a parsed backup file's structure BEFORE anything is written.
+// Throws a descriptive Error on the first problem so the caller can abort
+// the import without mutating localStorage or Supabase. Only collections
+// the app actually restores are checked; a genuine EdgeJournal export
+// (object + arrays of records) always passes. This implements the
+// "Validate before you commit" rule so a malformed file can never cause a
+// partial restore or a silent false-positive "imported successfully".
+export function validateBackupData(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error('Invalid backup: expected a JSON object.');
+  }
+  if (JSON.stringify(data).length > MAX_IMPORT_BYTES) {
+    throw new Error('Backup file is too large to import.');
+  }
+
+  // The file must be recognizably an EdgeJournal backup — it has to carry
+  // at least one of the known top-level keys, otherwise an unrelated JSON
+  // object would be reported as "imported successfully" while writing
+  // nothing.
+  const knownKeys = ['trades', 'goals', 'plans', 'reflections', 'study', 'accounts', 'challenges', 'models', 'riskCriteria', 'checklistCriteria', 'tags', 'accountName'];
+  if (!knownKeys.some((key) => data[key] !== undefined)) {
+    throw new Error('Invalid backup: this file is not an EdgeJournal backup.');
+  }
+
+  // Record collections restore into Supabase.
+  const collections = ['trades', 'goals', 'plans', 'reflections', 'study', 'accounts', 'challenges'];
+  for (const key of collections) {
+    if (data[key] === undefined) continue; // older backups may omit some
+    if (!Array.isArray(data[key])) {
+      throw new Error(`Invalid backup: "${key}" must be an array.`);
+    }
+    for (const item of data[key]) {
+      if (!item || typeof item !== 'object') {
+        throw new Error(`Invalid backup: "${key}" contains a malformed entry.`);
+      }
+    }
+  }
+
+  // Per-browser settings written straight to localStorage.
+  for (const key of ['models', 'riskCriteria', 'checklistCriteria', 'tags']) {
+    if (data[key] === undefined) continue;
+    if (!Array.isArray(data[key])) {
+      throw new Error(`Invalid backup: "${key}" must be an array.`);
+    }
+  }
+  if (data.accountName !== undefined && typeof data.accountName !== 'string') {
+    throw new Error('Invalid backup: "accountName" must be a string.');
+  }
+}
+
 export function importAllData(data) {
   if (!data || typeof data !== 'object') throw new Error('Invalid backup file');
+  // Structure is validated up front in validateBackupData() (called by the
+  // import screen) before any write, so none of these writes happen against
+  // a malformed payload.
   // Trades, goals, plans, reflections, and study notes are intentionally
   // not written here — they now live in Supabase, not localStorage.
   // System.jsx reads `data.trades` / `data.goals` / `data.plans` /
