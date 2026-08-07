@@ -282,6 +282,7 @@ const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, 
             <ChecklistSummary title="Risk Management" values={t.riskChecklist} />
             <ChecklistSummary title="Trade Checklist" values={t.tradeChecklist} />
             <ChecklistSummary title="Mistakes" values={t.mistakes} />
+            <PsychologySummary t={t} />
 
             <ReviewBlock t={t} onChange={(review) => onUpdateReview?.(t.id, review)} />
           </div>
@@ -1335,6 +1336,54 @@ function ChecklistSummary({ title, values }) {
             {k}
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// Read-only breakdown of the trade's Trading Psychology emotion ratings.
+// Renders each of the 1–5 scores as a segmented bar so the emotion data
+// captured in the form is visible right on the trade.
+const PSYCH_KEYS = ['Confidence', 'Patience', 'Focus', 'Fear', 'Greed', 'FOMO', 'Revenge', 'Stress'];
+const PSYCH_POSITIVE = ['Confidence', 'Patience', 'Focus'];
+
+function PsychologySummary({ t }) {
+  const p = t?.psychology || {};
+  const entries = PSYCH_KEYS.filter((k) => Number(p[k]) >= 1 && Number(p[k]) <= 5);
+  if (!entries.length) return null;
+  return (
+    <div>
+      <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 8 }}>
+        Trading Psychology
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
+        {PSYCH_KEYS.filter((k) => entries.includes(k)).map((k) => {
+          const val = Number(p[k]);
+          const pos = PSYCH_POSITIVE.includes(k);
+          const color = pos ? 'var(--win)' : 'var(--loss)';
+          const muted = pos ? 'rgba(47,214,110,0.18)' : 'rgba(255,77,94,0.18)';
+          return (
+            <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: 'var(--text-muted)' }}>
+                <span>{k}</span>
+                <span className="mono" style={{ color, fontWeight: 700 }}>{val}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 3 }}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <span
+                    key={n}
+                    style={{
+                      flex: 1,
+                      height: 5,
+                      borderRadius: 3,
+                      background: n <= val ? muted : 'var(--border)',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

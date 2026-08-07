@@ -77,9 +77,8 @@ export default function DisciplineScoreWidget({ score = 0, metrics = [] }) {
     ? metrics
     : [
         { label: 'Plan Following', value: 0 },
-        { label: 'Risk Management', value: 0 },
+        { label: 'Rule Compliance', value: 0 },
         { label: 'Consistency', value: 0 },
-        { label: 'Execution', value: 0 },
         { label: 'Emotional Control', value: 0 },
         { label: 'Review & Reflection', value: 0 },
       ];

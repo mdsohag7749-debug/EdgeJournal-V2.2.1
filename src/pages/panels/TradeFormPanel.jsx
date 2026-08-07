@@ -11,9 +11,11 @@ import {
   ScanLine,
   Sparkles,
   StickyNote,
+  Brain,
   Tag,
   Timer,
   Wallet,
+  AlertTriangle,
 } from 'lucide-react';
 import SidePanel from '../../components/SidePanel';
 import ImageUpload from '../../components/ImageUpload';
@@ -37,6 +39,41 @@ const INSTRUMENT_GROUPS = [
 const SESSIONS = ['Asia', 'London', 'New York', 'London + New York'];
 const EMOTIONS = ['Confident', 'Calm', 'Fear', 'Greed', 'FOMO', 'Revenge', 'Hesitation'];
 const MISTAKES = ['Overtrading', 'Early Entry', 'Late Entry', 'Moved SL', 'Moved TP', 'FOMO', 'Revenge', 'Ignored Plan', 'News Trade'];
+
+// Mistake Tracker — the defined mistake vocabulary for the dedicated Mistakes
+// section. Multiple can be selected per trade and stored in the same
+// `mistakes` map, kept in the canonical display order.
+const MISTAKE_NAMES = [
+  'Late Entry',
+  'Early Exit',
+  'Moved Stop Loss',
+  'No Stop Loss',
+  'Over Risk',
+  'Counter Trend',
+  'News Chase',
+  'Over Trading',
+  'Missed Plan',
+  'Revenge Trade',
+  'FOMO Entry',
+  'Impatience',
+];
+
+// Trading Psychology — the 8 institutional emotions tracked on a 1–5 scale
+// for every trade. "pos" emotions score higher = better; "neg" emotions score
+// higher = more of that disruptive state present (so lower is healthier). The
+// default rating biases positive emotions to a neutral 3 and negative ones to
+// a mild 1, so a freshly-opened form reads as balanced and the trader shifts
+// the knobs to match how they actually felt.
+const PSYCH_EMOTIONS = [
+  { key: 'Confidence', tone: 'pos' },
+  { key: 'Patience', tone: 'pos' },
+  { key: 'Focus', tone: 'pos' },
+  { key: 'Fear', tone: 'neg' },
+  { key: 'Greed', tone: 'neg' },
+  { key: 'FOMO', tone: 'neg' },
+  { key: 'Revenge', tone: 'neg' },
+  { key: 'Stress', tone: 'neg' },
+];
 
 // Used to convert JPY-quoted pip values into USD for non-USDJPY JPY pairs
 // (e.g. EURJPY, GBPJPY) when no live feed is available.
@@ -115,26 +152,25 @@ function computeDerived(form) {
   const riskPerUnit = hasEntry && hasSL ? Math.abs(entry - sl) : 0;
   const stopPips = riskPerUnit > 0 && cfg.pip > 0 ? riskPerUnit / cfg.pip : 0;
   const riskValue = stopPips * cfg.pipValue;
-
   // Planned R:R from SL / TP (and reward distance)
   const rewardPerUnit = hasEntry && hasTP ? Math.abs(tp - entry) : 0;
   const rewardPips = rewardPerUnit > 0 && cfg.pip > 0 ? rewardPerUnit / cfg.pip : 0;
   let plannedRR = 0;
-  if (riskValue > 0 && riskAmount > 0) {
+  if (riskValue > 0) {
     plannedRR = (rewardPerUnit > 0 ? rewardPips * cfg.pipValue : 0) / riskValue;
+  } else if (hasEntry && hasSL && hasTP) {
+    const risk = Math.abs(entry - sl);
+    const reward = Math.abs(tp - entry);
+    if (risk > 0) plannedRR = reward / risk;
   }
 
-  // Lot / position size — fully automatic, but ONLY emitted once a stop
-  // distance and a risk budget are both known. Until then the position is
-  // unsized, so lot size, RR, PnL and PnL % stay uncomputed (shown as "—")
-  // rather than silently collapsing to 0.00 or assuming a single lot.
+  // Lot / position size — fully automatic. position size can never drop
+  // to zero: when no balance/risk sizing is available it falls back to the
+  // manual lot size, else a single lot, so the recorded lot, RR and PnL
+  // never collapse.
   const manualLot = lot !== null && lot > 0;
   const autoLot = riskValue > 0 && riskAmount > 0 ? riskAmount / riskValue : 0;
-  const canSize = manualLot || autoLot > 0;
-  const qty = canSize ? (manualLot ? lot : autoLot) : 0;
-
-  // A closed (won/lost) trade is only computable once a lot size is known.
-  const canComputePnL = hasEntry && hasExit && qty > 0;
+  const qty = manualLot ? lot : autoLot > 0 ? autoLot : 1;
 
   // Potential profit at the take profit level.
   const potentialProfit = plannedRR > 0 && riskAmount > 0 ? plannedRR * riskAmount : 0;
@@ -144,24 +180,24 @@ function computeDerived(form) {
   // Built from the same cfg.pipValue/pip used to size the position, so the
   // displayed PnL always matches the calculator and the saved record.
   let pnl = 0;
-  if (canComputePnL) {
+  if (hasEntry && hasExit) {
     const directionMultiplier = form.direction === 'Buy' ? 1 : -1;
     const valuePerPricePoint = cfg.pipValue / cfg.pip; // $ per 1.0 price move, per 1.0 lot
-    pnl = (exit - entry) * directionMultiplier * valuePerPricePoint * qty;
+    const effQty = qty > 0 ? qty : 1; // fall back to 1 lot if never sized
+    pnl = (exit - entry) * directionMultiplier * valuePerPricePoint * effQty;
   }
 
   // PnL (%) vs account balance
   let pnlPct = 0;
-  if (canComputePnL && hasBalance) pnlPct = (pnl / balance) * 100;
+  if (hasBalance) pnlPct = (pnl / balance) * 100;
 
   // Realized R multiple (how many R the trade actually returned)
   let realizedRR = 0;
   if (riskAmount > 0) realizedRR = pnl / riskAmount;
 
-  // Result (auto) — only once the trade is sized and closed, so an unsized
-  // trade is never mislabeled as a break-even.
+  // Result (auto)
   let result = '';
-  if (canComputePnL) result = pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'BE';
+  if (hasEntry && hasExit) result = pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'BE';
 
   // Trade duration (HH:MM)
   let duration = '';
@@ -189,28 +225,12 @@ function computeDerived(form) {
     potentialProfit,
     qty,
     autoLot,
-    canComputePnL,
     pnl,
     pnlPct,
     result,
     duration,
     warnings,
   };
-}
-
-// Persists the computed fields into the form so the saved trade always
-// carries real, derived numbers.
-function applyAutoCalc(next) {
-  const d = computeDerived(next);
-  const patch = {};
-  if (num(next.entryPrice) !== null && num(next.exitPrice) !== null) {
-    patch.netPnl = Math.round(d.pnl * 100) / 100;
-    patch.result = d.result;
-  }
-  if (d.plannedRR > 0) patch.rr = Math.round(d.plannedRR * 100) / 100;
-  const manualLot = num(next.contracts) !== null && num(next.contracts) > 0;
-  if (!manualLot && d.autoLot > 0) patch.contracts = Math.round(d.autoLot * 10000) / 10000;
-  return { ...next, ...patch };
 }
 
 function validateTrade(form) {
@@ -285,6 +305,7 @@ const BLANK = {
   lessonsLearned: '',
   screenshot: '',
   tags: [],
+  psychology: {},
 };
 
 function Section({ icon, title, accent = { bg: 'rgba(255,255,255,0.06)', fg: 'var(--text-muted)' }, children }) {
@@ -352,6 +373,48 @@ function SummaryStat({ label, value, color }) {
       <span className="mono" style={{ fontSize: 16, fontWeight: 800, color, lineHeight: 1.1, whiteSpace: 'nowrap' }}>
         {value}
       </span>
+    </div>
+  );
+}
+
+// Intuitive 1–5 selector for a single psychology emotion. Positive emotions
+// (Confidence/Patience/Focus) light up green; disruptive ones (Fear/Greed/FOMO/
+// Revenge/Stress) light up red so a high rating visually reads as "present".
+function PsychRating({ emotion, value, onChange }) {
+  const pos = emotion.tone === 'pos';
+  const fg = pos ? 'var(--win)' : '#ff4d5e';
+  const bg = pos ? 'rgba(47,214,110,0.16)' : 'rgba(255,77,94,0.16)';
+  const borderColor = pos ? 'rgba(47,214,110,0.4)' : 'rgba(255,77,94,0.4)';
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>{emotion.key}</span>
+      <div style={{ display: 'flex', gap: 5 }}>
+        {[1, 2, 3, 4, 5].map((n) => {
+          const active = (value || 0) >= n;
+          return (
+            <button
+              key={n}
+              type="button"
+              onClick={() => onChange(n)}
+              aria-label={`${emotion.key} ${n} of 5`}
+              style={{
+                flex: 1,
+                padding: '6px 0',
+                borderRadius: 6,
+                fontSize: 11.5,
+                fontWeight: 700,
+                background: active ? bg : 'var(--bg-elevated)',
+                color: active ? fg : 'var(--text-faint)',
+                border: active ? `1.5px solid ${borderColor}` : '1.5px solid var(--border)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {n}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -435,7 +498,7 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
       setConfidence(Math.min(5, Math.max(1, Math.round((initial?.rating || 6) / 2))));
       setForm(
         initial
-          ? { ...BLANK, ...initial, accountId, riskChecklist: initial.riskChecklist || {}, tradeChecklist: initial.tradeChecklist || {}, mistakes: initial.mistakes || {} }
+          ? { ...BLANK, ...initial, accountId, riskChecklist: initial.riskChecklist || {}, tradeChecklist: initial.tradeChecklist || {}, mistakes: initial.mistakes || {}, psychology: initial.psychology || {} }
           : { ...BLANK, accountId, model: models[0] || '' }
       );
       setErrors({});
@@ -443,17 +506,30 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initial, preferredAccountId]);
 
+  // Raw field write. NEVER derives or persists computed values into form
+  // while typing — computeDerived() is the single source of truth and always
+  // recomputes from the live raw inputs, so there is no stale state and no
+  // second calculation path.
   function set(key, value) {
-    // The shared engine must always see the same account balance as the
-    // preview, or the persisted netPnl/lot diverges from what's shown.
-    setForm((f) => applyAutoCalc({ ...f, [key]: value, accountBalance: balanceRef.current }));
+    setForm((f) => ({ ...f, [key]: value }));
     setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
   }
 
   function setBalance(value) {
     setAccountBalance(value);
     balanceRef.current = value;
-    setForm((f) => applyAutoCalc({ ...f, accountBalance: value }));
+  }
+
+  // Update a single Trading Psychology emotion score, keeping the rest intact.
+  // Uses a functional update so a rapid second click on the same emotion can't
+  // clobber the first, and clamps to the documented 1-5 range.
+  function setPsych(key, value) {
+    const clamp = (n) => Math.min(5, Math.max(1, Number.isFinite(Number(n)) ? Number(n) : 1));
+    setForm((f) => {
+      const next = { ...(f.psychology || {}), [key]: clamp(value) };
+      return { ...f, psychology: next };
+    });
+    setErrors((e) => (e.psychology ? { ...e, psychology: undefined } : e));
   }
 
   function handleSave() {
@@ -461,17 +537,26 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    // Save EXACTLY the values shown in the preview. `derived` is the
-    // single calculation engine's live output — no recalculation here,
+    // Single pipeline: Inputs -> computeDerived() -> Save. Nothing is ever
+    // read back from previously-stored derived fields — computeDerived() is
+    // re-run here (the same engine the preview uses) on the live raw inputs,
     // so Preview PnL === Saved PnL === Supabase PnL === Dashboard PnL.
+    const d = computeDerived({ ...form, accountBalance });
+
     const hasExitOutcome = num(form.entryPrice) !== null && num(form.exitPrice) !== null;
+    // A real lot exists if the trader typed one or the auto-sizer produced one.
+    const manualLot = num(form.contracts) !== null && num(form.contracts) > 0;
+    const sized = manualLot || d.autoLot > 0;
+
     const toSave = {
       ...form,
       rating: confidence * 2,
-      netPnl: hasExitOutcome ? Math.round(derived.pnl * 100) / 100 : form.netPnl,
-      result: hasExitOutcome ? derived.result : form.result,
-      rr: derived.plannedRR > 0 ? Math.round(derived.plannedRR * 100) / 100 : form.rr,
-      contracts: derived.qty > 0 ? Math.round(derived.qty * 10000) / 10000 : form.contracts,
+      // Derived P&L only belongs on a closed trade; otherwise leave blank
+      // (no fabricated 0.00 or recycled stale value).
+      netPnl: hasExitOutcome ? Math.round(d.pnl * 100) / 100 : '',
+      result: hasExitOutcome ? d.result : '',
+      rr: d.plannedRR > 0 ? Math.round(d.plannedRR * 100) / 100 : '',
+      contracts: sized ? Math.round(d.qty * 10000) / 10000 : '',
     };
     onSave(toSave);
   }
@@ -572,8 +657,8 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
 
               {isClosed ? (
                 <>
-                  <SummaryStat label="PnL $" value={derived.canComputePnL ? formatMoney(derived.pnl) : '—'} color={pnlColor} />
-                  <SummaryStat label="PnL %" value={derived.canComputePnL ? `${derived.pnlPct >= 0 ? '+' : ''}${derived.pnlPct.toFixed(2)}%` : '—'} color={pnlColor} />
+                  <SummaryStat label="PnL $" value={formatMoney(derived.pnl)} color={pnlColor} />
+                  <SummaryStat label="PnL %" value={`${derived.pnlPct >= 0 ? '+' : ''}${derived.pnlPct.toFixed(2)}%`} color={pnlColor} />
                   <SummaryStat label="Duration" value={derived.duration || '—'} color="var(--text-muted)" />
                 </>
               ) : (
@@ -598,7 +683,14 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
                   <label>Account *</label>
                   <select
                     value={form.accountId}
-                    onChange={(e) => set('accountId', e.target.value)}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      const acc = accounts.find((a) => a.id === id);
+                      const bal = acc?.currentBalance ?? acc?.startingBalance ?? '';
+                      setAccountBalance(bal);
+                      balanceRef.current = bal;
+                      set('accountId', id);
+                    }}
                     style={errors.accountId ? { borderColor: 'var(--loss)' } : undefined}
                   >
                     <option value="">Select account</option>
@@ -841,10 +933,58 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
                 onChange={(v) => set('tradeChecklist', v)}
               />
             </div>
+
+            <Section icon={<AlertTriangle size={14} />} title="Mistakes">
+              <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: 0 }}>
+                Tick everything you did wrong on this trade — tracked live in Mistake Analytics.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 8 }}>
+                {MISTAKE_NAMES.map((m) => {
+                  const active = !!form.mistakes[m];
+                  return (
+                    <label
+                      key={m}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '9px 12px',
+                        borderRadius: 10,
+                        fontSize: 13,
+                        cursor: 'pointer',
+                        color: 'var(--text)',
+                        background: active ? 'rgba(255,77,94,0.10)' : 'var(--bg-elevated)',
+                        border: active ? '1.5px solid rgba(255,77,94,0.4)' : '1.5px solid var(--border)',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={active}
+                        onChange={() => set('mistakes', { ...form.mistakes, [m]: !active })}
+                        style={{ accentColor: 'var(--loss)', width: 15, height: 15, flexShrink: 0 }}
+                      />
+                      <span>{m}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </Section>
           </div>
 
-          {/* RIGHT: tags, media, notes */}
+          {/* RIGHT: psychology, tags, media, notes */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <Section icon={<Brain size={14} />} title="Trading Psychology">
+              <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: 0 }}>
+                How you felt on this trade — before the fill. Saved with every trade and surfaced in Emotion Analytics.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
+                {PSYCH_EMOTIONS.map((e) => (
+                  <PsychRating key={e.key} emotion={e} value={form.psychology?.[e.key]} onChange={(v) => setPsych(e.key, v)} />
+                ))}
+              </div>
+            </Section>
+
             <Section icon={<Tag size={14} />} title="Tags">
               <div className="field-row cols-2">
                 <div className="field">
@@ -940,7 +1080,7 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
               </div>
             </Section>
 
-            <Section icon={<StickyNote size={14} />} title="Notes">
+<Section icon={<StickyNote size={14} />} title="Notes">
               <textarea
                 value={form.notes}
                 onChange={(e) => set('notes', e.target.value)}

@@ -86,6 +86,9 @@ export function toTradeRow(trade, userId, { partial = false, accountId } = {}) {
   // review (jsonb) — the closed-trade Review & Reflection checklist.
   if (!partial || 'review' in trade) row.review = trade.review || {};
 
+  // psychology (jsonb) — the Trading Psychology emotion scores (1–5).
+  if (!partial || 'psychology' in trade) row.psychology = trade.psychology || {};
+
   return row;
 }
 
@@ -145,6 +148,7 @@ export function fromTradeRow(row) {
     tags: Array.isArray(row.tags) ? row.tags : [],
     isFavorite: !!row.is_favorite,
     review: row.review || {},
+    psychology: row.psychology || {},
   };
 }
 

@@ -16,6 +16,7 @@ const Study = lazy(() => import('../pages/Study'));
 const Goals = lazy(() => import('../pages/Goals'));
 const Challenges = lazy(() => import('../pages/Challenges'));
 const Analytics = lazy(() => import('../pages/Analytics'));
+const Psychology = lazy(() => import('../pages/Psychology'));
 const System = lazy(() => import('../pages/System'));
 const Profile = lazy(() => import('../pages/Profile'));
 const Settings = lazy(() => import('../pages/Settings'));
@@ -73,6 +74,13 @@ export const routes = [
     Component: Analytics,
     title: 'Advanced Analytics',
     subtitle: 'Deep-dive performance breakdowns across every trade',
+  },
+  {
+    id: 'psychology',
+    path: '/psychology',
+    Component: Psychology,
+    title: 'Psychology',
+    subtitle: 'Your trading mind — emotions, mistakes, compliance and discipline',
   },
   {
     id: 'system',

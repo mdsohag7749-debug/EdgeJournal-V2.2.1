@@ -13,17 +13,19 @@ import {
   TrendingUp,
   User,
   Trophy,
+  Brain,
 } from 'lucide-react';
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'premarket', label: 'Pre-Market Plan', icon: Sunrise },
   { id: 'journal', label: 'Trading Journal', icon: BookOpen },
+  { id: 'analytics', label: 'Analytics', icon: Activity },
+  { id: 'psychology', label: 'Psychology', icon: Brain },
   { id: 'reflections', label: 'Reflections', icon: MessageSquareText },
   { id: 'study', label: 'Study', icon: GraduationCap },
   { id: 'goals', label: 'Goals', icon: Target },
   { id: 'challenges', label: 'Challenges', icon: Trophy },
-  { id: 'analytics', label: 'Analytics', icon: Activity },
   { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'profile', label: 'Profile', icon: User },
 ];

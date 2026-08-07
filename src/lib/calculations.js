@@ -1,5 +1,7 @@
 // All calculations derive purely from the trades array.
 
+import { computeRuleCompliance } from './ruleCompliance';
+
 function sortByDate(trades) {
   return [...trades].sort((a, b) => (a.date + (a.entryTime || '')).localeCompare(b.date + (b.entryTime || '')));
 }
@@ -337,37 +339,16 @@ export function computeDisciplineScore(trades, { models = [], riskCriteria = [],
   const planned = list.filter((t) => t.model && configuredModels.includes(t.model)).length;
   const planFollowing = clamp(ratio(planned, total));
 
-  // B) Execution — completed Trade Checklist items vs the configured checklist,
-  // averaged over trades that actually used a checklist (real data only).
-  let execNumer = 0;
-  let execDenom = 0;
-  if (configuredChecklist.length) {
-    list.forEach((t) => {
-      const tc = t.tradeChecklist || {};
-      if (Object.keys(tc).length) {
-        execNumer += configuredChecklist.filter((c) => tc[c]).length;
-        execDenom += configuredChecklist.length;
-      }
-    });
-  }
-  const execution = clamp(ratio(execNumer, execDenom));
+  // B) Rule Compliance — how faithfully the trader followed their configured
+  // rules (Risk Checklist + Trade Checklist) with every logged mistake counted
+  // as a break. Delegated to the shared ruleCompliance engine so the checklist
+  // adherence is computed exactly once and re-used here (no duplicate
+  // calculations). This replaces the previous separate Execution / Risk
+  // Management pillars, which both derived from the same two checklists.
+  const ruleCompliance = computeRuleCompliance(list, { riskCriteria: configuredRisk, checklistCriteria: configuredChecklist });
+  const ruleFollowing = ruleCompliance.ruleScore;
 
-  // C) Risk Management — completed Risk Management Checklist items vs the
-  // configured checklist, averaged over trades that used one.
-  let riskNumer = 0;
-  let riskDenom = 0;
-  if (configuredRisk.length) {
-    list.forEach((t) => {
-      const rc = t.riskChecklist || {};
-      if (Object.keys(rc).length) {
-        riskNumer += configuredRisk.filter((c) => rc[c]).length;
-        riskDenom += configuredRisk.length;
-      }
-    });
-  }
-  const riskManagement = clamp(ratio(riskNumer, riskDenom));
-
-  // D) Consistency — percentage of trading days that ended in profit.
+  // C) Consistency — percentage of trading days that ended in profit.
   const dayMap = {};
   list.forEach((t) => {
     if (!t.date) return;
@@ -392,9 +373,8 @@ export function computeDisciplineScore(trades, { models = [], riskCriteria = [],
 
   const metrics = [
     { label: 'Plan Following', value: planFollowing },
-    { label: 'Risk Management', value: riskManagement },
+    { label: 'Rule Compliance', value: ruleFollowing },
     { label: 'Consistency', value: consistency },
-    { label: 'Execution', value: execution },
     { label: 'Emotional Control', value: emotionalControl },
     { label: 'Review & Reflection', value: reviewReflection },
   ];
