@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useData } from '../context/DataContext';
 import { computeAnalytics } from '../lib/analytics';
-import StatCard from '../components/StatCard';
 import EmptyState from '../components/EmptyState';
 import PerformanceIntelligence from '../components/performance/PerformanceIntelligence';
 import DeepPerformanceAnalytics from '../components/performance/DeepPerformanceAnalytics';
@@ -28,18 +27,6 @@ import {
   CartesianGrid,
 } from 'recharts';
 import {
-  Percent,
-  PercentCircle,
-  Gauge,
-  Scale,
-  TrendingUp,
-  TrendingDown,
-  Trophy,
-  Flame,
-  Snowflake,
-  Award,
-  CalendarDays,
-  Activity,
   BarChart3,
   Clock,
   Compass,
@@ -245,35 +232,8 @@ export default function Analytics({ onNavigate }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
 
-      {/* � SECTION 1 — Performance Overview */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <SectionHeading number="01" title="Performance Overview" subtitle="Your headline results — win rate, profit factor, risk/reward and streaks." accent="#7c3aed" />
-        <div className="dash-stats-grid">
-          <StatCard label="Win Rate" value={a.winRate} format={(v) => `${v.toFixed(1)}%`} icon={Percent} accent="#16a34a" delay={0} />
-          <StatCard label="Loss Rate" value={a.lossRate} format={(v) => `${v.toFixed(1)}%`} icon={PercentCircle} accent="#dc2626" delay={0.02} />
-          <StatCard
-            label="Profit Factor"
-            value={a.profitFactor === Infinity ? '∞' : a.profitFactor || 0}
-            format={(v) => (typeof v === 'number' ? v.toFixed(2) : v)}
-            icon={Gauge}
-            accent="#7c3aed"
-            delay={0.04}
-          />
-          <StatCard label="Average R:R" value={a.avgRR || 0} format={(v) => (v ? v.toFixed(2) : '—')} icon={Scale} accent="#2563eb" delay={0.06} />
-          <StatCard label="Average Win" value={a.avgWin} format={formatMoney} valueClass="pnl-pos" icon={TrendingUp} accent="#16a34a" delay={0.08} />
-          <StatCard label="Average Loss" value={a.avgLoss} format={formatMoney} valueClass="pnl-neg" icon={TrendingDown} accent="#dc2626" delay={0.1} />
-          <StatCard label="Net P&L" value={a.netPnl} format={formatMoney} valueClass={pnlClass(a.netPnl)} icon={Activity} accent={a.netPnl >= 0 ? '#16a34a' : '#dc2626'} delay={0.12} />
-          <StatCard label="Best Trade" value={a.bestTrade} format={formatMoney} valueClass="pnl-pos" icon={Trophy} accent="#16a34a" delay={0.14} />
-          <StatCard label="Worst Trade" value={a.worstTrade} format={formatMoney} valueClass="pnl-neg" icon={TrendingDown} accent="#dc2626" delay={0.16} />
-          <StatCard label="Current Win Streak" value={a.currentWinStreak} format={(v) => `${Math.round(v)}`} icon={Flame} accent="#16a34a" delay={0.18} />
-          <StatCard label="Current Loss Streak" value={a.currentLossStreak} format={(v) => `${Math.round(v)}`} icon={Snowflake} accent="#dc2626" delay={0.2} />
-          <StatCard label="Longest Win Streak" value={a.longestWinStreak} format={(v) => `${Math.round(v)}`} icon={Award} accent="#7c3aed" delay={0.22} />
-          <StatCard label="Trading Days" value={a.tradingDays} format={(v) => `${Math.round(v)}`} icon={CalendarDays} accent="#2563eb" delay={0.24} />
-        </div>
-      </motion.div>
-
-      {/* SECTION 2 — Market Performance */}
-      <SectionHeading number="02" title="Market Performance" subtitle="Live edge leaderboard, pair / session / day / hour and strategy breakdown." accent="#2563eb" />
+      {/* SECTION 01 — Performance Intelligence (executive summary) */}
+      <SectionHeading number="01" title="Performance Intelligence" subtitle="Your executive summary — live edge, streaks and standout trades, recomputed from real history." accent="#7c3aed" />
       <PerformanceIntelligence />
       <DeepPerformanceAnalytics />
 
@@ -325,30 +285,27 @@ export default function Analytics({ onNavigate }) {
         </motion.div>
       </div>
 
-      {/* SECTION 3 — Risk & Equity */}
-      <SectionHeading number="03" title="Risk & Equity" subtitle="Exposure, drawdown, growth and your account's equity run from its starting balance." accent="#dc2626" />
+      {/* SECTION 02 — Risk & Equity */}
+      <SectionHeading number="02" title="Risk & Equity" subtitle="Exposure, drawdown, growth and your account's equity run from its starting balance." accent="#dc2626" />
       <RiskAnalytics />
       <EquityAnalytics />
 
-      {/* SECTION 4 — Institutional Insights */}
-      <SectionHeading number="04" title="Institutional Insights" subtitle="Statistically derived edge and risk observations, computed from real history." accent="#16a34a" />
+      {/* SECTION 03 — Institutional Insights */}
+      <SectionHeading number="03" title="Institutional Insights" subtitle="Statistically derived edge and risk observations, computed from real history." accent="#16a34a" />
       <InstitutionalInsights />
 
-      {/* SECTION 5 — Emotion Analytics */}
-      <SectionHeading number="05" title="Emotion Analytics" subtitle="Trading psychology captured from every logged trade — mood, confidence and discipline." accent="#7c3aed" />
+      {/* SECTION 04 — Psychology (Emotion Analytics + Psychology Insights) */}
+      <SectionHeading number="04" title="Psychology" subtitle="Emotion distribution, trends and statistically derived psychology insights — every emotion metric shown once." accent="#7c3aed" />
       <EmotionAnalytics />
+      <PsychologyInsights />
 
-      {/* SECTION 6 — Mistake Analytics */}
-      <SectionHeading number="06" title="Mistake Analytics" subtitle="What you did wrong, how often, and the real cost — tracked from every logged trade." accent="#dc2626" />
+      {/* SECTION 05 — Mistake Analytics */}
+      <SectionHeading number="05" title="Mistake Analytics" subtitle="What you did wrong, how often, and the real cost — tracked from every logged trade." accent="#dc2626" />
       <MistakeAnalytics />
 
-      {/* SECTION 7 — Rule Compliance */}
-      <SectionHeading number="07" title="Rule Compliance" subtitle="How faithfully you follow your own rules, and the discipline it builds — live from your checklists." accent="#16a34a" />
+      {/* SECTION 06 — Rule Compliance */}
+      <SectionHeading number="06" title="Rule Compliance" subtitle="How faithfully you follow your own rules, and the discipline it builds — live from your checklists." accent="#16a34a" />
       <RuleComplianceAnalytics />
-
-      {/* SECTION 8 — Psychology Insights */}
-      <SectionHeading number="08" title="Psychology Insights" subtitle="Automatic, purely statistical observations about your trading mind — no AI, no guesswork." accent="#f59e0b" />
-      <PsychologyInsights />
     </div>
   );
 }

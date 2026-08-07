@@ -5,13 +5,12 @@ import { useData } from '../../context/DataContext';
 import { formatMoney } from '../../lib/utils';
 import { computeInstitutionalInsights } from '../../lib/insightAnalytics';
 import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { TrendingUp, Trophy, TrendingDown, SunMoon, CalendarDays, Target, Activity, Briefcase, AlertTriangle, Repeat, Sparkles } from 'lucide-react';
+import { TrendingUp, Activity, Briefcase, Repeat, Sparkles } from 'lucide-react';
 
 const WIN = '#16a34a';
 const LOSS = '#dc2626';
 const BLUE = '#2563eb';
 const VIOLET = '#7c3aed';
-const AMBER = '#b45309';
 
 const TONES = {
   pos: 'linear-gradient(180deg, rgba(22,163,74,0.5), rgba(22,163,74,0.0))',
@@ -108,36 +107,6 @@ export default function InstitutionalInsights() {
 
   const cards = [
     {
-      title: 'Best Performing Pair', icon: Trophy, tone: 'win', color: WIN,
-      value: i.bestPair?.label || '—',
-      detail: i.bestPair ? `${fmtMoney(i.bestPair.netPnl)} net · ${i.bestPair.winRate.toFixed(1)}%` : 'Insufficient data',
-      coverage: i.bestPair ? `${i.bestPair.trades} trades` : null,
-    },
-    {
-      title: 'Worst Performing Pair', icon: TrendingDown, tone: 'neg', color: LOSS,
-      value: i.worstPair?.label || '—',
-      detail: i.worstPair ? `${fmtMoney(i.worstPair.netPnl)} net · ${i.worstPair.winRate.toFixed(1)}%` : 'Insufficient data',
-      coverage: i.worstPair ? `${i.worstPair.trades} trades` : null,
-    },
-    {
-      title: 'Best Session', icon: SunMoon, tone: 'win', color: WIN,
-      value: i.bestSession?.label || '—',
-      detail: i.bestSession ? `${fmtMoney(i.bestSession.netPnl)} net` : 'Insufficient data',
-      coverage: null,
-    },
-    {
-      title: 'Best Day', icon: CalendarDays, tone: 'violet', color: VIOLET,
-      value: i.bestDay?.label || '—',
-      detail: i.bestDay ? `${fmtMoney(i.bestDay.netPnl)} net` : 'Insufficient data',
-      coverage: null,
-    },
-    {
-      title: 'Best Risk Level', icon: Target, tone: 'win', color: WIN,
-      value: i.bestRiskBand?.label || '—',
-      detail: i.bestRiskBand ? `${i.bestRiskBand.winRate.toFixed(1)}% win rate` : 'Insufficient data',
-      coverage: i.bestRiskBand ? `${i.bestRiskBand.trades} trades` : null,
-    },
-    {
       title: 'Highest RR Environment', icon: Activity, tone: 'violet', color: VIOLET,
       value: i.rrEnvironment?.label || '—',
       detail: i.rrEnvironment ? `${i.rrEnvironment.avgRR.toFixed(2)} avg R:R` : 'Insufficient data',
@@ -148,12 +117,6 @@ export default function InstitutionalInsights() {
       value: i.bestModel?.label || '—',
       detail: i.bestModel ? `${fmtMoney(i.bestModel.netPnl)} net` : 'Insufficient data',
       coverage: i.bestModel ? `${i.bestModel.trades} trades` : null,
-    },
-    {
-      title: 'Most Common Mistake', icon: AlertTriangle, tone: 'neg', color: AMBER,
-      value: i.topMistake?.name || 'None recorded',
-      detail: i.topMistake ? `${i.topMistake.count}× recorded` : 'No mistakes logged yet',
-      coverage: null,
     },
     {
       title: 'Most Consistent Session', icon: Repeat, tone: 'neu', color: BLUE,

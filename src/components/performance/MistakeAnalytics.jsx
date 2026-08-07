@@ -14,7 +14,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
-import { AlertTriangle, Target, Layers, CalendarDays, Crosshair, Clock, Flame, TrendingDown } from 'lucide-react';
+import { AlertTriangle, Target, Layers, CalendarDays, Crosshair, Clock, TrendingDown } from 'lucide-react';
 
 const RED = '#dc2626';
 const AMBER = '#b45309';
@@ -138,7 +138,6 @@ export default function MistakeAnalytics() {
               delay={0}
               sub={m.mostCommon ? `${m.mostCommon.count} time${m.mostCommon.count === 1 ? '' : 's'}` : ''}
             />
-            <StatCard label="Mistake Rate" value={m.mistakeRate} format={(v) => `${v.toFixed(1)}%`} icon={Flame} accent={AMBER} delay={0.02} />
             <StatCard label="Total Mistakes" value={m.totalMistakes} format={(v) => `${Math.round(v)}`} icon={Layers} accent={BLUE} delay={0.04} />
             <StatCard
               label="Most Expensive Mistake"

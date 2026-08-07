@@ -17,7 +17,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
-import { Percent, Gauge, Scale, Activity, TrendingUp, TrendingDown, Clock, ChartColumn, SunMoon, CalendarDays, Hourglass, BarChart3, CheckCircle2, Braces } from 'lucide-react';
+import { Percent, Gauge, Activity, TrendingUp, TrendingDown, Clock, ChartColumn, SunMoon, CalendarDays, Hourglass, BarChart3, CheckCircle2, Braces } from 'lucide-react';
 
 const WIN = '#16a34a';
 const LOSS = '#dc2626';
@@ -187,7 +187,6 @@ export default function DeepPerformanceAnalytics() {
           <div className="dash-stats-grid">
             <StatCard label="Win Rate" value={s.winRate} format={(v) => `${v.toFixed(1)}%`} icon={Percent} accent={WIN} delay={0} />
             <StatCard label="Profit Factor" value={s.profitFactor === Infinity ? '∞' : s.profitFactor || 0} format={(v) => (typeof v === 'number' ? v.toFixed(2) : v)} icon={Gauge} accent="#7c3aed" delay={0.02} />
-            <StatCard label="Average R:R" value={s.avgRR || 0} format={(v) => (v ? v.toFixed(2) : '—')} icon={Scale} accent="#2563eb" delay={0.04} />
             <StatCard label="Net P&L" value={s.netPnl} format={formatMoney} valueClass={pnlClass(s.netPnl)} icon={Activity} accent={s.netPnl >= 0 ? WIN : LOSS} delay={0.06} />
             <StatCard label="Average Win" value={s.avgWin} format={formatMoney} valueClass="pnl-pos" icon={TrendingUp} accent={WIN} delay={0.08} />
             <StatCard label="Average Loss" value={s.avgLoss} format={formatMoney} valueClass="pnl-neg" icon={TrendingDown} accent={LOSS} delay={0.1} />
