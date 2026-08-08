@@ -56,6 +56,8 @@ export default function Login() {
         eyebrow="Welcome back"
         title="Sign in to EdgeJournal"
         subtitle="Log in to keep your trading journal up to date."
+        headline="Trade with intention."
+        headlineText="EdgeJournal captures your execution, discipline, and the decisions behind every trade — so patterns become measurable and your edge compounds."
         footer={
           <p className="auth-footer-note">
             Don&apos;t have an account? <Link to="/register">Create one</Link>
