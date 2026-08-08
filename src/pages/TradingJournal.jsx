@@ -4,6 +4,9 @@ import { useData } from '../context/DataContext';
 import { useAccounts } from '../context/AccountContext';
 import { useAuth } from '../context/AuthContext';
 import TradeFormPanel from './panels/TradeFormPanel';
+import TradeReviewPanel from '../components/tradeReview/TradeReviewPanel';
+import SavedViewsPanel from '../components/SavedViewsPanel';
+import { loadSavedViews, persistNewView, persistRename, persistDelete } from '../lib/savedViews';
 import Lightbox from '../components/Lightbox';
 import { TradeScreenshotGallery } from '../components/TradeScreenshots';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -12,6 +15,7 @@ import SidePanel from '../components/SidePanel';
 import { loadJSON, saveJSON, downloadJSONFile } from '../lib/storage';
 import { uid, todayISO, formatDate, formatMoney, pnlClass, resultTagClass, directionTagClass } from '../lib/utils';
 import { REVIEW_ITEMS, isClosedTrade, reviewScoreForTrade, reviewStatusForTrade } from '../lib/calculations';
+import { BLANK_FILTERS, filterTrades, activeFilters } from '../lib/journalFilters';
 import TagChip from '../components/TagChip';
 import TagManager from '../components/TagManager';
 import {
@@ -37,33 +41,10 @@ import {
   ArrowUp,
   ArrowDown,
 } from 'lucide-react';
-
 const SESSION_OPTIONS = ['Asia', 'London', 'New York', 'London + New York'];
 
-const RESULT_ORDER = { Win: 0, BE: 1, Loss: 2 };
 const RESULTS = ['All', 'Win', 'Loss', 'BE'];
 const DIRECTIONS = ['All', 'Buy', 'Sell'];
-const BLANK_FILTERS = {
-  account: 'All',
-  pair: 'All',
-  direction: 'All',
-  session: 'All',
-  timeframe: 'All',
-  result: 'All',
-  emotion: 'All',
-  model: 'All',
-  tag: 'All',
-  reviewStatus: 'All',
-  newsTrade: false,
-  aPlus: false,
-  dateFrom: '',
-  dateTo: '',
-  rrMin: '',
-  rrMax: '',
-  riskPctMin: '',
-  riskPctMax: '',
-};
-
 const REVIEW_STATUTES = ['All', 'Reviewed', 'Pending Review'];
 
 const inputStyle = {
@@ -126,7 +107,7 @@ function FilterSelect({ label, value, options, onChange }) {
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={selectStyle}>
+      <select value={value} onChange={(e) => onChange(e.target.value)} style={selectStyle} aria-label={label}>
         {opts.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
@@ -134,6 +115,56 @@ function FilterSelect({ label, value, options, onChange }) {
         ))}
       </select>
     </label>
+  );
+}
+
+// Multi-select filter with OR semantics WITHIN a dimension: a trade matches
+// when its value equals ANY of the chosen options. Picking an option appends
+// it to `value`; "All" clears the whole dimension. This is the visual face of
+// the shared engine's plural keys (pairs/sessions/directions/results/models).
+function MultiFilter({ label, value, options, onChange, placeholder }) {
+  const chosen = Array.isArray(value) ? value : [];
+  const available = options
+    .filter((o) => typeof o !== 'object' || o.value !== 'All')
+    .map((o) => (typeof o === 'object' ? o : { value: o, label: o }))
+    .filter((o) => o.value !== 'All' && o.value !== '' && !chosen.includes(o.value));
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{label}</span>
+      {chosen.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+          {chosen.map((v) => (
+            <button
+              key={v}
+              type="button"
+              className="tag tag-neutral"
+              onClick={() => onChange(chosen.filter((x) => x !== v))}
+              aria-label={`Remove ${label} ${v}`}
+              style={{ cursor: 'pointer', fontSize: 11, padding: '3px 8px', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+            >
+              {v} <X size={11} aria-hidden />
+            </button>
+          ))}
+        </div>
+      )}
+      <select
+        value=""
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v) onChange([...chosen, v]);
+          e.target.value = '';
+        }}
+        style={selectStyle}
+        aria-label={`Add ${label}`}
+      >
+        <option value="">{placeholder || `Add ${label}…`}</option>
+        {available.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 
@@ -165,7 +196,7 @@ function ToggleFilter({ label, active, onClick }) {
   );
 }
 
-const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, plan, library, onToggle, onEdit, onDelete, onQuickEdit, onToggleFavorite, onToggleSelect, onLightbox, onUpdateReview }) {
+const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, plan, library, onToggle, onEdit, onDelete, onQuickEdit, onToggleFavorite, onToggleSelect, onLightbox, onUpdateReview, onReview }) {
   const tags = Array.isArray(t.tags) ? t.tags : [];
   const closed = isClosedTrade(t);
   const reviewScore = reviewScoreForTrade(t);
@@ -234,6 +265,9 @@ const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, 
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={(e) => e.stopPropagation()}>
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={() => onReview(t)} aria-label="Review trade" title="Review Trade">
+            <ClipboardCheck size={14} color="var(--text-muted)" />
+          </button>
           <button className="btn btn-ghost btn-icon btn-sm" onClick={() => onToggleFavorite(t)} aria-label={t.isFavorite ? 'Remove favorite' : 'Mark as favorite'} title={t.isFavorite ? 'Favorite' : 'Mark as favorite'}>
             <Star size={14} fill={t.isFavorite ? 'var(--red)' : 'none'} color={t.isFavorite ? 'var(--red)' : 'var(--text-muted)'} />
           </button>
@@ -325,7 +359,7 @@ const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, 
 
 export default function TradingJournal() {
   const { trades, plans, tagLibrary } = useData();
-  const { accounts, getAccountName } = useAccounts();
+  const { accounts, getAccountName, selectedAccountId, preferredAccountId } = useAccounts();
   const { user } = useAuth();
   const presetsKey = `njh_journal_presets_${user?.id || 'anon'}`;
 
@@ -335,6 +369,13 @@ export default function TradingJournal() {
   const [expanded, setExpanded] = useState({});
   const [lightbox, setLightbox] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
+
+  // ---- Review mode (read-only "Review Trade" replay panel)
+  const [reviewIndex, setReviewIndex] = useState(null);
+
+  // ---- Saved Views (filter + sort configurations, account-scoped)
+  const [views, setViews] = useState(() => loadSavedViews());
+  const [viewsOpen, setViewsOpen] = useState(false);
 
   // ---- Feature 1 & 2: search + advanced filters
   const [query, setQuery] = useState('');
@@ -403,6 +444,16 @@ export default function TradingJournal() {
     return ['All', ...Array.from(set).sort()];
   }, [trades.items, tagLibrary]);
 
+  const mistakeOptions = useMemo(() => {
+    const set = new Set();
+    trades.items.forEach((t) => {
+      Object.entries(t.mistakes || {}).forEach(([k, v]) => {
+        if (v) set.add(k);
+      });
+    });
+    return ['All', ...Array.from(set).sort()];
+  }, [trades.items]);
+
   const accountOptions = useMemo(() => [{ value: 'All', label: 'All' }, ...accounts.map((a) => ({ value: a.id, label: a.name }))], [accounts]);
 
   const planById = useMemo(() => {
@@ -419,104 +470,27 @@ export default function TradingJournal() {
     [planById]
   );
 
-  // ---- Filtering + sorting (everything real trade data, instant updates)
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const num = (v) => {
-      const n = Number(v);
-      return Number.isFinite(n) && v !== '' ? n : null;
-    };
-    const rrMin = num(filters.rrMin);
-    const rrMax = num(filters.rrMax);
-    const riskMin = num(filters.riskPctMin);
-    const riskMax = num(filters.riskPctMax);
-
-    const list = trades.items.filter((t) => {
-      if (favoritesOnly && !t.isFavorite) return false;
-      if (filters.account !== 'All' && t.accountId !== filters.account) return false;
-      if (filters.pair !== 'All' && t.instrument !== filters.pair) return false;
-      if (filters.direction !== 'All' && t.direction !== filters.direction) return false;
-      if (filters.session !== 'All' && t.session !== filters.session) return false;
-      if (filters.timeframe !== 'All' && t.timeframe !== filters.timeframe) return false;
-      if (filters.result !== 'All' && t.result !== filters.result) return false;
-      if (filters.emotion !== 'All' && t.emotion !== filters.emotion) return false;
-      if (filters.model !== 'All' && t.model !== filters.model) return false;
-      if (filters.tag !== 'All' && !(Array.isArray(t.tags) && t.tags.includes(filters.tag))) return false;
-      if (filters.newsTrade) {
-        const hasNews = (Array.isArray(t.tags) ? t.tags : []).some((x) => x.toLowerCase() === 'news');
-        if (!hasNews) return false;
-      }
-      if (filters.aPlus) {
-        const hasAPlus = (Array.isArray(t.tags) ? t.tags : []).some((x) => x.toLowerCase() === 'a+');
-        if (!hasAPlus) return false;
-      }
-      const tReview = reviewStatusForTrade(t);
-      if (filters.reviewStatus !== 'All' && tReview !== filters.reviewStatus) return false;
-      if (filters.dateFrom && (t.date || '') < filters.dateFrom) return false;
-      if (filters.dateTo && (t.date || '') > filters.dateTo) return false;
-      const rr = num(t.rr);
-      if (rrMin !== null && (rr === null || rr < rrMin)) return false;
-      if (rrMax !== null && (rr === null || rr > rrMax)) return false;
-      const riskPct = num(t.riskPercent);
-      if (riskMin !== null && (riskPct === null || riskPct < riskMin)) return false;
-      if (riskMax !== null && (riskPct === null || riskPct > riskMax)) return false;
-      if (q) {
-        const haystack = [
-          t.instrument,
-          t.direction,
-          t.result,
-          t.model,
-          t.session,
-          t.tradeGrade,
-          t.emotion,
-          t.notes,
-          t.confluences,
-          t.lessonsLearned,
-          t.tradeManagement,
-          getAccountName(t.accountId),
-          t.id,
-          ...(Array.isArray(t.tags) ? t.tags : []),
-        ]
-          .filter(Boolean)
-          .map((v) => String(v).toLowerCase());
-        if (!haystack.some((v) => v.includes(q))) return false;
-      }
-      return true;
-    });
-
-    const dir = sortDir === 'asc' ? 1 : -1;
-    return list.sort((a, b) => {
-      let v = 0;
-      switch (sortKey) {
-        case 'date':
-          v = (a.date + (a.entryTime || '')).localeCompare(b.date + (b.entryTime || ''));
-          break;
-        case 'pair':
-          v = (a.instrument || '').localeCompare(b.instrument || '');
-          break;
-        case 'profit':
-          v = (Number(a.netPnl) || 0) - (Number(b.netPnl) || 0);
-          break;
-        case 'rr':
-          v = (Number(a.rr) || 0) - (Number(b.rr) || 0);
-          break;
-        case 'result':
-          v = (RESULT_ORDER[a.result] ?? 3) - (RESULT_ORDER[b.result] ?? 3);
-          break;
-        case 'account':
-          v = getAccountName(a.accountId).localeCompare(getAccountName(b.accountId));
-          break;
-        default:
-          break;
-      }
-      return v * dir;
-    });
-  }, [trades.items, query, filters, favoritesOnly, sortKey, sortDir, getAccountName]);
+  // ---- Filtering + sorting — delegated to the shared journalFilters engine
+  // (the single source of truth the Sprint 8 unit tests cover). Everything is
+  // real trade data from the currently scoped `trades.items`.
+  const filtered = useMemo(
+    () =>
+      filterTrades(trades.items, {
+        filters,
+        favoritesOnly,
+        query,
+        sortKey,
+        sortDir,
+        accountNameOf: getAccountName,
+      }),
+    [trades.items, filters, favoritesOnly, query, sortKey, sortDir, getAccountName]
+  );
 
   const total = trades.items.length;
   const countActive = (k) => {
     const v = filters[k];
     if (typeof v === 'boolean') return v ? 1 : 0;
+    if (Array.isArray(v)) return v.length ? 1 : 0;
     return v !== 'All' && v !== '' ? 1 : 0;
   };
   const hasFilters =
@@ -526,7 +500,7 @@ export default function TradingJournal() {
     filters.aPlus ||
     Object.keys(BLANK_FILTERS).some((k) => {
       if (k === 'newsTrade' || k === 'aPlus') return filters[k];
-      return filters[k] !== BLANK_FILTERS[k] && filters[k] !== '' && filters[k] !== 'All';
+      return Array.isArray(filters[k]) ? filters[k].length > 0 : filters[k] !== BLANK_FILTERS[k] && filters[k] !== '' && filters[k] !== 'All';
     });
   const activeFilterCount = Object.keys(BLANK_FILTERS).reduce((n, k) => n + countActive(k), 0) + (favoritesOnly ? 1 : 0) + (query.trim() !== '' ? 1 : 0);
 
@@ -539,6 +513,63 @@ export default function TradingJournal() {
     setFilters(BLANK_FILTERS);
     setFavoritesOnly(false);
   }
+
+  // ---- Active-filter summary chips (remove one, or clear all)
+  const activeChips = useMemo(() => activeFilters(filters, { query, favoritesOnly }), [filters, query, favoritesOnly]);
+
+  // Map a chip id (generated by the shared engine) back to the filter keys it
+  // represents so one chip can be removed without touching the others.
+  function clearChip(id) {
+    if (id === 'query') return setQuery('');
+    if (id === 'favorites') return setFavoritesOnly(false);
+    const key = id.replace(/^filter:/, '');
+    if (key === 'date') return setFilters((prev) => ({ ...prev, dateFrom: '', dateTo: '' }));
+    const parts = key.split(':').filter((k) => k);
+    setFilters((prev) => {
+      const next = { ...prev };
+      parts.forEach((k) => {
+        if (k in BLANK_FILTERS) next[k] = Array.isArray(BLANK_FILTERS[k]) ? [] : BLANK_FILTERS[k];
+      });
+      return next;
+    });
+  }
+
+  // ---- Saved Views (account-scoped, filter+sort configs)
+  const createView = useCallback(
+    (name) => {
+      const result = persistNewView(views, {
+        name,
+        filters,
+        sortKey,
+        sortDir,
+        favoritesOnly,
+        accountId: selectedAccountId || preferredAccountId || '',
+      });
+      if (!result.error) setViews(result.views);
+      return result;
+    },
+    [views, filters, sortKey, sortDir, favoritesOnly, selectedAccountId, preferredAccountId]
+  );
+
+  const renameView = useCallback(
+    (id, name) => {
+      const result = persistRename(views, id, name);
+      if (!result.error) setViews(result.views);
+      return result;
+    },
+    [views]
+  );
+
+  const deleteView = useCallback((id) => setViews(persistDelete(views, id)), [views]);
+
+  const applyView = useCallback((view) => {
+    setQuery('');
+    setFavoritesOnly(view.favoritesOnly || false);
+    setFilters({ ...BLANK_FILTERS, ...(view.filters || {}) });
+    if (view.sortKey) setSortKey(view.sortKey);
+    if (view.sortDir) setSortDir(view.sortDir);
+    setFilterOpen(true);
+  }, []);
 
   // ---- Feature 4: saved presets (save / rename / delete / favorite / default)
   function savePreset() {
@@ -617,6 +648,40 @@ export default function TradingJournal() {
     setEditing(trade);
     setPanelOpen(true);
   }, []);
+
+  // ---- Review Trade (read-only replay) navigation across the filtered list
+  const openReview = useCallback((trade) => {
+    const i = filtered.findIndex((t) => t.id === trade.id);
+    setReviewIndex(i >= 0 ? i : 0);
+  }, [filtered]);
+
+  const closeReview = useCallback(() => setReviewIndex(null), []);
+
+  const currentReview = reviewIndex !== null ? filtered[reviewIndex] : null;
+  const canPrevReview = reviewIndex !== null && reviewIndex > 0;
+  const canNextReview = reviewIndex !== null && reviewIndex < filtered.length - 1;
+  const currentPlan = currentReview ? planById.get(currentReview.planId) : null;
+
+  const reviewStep = useCallback(
+    (delta) => {
+      setReviewIndex((i) => {
+        if (i === null) return i;
+        const next = i + delta;
+        return next >= 0 && next < filtered.length ? next : i;
+      });
+    },
+    [filtered.length]
+  );
+
+  // "Open Full Trade" jumps out of the read-only replay into the normal
+  // edit flow for that exact trade (no data loss, edit allowed there).
+  const openFullFromReview = useCallback(() => {
+    const t = reviewIndex !== null ? filtered[reviewIndex] : null;
+    if (!t) return;
+    setPanelOpen(true);
+    setEditing(t);
+    setReviewIndex(null);
+  }, [filtered, reviewIndex]);
 
   function handleSave(form) {
     if (editing) trades.update(editing.id, form);
@@ -808,13 +873,15 @@ export default function TradingJournal() {
           </button>
 
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <select value={sortKey} onChange={(e) => setSortKey(e.target.value)} aria-label="Sort trades" style={{ ...selectStyle, maxWidth: 170 }}>
+            <select value={sortKey} onChange={(e) => setSortKey(e.target.value)} aria-label="Sort trades" style={{ ...selectStyle, maxWidth: 190 }}>
               <option value="date">Sort: Date</option>
               <option value="pair">Sort: Pair</option>
               <option value="profit">Sort: Profit</option>
               <option value="rr">Sort: R:R</option>
               <option value="result">Sort: Win/Loss</option>
               <option value="account">Sort: Account</option>
+              <option value="risk">Sort: Risk %</option>
+              <option value="setup">Sort: Setup</option>
             </select>
             <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))} aria-label="Toggle sort direction" title={sortDir === 'asc' ? 'Ascending' : 'Descending'}>
               {sortDir === 'asc' ? <ArrowUp size={15} /> : <ArrowDown size={15} />}
@@ -823,6 +890,15 @@ export default function TradingJournal() {
 
           <button className={`btn btn-sm ${favoritesOnly ? 'btn-accent' : 'btn-ghost'}`} onClick={() => setFavoritesOnly((f) => !f)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <Star size={13} fill={favoritesOnly ? 'currentColor' : 'none'} /> Favorites
+          </button>
+
+          <button
+            className={`btn btn-sm ${viewsOpen || views.some((v) => !v.accountId || v.accountId === (selectedAccountId || preferredAccountId || '')) ? 'btn-accent' : 'btn-ghost'}`}
+            onClick={() => setViewsOpen(true)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            title="Create, load, rename, or delete saved views"
+          >
+            <BookOpen size={13} /> Views
           </button>
 
           <button
@@ -856,6 +932,35 @@ export default function TradingJournal() {
         </div>
       </div>
 
+      {/* Active filter summary — one removable chip per active filter */}
+      {activeChips.length > 0 && (
+        <div className="card" style={{ padding: '10px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)' }}>
+          {filtered.length} {filtered.length === 1 ? 'trade' : 'trades'} found
+        </span>
+        <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          {activeChips.map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              className="tag tag-neutral"
+              onClick={() => clearChip(chip.id)}
+              aria-label={`Remove filter ${chip.label}`}
+              style={{ cursor: 'pointer', gap: 4, padding: '5px 10px', display: 'inline-flex', alignItems: 'center', fontSize: 11.5, fontFamily: 'inherit', fontWeight: 600 }}
+            >
+              {chip.label} <X size={11} aria-hidden />
+            </button>
+          ))}
+        </span>
+        <div style={{ flex: 1 }} />
+        <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <FilterX size={12} /> Clear all filters
+        </button>
+      </div>
+        </div>
+      )}
+
       {/* Filter drawer — animated slide-in drawer with every filter */}
       <SidePanel
         open={filterOpen}
@@ -886,6 +991,22 @@ export default function TradingJournal() {
             <FilterSelect label="Emotion" value={filters.emotion} options={optionList.emotions} onChange={(v) => setFilter('emotion', v)} />
             <FilterSelect label="Review Status" value={filters.reviewStatus} options={REVIEW_STATUTES} onChange={(v) => setFilter('reviewStatus', v)} />
             <FilterSelect label="Timeframe" value={filters.timeframe} options={optionList.timeframes} onChange={(v) => setFilter('timeframe', v)} />
+          </div>
+
+          {/* Multi-select / OR — a trade matches ANY selected value within a
+              group, and ALL groups still apply (strict AND across groups). */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span className="drawer-label">Multi-select (match any)</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
+              <MultiFilter label="Pairs" value={filters.pairs} options={optionList.pairs} onChange={(v) => setFilter('pairs', v)} placeholder="Add pairs…" />
+              <MultiFilter label="Directions" value={filters.directions} options={DIRECTIONS} onChange={(v) => setFilter('directions', v)} placeholder="Add directions…" />
+              <MultiFilter label="Sessions" value={filters.sessions} options={optionList.sessions} onChange={(v) => setFilter('sessions', v)} placeholder="Add sessions…" />
+              <MultiFilter label="Setups" value={filters.models} options={optionList.models} onChange={(v) => setFilter('models', v)} placeholder="Add setups…" />
+              <MultiFilter label="Outcomes" value={filters.results} options={RESULTS} onChange={(v) => setFilter('results', v)} placeholder="Add outcomes…" />
+              <MultiFilter label="Timeframes" value={filters.timeframes} options={optionList.timeframes} onChange={(v) => setFilter('timeframes', v)} placeholder="Add timeframes…" />
+              <MultiFilter label="Emotions" value={filters.emotions} options={optionList.emotions} onChange={(v) => setFilter('emotions', v)} placeholder="Add emotions…" />
+              <MultiFilter label="Mistakes" value={filters.mistakes} options={mistakeOptions} onChange={(v) => setFilter('mistakes', v)} placeholder="Add mistake…" />
+            </div>
           </div>
 
           {/* Date */}
@@ -928,6 +1049,20 @@ export default function TradingJournal() {
               <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>Max</span>
                 <input type="number" min="0" step="any" value={filters.rrMax} onChange={(e) => setFilter('rrMax', e.target.value)} placeholder="e.g. 5" style={inputStyle} />
+              </label>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span className="drawer-label">Net P&amp;L ($)</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>Min</span>
+                <input type="number" step="any" value={filters.pnlMin} onChange={(e) => setFilter('pnlMin', e.target.value)} placeholder="e.g. -100" style={inputStyle} />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>Max</span>
+                <input type="number" step="any" value={filters.pnlMax} onChange={(e) => setFilter('pnlMax', e.target.value)} placeholder="e.g. 500" style={inputStyle} />
               </label>
             </div>
           </div>
@@ -1088,6 +1223,7 @@ export default function TradingJournal() {
               onToggleSelect={toggleSelect}
               onLightbox={setLightbox}
               onUpdateReview={handleUpdateReview}
+              onReview={openReview}
             />
           ))}
 
@@ -1288,6 +1424,31 @@ export default function TradingJournal() {
       </SidePanel>
 
       <TradeFormPanel open={panelOpen} onClose={() => setPanelOpen(false)} onSave={handleSave} initial={editing} />
+      <SavedViewsPanel
+        open={viewsOpen}
+        onClose={() => setViewsOpen(false)}
+        views={views}
+        accountId={selectedAccountId || preferredAccountId || ''}
+        getAccountName={getAccountName}
+        onCreate={createView}
+        onApply={applyView}
+        onRename={renameView}
+        onDelete={deleteView}
+      />
+      <TradeReviewPanel
+        open={reviewIndex !== null}
+        onClose={closeReview}
+        trade={currentReview}
+        plan={currentPlan}
+        index={(reviewIndex ?? 0) + 1}
+        total={filtered.length}
+        canPrev={canPrevReview}
+        canNext={canNextReview}
+        onPrev={() => reviewStep(-1)}
+        onNext={() => reviewStep(1)}
+        onOpenFull={openFullFromReview}
+        getAccountName={getAccountName}
+      />
       <TagManager open={tagManagerOpen} onClose={() => setTagManagerOpen(false)} />
       <Lightbox src={lightbox} onClose={() => setLightbox(null)} />
       <ConfirmDialog

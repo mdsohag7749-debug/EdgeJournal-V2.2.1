@@ -128,3 +128,53 @@ describe('Trading Journal search + filters — (Sprint 6.8)', () => {
     expect(screen.queryByLabelText(row('EURUSD'))).not.toBeInTheDocument();
   });
 });
+
+describe('Multi-select OR + active filter summary — (Sprint 8.6)', () => {
+  it('OR across a multi-select dimension filters like the shared engine', () => {
+    render(<TradingJournal />);
+    fireEvent.click(screen.getByRole('button', { name: /filters/i }));
+
+    // Add two pairs: GBPUSD OR EURUSD within the same dimension.
+    fireEvent.change(screen.getByLabelText('Add Pairs'), { target: { value: 'GBPUSD' } });
+    fireEvent.change(screen.getByLabelText('Add Pairs'), { target: { value: 'EURUSD' } });
+    fireEvent.click(screen.getByRole('button', { name: /show 3 trades/i }));
+
+    expect(screen.getAllByLabelText(/ trade /)).toHaveLength(3);
+  });
+
+  it('AND across a multi-select group and a single dimension', () => {
+    render(<TradingJournal />);
+    fireEvent.click(screen.getByRole('button', { name: /filters/i }));
+
+    fireEvent.change(screen.getByLabelText('Add Sessions'), { target: { value: 'London' } });
+    fireEvent.change(screen.getByLabelText('Win / Loss'), { target: { value: 'Win' } });
+    fireEvent.click(screen.getByRole('button', { name: /show 2 trades/i }));
+
+    expect(screen.getAllByLabelText(/ trade /)).toHaveLength(2);
+  });
+
+  it('active-filter chips render, remove one, and Clear All resets', () => {
+    render(<TradingJournal />);
+    fireEvent.click(screen.getByRole('button', { name: /filters/i }));
+    fireEvent.change(screen.getByLabelText('Win / Loss'), { target: { value: 'Loss' } });
+    fireEvent.click(screen.getByRole('button', { name: /show 1 trade/i }));
+
+    // Summary chip appears with the result label.
+    expect(screen.getByText('Result: Loss')).toBeInTheDocument();
+
+    // Remove just that chip → everything returns.
+    fireEvent.click(screen.getByRole('button', { name: /Remove filter Result: Loss/ }));
+    expect(screen.getAllByLabelText(/ trade /)).toHaveLength(3);
+  });
+
+  it('Clear all filters restores every trade', () => {
+    render(<TradingJournal />);
+    fireEvent.click(screen.getByRole('button', { name: /filters/i }));
+    fireEvent.change(screen.getByLabelText('Session'), { target: { value: 'London' } });
+    fireEvent.click(screen.getByRole('button', { name: /show 2 trades/i }));
+    expect(screen.getAllByLabelText(/ trade /)).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('button', { name: /clear all filters/i }));
+    expect(screen.getAllByLabelText(/ trade /)).toHaveLength(3);
+  });
+});

@@ -739,7 +739,7 @@ function SectionAbout() {
           </div>
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>EdgeJournal</div>
-            <div style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>v2.2.2 Stable Beta</div>
+            <div style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>v2.3.0 Stable Beta</div>
           </div>
         </div>
         <p>

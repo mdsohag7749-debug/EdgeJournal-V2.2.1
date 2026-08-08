@@ -10,13 +10,17 @@ import EquityAnalytics from '../components/performance/EquityAnalytics';
 import InstitutionalInsights from '../components/performance/InstitutionalInsights';
 import EmotionAnalytics from '../components/performance/EmotionAnalytics';
 import MistakeAnalytics from '../components/performance/MistakeAnalytics';
+import MistakePatternIntelligence from '../components/performance/MistakePatternIntelligence';
 import RuleComplianceAnalytics from '../components/performance/RuleComplianceAnalytics';
 import SmartTradeInsights from '../components/performance/SmartTradeInsights';
 import SetupIntelligence from '../components/performance/SetupIntelligence';
+import SetupPerformanceDashboard from '../components/performance/SetupPerformanceDashboard';
 import SessionAndPairIntelligence from '../components/performance/SessionAndPairIntelligence';
+import PairSessionHeatmap from '../components/performance/PairSessionHeatmap';
 import RiskExecutionIntelligence from '../components/performance/RiskExecutionIntelligence';
 import PatternDetection from '../components/performance/PatternDetection';
 import Recommendations from '../components/performance/Recommendations';
+import DisciplineScore20 from '../components/performance/DisciplineScore20';
 import PsychologyInsights from '../components/dashboard/PsychInsights';
 import { formatMoney, formatMoneyShort, pnlClass } from '../lib/utils';
 import {
@@ -310,10 +314,12 @@ export default function Analytics({ onNavigate }) {
       {/* SECTION 05 — Setup / Model Performance */}
       <SectionHeading number="05" title="Setup / Model Performance" subtitle="Which trading models are actually paying off — ranked by a balanced score, guarded by minimum sample size." accent="#c026d3" />
       <SetupIntelligence />
+      <SetupPerformanceDashboard />
 
       {/* SECTION 06 — Session & Pair Intelligence */}
       <SectionHeading number="06" title="Session & Pair Intelligence" subtitle="Contextual edges across trading pairs, sessions and their combination — guarded by minimum sample size." accent="#e07b00" />
       <SessionAndPairIntelligence />
+      <PairSessionHeatmap />
 
       {/* SECTION 07 — Risk & Execution Intelligence */}
       <SectionHeading number="07" title="Risk & Execution Intelligence" subtitle="How your sizing and execution behaviour relate to outcomes — interpreted relationships, guarded by sample size." accent="#e11d48" />
@@ -331,10 +337,15 @@ export default function Analytics({ onNavigate }) {
       {/* SECTION 10 — Mistake Analytics */}
       <SectionHeading number="07" title="Mistake Analytics" subtitle="What you did wrong, how often, and the real cost — tracked from every logged trade." accent="#dc2626" />
       <MistakeAnalytics />
+      <MistakePatternIntelligence />
 
 {/* SECTION 11 — Rule Compliance */}
       <SectionHeading number="11" title="Rule Compliance" subtitle="How faithfully you follow your own rules, and the discipline it builds — live from your checklists." accent="#16a34a" />
       <RuleComplianceAnalytics />
+
+      {/* SECTION 11B — Discipline Score 2.0 */}
+      <SectionHeading number="11B" title="Discipline Score 2.0" subtitle="A transparent, weighted 0–100 across risk, planning, execution, mistake control and review — built only from real data." accent="#f59e0b" />
+      <DisciplineScore20 />
 
       {/* SECTION 12 — Action Recommendations */}
       <SectionHeading number="12" title="Action Recommendations" subtitle="Practical next steps drawn from your detected patterns — decision support, not a signal generator." accent="#f59e0b" />
