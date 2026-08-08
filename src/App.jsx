@@ -5,6 +5,7 @@ import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ProtectedRoute from './routes/ProtectedRoute';
 import GuestRoute from './routes/GuestRoute';
+import TradingCursor from './components/cursor/TradingCursor';
 
 // Top-level router.
 // - /login, /register, /forgot-password: standalone auth pages, guarded
@@ -14,39 +15,42 @@ import GuestRoute from './routes/GuestRoute';
 //   authenticated app is protected in one place.
 export default function App() {
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={
-          <GuestRoute>
-            <Login />
-          </GuestRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <GuestRoute>
-            <Register />
-          </GuestRoute>
-        }
-      />
-      <Route
-        path="/forgot-password"
-        element={
-          <GuestRoute>
-            <ForgotPassword />
-          </GuestRoute>
-        }
-      />
-      <Route
-        path="/*"
-        element={
-          <ProtectedRoute>
-            <AppShell />
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+    <>
+      <TradingCursor />
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <GuestRoute>
+              <Login />
+            </GuestRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <GuestRoute>
+              <Register />
+            </GuestRoute>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <GuestRoute>
+              <ForgotPassword />
+            </GuestRoute>
+          }
+        />
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </>
   );
 }

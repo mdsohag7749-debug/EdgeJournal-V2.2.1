@@ -1,0 +1,69 @@
+/* ---------- EdgeJournal custom trading cursor ---------- */
+
+.cursor-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+}
+
+/* Hiding the native cursor only while our cursor is live. Restored on
+   unmount/mouseleave via the `.cursor-hidden` class on <html>. */
+html.cursor-hidden,
+html.cursor-hidden *,
+html.cursor-hidden *::before,
+html.cursor-hidden *::after {
+  cursor: none !important;
+}
+
+/* Full-viewport candle canvas, sits behind the ring/dot. */
+.cursor-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Thin circular ring — the real pointer with a touch of easing. */
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  transform: translate3d(-1000px, -1000px, 0) translate(-50%, -50%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 0 14px rgba(193, 18, 31, 0.22);
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition: border-color 160ms linear;
+}
+
+/* Tiny center point with a very subtle red accent. */
+.cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 6px rgba(193, 18, 31, 0.5);
+  transform: translate3d(-1000px, -1000px, 0) translate(-50%, -50%);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* Touch devices should never see our cursor or be affected by it: the
+   overlay is only mounted for capable pointers, but keep this as a belt. */
+@media (pointer: coarse) {
+  .cursor-overlay {
+    display: none;
+  }
+}

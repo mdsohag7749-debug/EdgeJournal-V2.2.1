@@ -1145,14 +1145,215 @@ a:focus-visible,
   color: var(--auth-text-dim);
 }
 
-/* ---------- Footer ---------- */
+/* ---------- Premium footer ---------- */
 .auth-footer {
-  padding: 0 clamp(24px, 5vw, 64px) clamp(34px, 6vh, 60px);
-  text-align: center;
+  position: relative;
+  padding: clamp(72px, 11vh, 120px) clamp(24px, 5vw, 64px) clamp(40px, 6vh, 64px);
   font-family: var(--font-mono);
+  border-top: 1px solid var(--auth-line-soft);
+  background: linear-gradient(180deg, rgba(10, 10, 15, 0), rgba(10, 10, 15, 0.55));
+}
+.auth-footer::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 -160px;
+  width: 320px;
+  background: radial-gradient(50% 60% at 0% 100%, rgba(193, 18, 31, 0.07), transparent 70%);
+  pointer-events: none;
+}
+.auth-footer-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+.auth-footer-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: clamp(32px, 5vw, 72px);
+}
+.auth-brand-mark-sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  flex: 0 0 auto;
+}
+.auth-footer-brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.auth-footer-brand-name {
+  margin: 1px 0 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.auth-footer-tagline {
+  margin: 9px 0 0;
+  max-width: 320px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--auth-text-dim);
+}
+.auth-footer-col {
+  display: block;
+}
+.auth-footer-nav h3,
+.auth-footer-col-heading {
+  margin: 0 0 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--auth-text-faint);
+}
+.auth-footer-link {
+  display: block;
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  color: var(--auth-text-dim);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.auth-footer-link:hover {
+  color: var(--auth-red);
+}
+.auth-footer-social {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: clamp(28px, 4vh, 44px);
+  padding-top: clamp(24px, 3.5vh, 36px);
+  border-top: 1px solid var(--auth-line);
+}
+.auth-footer-disclaimer {
+  margin: 0;
+  max-width: 520px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--auth-text-faint);
+}
+.auth-footer-social-icons {
+  display: flex;
+  gap: 10px;
+}
+.auth-social-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--auth-text-dim);
+  background: var(--auth-line-soft);
+  box-shadow: inset 0 0 0 1px var(--auth-line);
+  transition: color 0.2s ease, background 0.2s ease;
+}
+.auth-footer-bottom {
+  margin-top: clamp(24px, 3.5vh, 36px);
+  text-align: center;
+}
+.auth-footer-bottom p {
+  margin: 0;
   font-size: 12px;
   letter-spacing: 0.03em;
   color: var(--auth-text-faint);
+}
+
+/* ---------- Footer → brand transition ---------- */
+.auth-footer-gap {
+  position: relative;
+  height: clamp(56px, 8vh, 88px);
+  background: linear-gradient(180deg, rgba(10, 10, 15, 0.55), rgba(10, 10, 15, 0));
+}
+
+/* ---------- FAQ ---------- */
+.auth-faq {
+  position: relative;
+  padding: clamp(64px, 10vh, 120px) clamp(24px, 5vw, 64px) clamp(56px, 8vh, 96px);
+}
+.auth-faq-inner {
+  max-width: 820px;
+  margin: 0 auto;
+}
+.auth-faq-list {
+  margin-top: clamp(28px, 4vh, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.auth-faq-item {
+  position: relative;
+  border: 1px solid var(--auth-line);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(18, 18, 26, 0.5), rgba(12, 12, 17, 0.62));
+  overflow: hidden;
+  transition: border-color 0.25s ease;
+}
+.auth-faq-item[open] {
+  border-color: var(--auth-line-soft);
+}
+.auth-faq-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, var(--auth-red), transparent);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.auth-faq-item[open]::after {
+  opacity: 0.6;
+}
+.auth-faq-question {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--white);
+  user-select: none;
+}
+.auth-faq-question::-webkit-details-marker {
+  display: none;
+}
+.auth-faq-icon {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--auth-red);
+  background: var(--auth-red-glow);
+  transition: transform 0.3s ease;
+}
+.auth-faq-item[open] .auth-faq-icon {
+  transform: rotate(180deg);
+}
+.auth-faq-answer {
+  padding: 0 22px 20px;
+  font-size: 14.5px;
+  line-height: 1.66;
+  color: var(--auth-text-dim);
+}
+.auth-faq-answer p {
+  margin: 0;
 }
 
 /* ---------- Shared auth widget styles ---------- */
@@ -1545,9 +1746,211 @@ a:focus-visible,
   .auth-landing .auth-panel,
   .auth-landing .auth-section-eyebrow,
   .auth-landing .auth-section-title,
-  .auth-landing .auth-section-text {
+  .auth-landing .auth-section-text,
+  .auth-landing .auth-faq-item {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+}
+
+/* ---------- Animated EDGEJOURNAL wordmark section ---------- */
+/* Oversized, scroll-driven brand wordmark below the auth hero. The
+   wordmark and its decorative layers respond to scroll progress, so the
+   whole block is transform / opacity only and settles to a static,
+   fully-readable state under prefers-reduced-motion. */
+
+.auth-brand-section {
+  position: relative;
+  min-height: clamp(460px, 60vh, 680px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  padding: clamp(56px, 8vh, 88px) clamp(20px, 5vw, 64px) clamp(48px, 7vh, 80px);
+  background: linear-gradient(180deg, rgba(10, 10, 15, 0), rgba(8, 8, 12, 0.35));
+}
+
+/* Layer 1 — faint trading grid. */
+.auth-brand-layer-grid {
+  position: absolute;
+  inset: -60px;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 58px 58px;
+  mask-image: radial-gradient(90% 80% at 50% 50%, #000 20%, transparent 78%);
+  -webkit-mask-image: radial-gradient(90% 80% at 50% 50%, #000 20%, transparent 78%);
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Layer 2 — restrained red glow behind the wordmark group. */
+.auth-brand-layer-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(920px, 90vw);
+  aspect-ratio: 1;
+  transform: translate(-50%, -46%);
+  background: radial-gradient(50% 50% at 50% 50%, rgba(193, 18, 31, 0.16), transparent 70%);
+  filter: blur(44px);
+  pointer-events: none;
+}
+
+/* Layer 3 — decorative equity-curve line + red tick markers. */
+.auth-brand-layer-curve {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.auth-brand-curve-svg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: clamp(24px, 4vh, 48px);
+  width: 100%;
+  height: clamp(120px, 22vh, 220px);
+  overflow: visible;
+}
+.auth-brand-curve-line {
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.05));
+}
+.auth-brand-curve-accent {
+  stroke: var(--red);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 8px var(--auth-red-glow));
+}
+.auth-brand-curve-tick {
+  stroke: rgba(193, 18, 31, 0.45);
+  stroke-width: 1;
+  stroke-dasharray: 1 5;
+  vector-effect: non-scaling-stroke;
+}
+.auth-brand-curve-dot {
+  fill: var(--red);
+  filter: drop-shadow(0 0 8px var(--auth-red-glow));
+}
+
+/* Small red execution markers that reveal with scroll (no loop). */
+.auth-brand-marker {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 10px var(--auth-red-glow);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.auth-brand-marker-a {
+  left: 16%;
+  top: 5%;
+}
+.auth-brand-marker-b {
+  right: 13%;
+  top: 10%;
+  width: 5px;
+  height: 5px;
+}
+
+/* The dominant closing wordmark — horizontally and vertically centered.
+   Sized to fill ~85-92vw on desktop so clipping stays minimal and
+   intentional, never swallowing the first/last letters. */
+.auth-brand-wordmark {
+  position: relative;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.06em;
+  margin: 0;
+  max-width: 100%;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(88px, 13.6vw, 190px);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+  color: var(--white);
+  text-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+  will-change: transform, opacity, filter, letter-spacing;
+}
+.auth-brand-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Supporting tagline sits above the wordmark. */
+.auth-brand-label {
+  position: relative;
+  margin: 0 0 clamp(20px, 3vh, 32px);
+  max-width: 340px;
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 1.35vw, 12.5px);
+  font-weight: 600;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+@media (max-width: 760px) {
+  .auth-brand-section {
+    min-height: clamp(380px, 52vh, 520px);
+    padding-top: clamp(48px, 7vh, 72px);
+  }
+  .auth-brand-wordmark {
+    font-size: clamp(52px, 15vw, 84px);
+  }
+  .auth-brand-label {
+    letter-spacing: 0.28em;
+    max-width: 300px;
+  }
+  .auth-brand-curve-svg {
+    top: clamp(20px, 4vh, 40px);
+    height: clamp(100px, 18vh, 160px);
+  }
+  .auth-brand-marker-a {
+    left: 10%;
+    top: 4%;
+  }
+  .auth-brand-marker-b {
+    right: 8%;
+    top: 9%;
+  }
+}
+
+@media (max-width: 420px) {
+  .auth-brand-section {
+    min-height: clamp(340px, 48vh, 440px);
+    padding: clamp(40px, 6vh, 56px) clamp(16px, 4vw, 20px) clamp(40px, 6vh, 56px);
+  }
+  .auth-brand-wordmark {
+    font-size: clamp(44px, 13.5vw, 62px);
+  }
+  .auth-brand-layer-glow {
+    width: 90vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-brand-section .auth-brand-layer-grid,
+  .auth-brand-section .auth-brand-layer-glow,
+  .auth-brand-section .auth-brand-layer-curve,
+  .auth-brand-section .auth-brand-marker {
+    transform: none !important;
+  }
+  .auth-brand-section .auth-brand-wordmark,
+  .auth-brand-section .auth-brand-label {
+    opacity: 1 !important;
+    transform: none !important;
+    scale: 1;
+    filter: none !important;
+    letter-spacing: -0.06em !important;
+    will-change: auto;
   }
 }

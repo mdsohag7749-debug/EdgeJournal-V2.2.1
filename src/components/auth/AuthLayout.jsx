@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
 import { TrendingUp, ChevronDown, Crosshair, Gauge, LineChart, NotebookPen } from 'lucide-react';
 import AuthVisual from './AuthVisual';
+import AnimatedBrandSection from './AnimatedBrandSection';
+import AuthFAQ from './AuthFAQ';
 import { TRADING_QUOTES } from '../../lib/quotes';
 
 const EASE = [0.22, 1, 0.36, 1];
@@ -279,7 +281,59 @@ export default function AuthLayout({ eyebrow, title, subtitle, children, footer,
         </div>
       </section>
 
-      <footer className="auth-footer">© {new Date().getFullYear()} EdgeJournal — trade with discipline.</footer>
+      {/* Frequently asked questions */}
+      {/* FAQ (unchanged) */}
+      <AuthFAQ />
+
+      {/* Premium footer — 3-column closing section */}
+      <footer className="auth-footer">
+        <div className="auth-footer-inner">
+          <div className="auth-footer-grid">
+            <div className="auth-footer-col auth-footer-brand">
+              <span className="auth-brand-mark auth-brand-mark-sm" aria-hidden="true">
+                <TrendingUp size={17} />
+              </span>
+              <div>
+                <p className="auth-footer-brand-name">EdgeJournal</p>
+                <p className="auth-footer-tagline">
+                  The trading journal for intentional execution — discipline, precision, and data.
+                </p>
+              </div>
+            </div>
+            <nav className="auth-footer-col auth-footer-nav" aria-label="Product">
+              <h3 className="auth-footer-col-heading">Product</h3>
+              <a className="auth-footer-link" href="/">Journal</a>
+              <a className="auth-footer-link" href="/">Discipline</a>
+              <a className="auth-footer-link" href="/">Analytics</a>
+            </nav>
+            <nav className="auth-footer-col auth-footer-nav" aria-label="Legal">
+              <h3 className="auth-footer-col-heading">Legal</h3>
+              <a className="auth-footer-link" href="/">Privacy</a>
+              <a className="auth-footer-link" href="/">Terms</a>
+              <a className="auth-footer-link" href="/">Contact</a>
+            </nav>
+          </div>
+
+          <div className="auth-footer-social">
+            <p className="auth-footer-disclaimer">
+              EdgeJournal records trading for informational purposes only — not financial advice.
+            </p>
+            <div className="auth-footer-social-icons" aria-hidden="true">
+              <span className="auth-social-glyph" aria-label="X">𝕏</span>
+              <span className="auth-social-glyph" aria-label="Discord">◈</span>
+              <span className="auth-social-glyph" aria-label="GitHub">⌥</span>
+            </div>
+          </div>
+
+          <div className="auth-footer-bottom">
+            <p>© {new Date().getFullYear()} EdgeJournal — trade with discipline.</p>
+          </div>
+        </div>
+      </footer>
+
+      {/* Breath + transition into the final cinematic brand section */}
+      <div className="auth-footer-gap" aria-hidden="true" />
+      <AnimatedBrandSection />
     </div>
   );
 }
