@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import AppShell from './layouts/AppShell';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -14,9 +14,12 @@ import TradingCursor from './components/cursor/TradingCursor';
 // - everything else: AppShell, guarded by ProtectedRoute so the whole
 //   authenticated app is protected in one place.
 export default function App() {
+  const location = useLocation();
+  const showTradingCursor = location.pathname === '/login';
+
   return (
     <>
-      <TradingCursor />
+      {showTradingCursor && <TradingCursor />}
       <Routes>
         <Route
           path="/login"

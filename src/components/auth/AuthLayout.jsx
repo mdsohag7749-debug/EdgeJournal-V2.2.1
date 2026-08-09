@@ -302,15 +302,30 @@ export default function AuthLayout({ eyebrow, title, subtitle, children, footer,
             </div>
             <nav className="auth-footer-col auth-footer-nav" aria-label="Product">
               <h3 className="auth-footer-col-heading">Product</h3>
-              <a className="auth-footer-link" href="/">Journal</a>
-              <a className="auth-footer-link" href="/">Discipline</a>
-              <a className="auth-footer-link" href="/">Analytics</a>
+              <a className="auth-footer-link" href="/journal">
+                <span className="auth-footer-label">Journal</span>
+              </a>
+              <a className="auth-footer-link" href="/psychology">
+                <span className="auth-footer-label">Discipline</span>
+              </a>
+              <a className="auth-footer-link" href="/analytics">
+                <span className="auth-footer-label">Analytics</span>
+              </a>
             </nav>
             <nav className="auth-footer-col auth-footer-nav" aria-label="Legal">
               <h3 className="auth-footer-col-heading">Legal</h3>
-              <a className="auth-footer-link" href="/">Privacy</a>
-              <a className="auth-footer-link" href="/">Terms</a>
-              <a className="auth-footer-link" href="/">Contact</a>
+              <span className="auth-footer-link auth-footer-link-soon" aria-disabled="true">
+                <span className="auth-footer-label">Privacy</span>
+                <span className="auth-footer-badge">Coming soon</span>
+              </span>
+              <span className="auth-footer-link auth-footer-link-soon" aria-disabled="true">
+                <span className="auth-footer-label">Terms</span>
+                <span className="auth-footer-badge">Coming soon</span>
+              </span>
+              <span className="auth-footer-link auth-footer-link-soon" aria-disabled="true">
+                <span className="auth-footer-label">Contact</span>
+                <span className="auth-footer-badge">Coming soon</span>
+              </span>
             </nav>
           </div>
 
