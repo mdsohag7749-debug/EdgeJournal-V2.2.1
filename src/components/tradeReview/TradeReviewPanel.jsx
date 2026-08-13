@@ -35,6 +35,7 @@ import { isClosedTrade, reviewScoreForTrade, reviewStatusForTrade } from '../../
 import { computeDerived } from '../../lib/tradeCalc';
 import { formatDate, formatMoney } from '../../lib/utils';
 import { TradeScreenshotGallery } from '../TradeScreenshots';
+import AITradeReview from './AITradeReview';
 
 // Psychology scores (the same 1–5 emotion ratings the trade form records).
 const PSYCH_KEYS = ['Confidence', 'Patience', 'Focus', 'Fear', 'Greed', 'FOMO', 'Revenge', 'Stress'];
@@ -248,6 +249,16 @@ export default function TradeReviewPanel({
             <Row label="Risk %" value={has(trade.riskPercent) ? `${trade.riskPercent}%` : ''} />
             <Row label="Position Size" value={trade.positionSize} mono />
           </Section>
+
+          {/* SECTION C.5 — AI Trade Review (read-only, explicit trigger only).
+              Canonical values (duration) come from the same computeDerived()
+              reuse as the rest of this panel; nothing is recomputed here. */}
+          <AITradeReview
+            trade={trade}
+            accountId={trade.accountId}
+            accountName={getAccountName?.(trade.accountId)}
+            duration={duration}
+          />
 
           {/* SECTION D — CHART EVIDENCE */}
           <Section title="Chart Evidence" icon={ImageIcon}>

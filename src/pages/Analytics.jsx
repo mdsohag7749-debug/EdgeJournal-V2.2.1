@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useData } from '../context/DataContext';
+import { useAccounts } from '../context/AccountContext';
 import { computeAnalytics } from '../lib/analytics';
 import EmptyState from '../components/EmptyState';
+import EdgeAICommandCenter from '../components/ai/EdgeAICommandCenter';
 import PerformanceIntelligence from '../components/performance/PerformanceIntelligence';
 import DeepPerformanceAnalytics from '../components/performance/DeepPerformanceAnalytics';
 import RiskAnalytics from '../components/performance/RiskAnalytics';
@@ -22,6 +23,9 @@ import PatternDetection from '../components/performance/PatternDetection';
 import Recommendations from '../components/performance/Recommendations';
 import DisciplineScore20 from '../components/performance/DisciplineScore20';
 import PsychologyInsights from '../components/dashboard/PsychInsights';
+import AnalyticsHeader from '../components/analytics/AnalyticsHeader';
+import AnalyticsSection from '../components/analytics/AnalyticsSection';
+import { AnalyticsTree, AnalyticsSectionSelector } from '../components/analytics/AnalyticsTree';
 import { formatMoney, formatMoneyShort, pnlClass } from '../lib/utils';
 import {
   BarChart,
@@ -36,14 +40,134 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
-import {
-  BarChart3,
-  Clock,
-  Compass,
-} from 'lucide-react';
+import { BarChart3, Clock, Compass } from 'lucide-react';
 
 const WIN_COLOR = '#16a34a';
 const LOSS_COLOR = '#dc2626';
+
+// ---- Sprint 9.6 information architecture ----
+// The whole Analytics page is organised into seven conceptual folders so it
+// reads as ONE trading-intelligence command center rather than a long stack
+// of unrelated cards. Every feature/metric from before is preserved — only
+// the visual hierarchy changed. No analytics calculation was touched.
+const GROUPS = [
+  {
+    key: 'performance',
+    index: '01',
+    id: 'analytics-group-performance',
+    title: 'Performance Intelligence',
+    short: 'Performance',
+    eyebrow: 'CORE PERFORMANCE · P&L & WIN RATE · PROFIT FACTOR · AVG R:R',
+  },
+  {
+    key: 'risk',
+    index: '02',
+    id: 'analytics-group-risk',
+    title: 'Risk & Equity',
+    short: 'Risk & Equity',
+    eyebrow: 'DRAWDOWN · RISK EXPOSURE · EQUITY BEHAVIOR',
+  },
+  {
+    key: 'institutional',
+    index: '03',
+    id: 'analytics-group-institutional',
+    title: 'Institutional Insights',
+    short: 'Institutional',
+    eyebrow: 'MARKET CONTEXT · SESSION INTELLIGENCE · EXECUTION QUALITY',
+  },
+  {
+    key: 'trading',
+    index: '04',
+    id: 'analytics-group-trading',
+    title: 'Trading Performance',
+    short: 'Trading',
+    eyebrow: 'SETUP & MODEL · PAIR × SESSION · TIMEFRAME · DIRECTION',
+  },
+  {
+    key: 'pattern',
+    index: '05',
+    id: 'analytics-group-pattern',
+    title: 'Pattern & Psychology',
+    short: 'Patterns & Mind',
+    eyebrow: 'MISTAKE PATTERNS · PSYCHOLOGY · RULE COMPLIANCE · DISCIPLINE SCORE 2.0',
+  },
+  {
+    key: 'action',
+    index: '06',
+    id: 'analytics-group-action',
+    title: 'Action & Improvement',
+    short: 'Action',
+    eyebrow: 'ACTION RECOMMENDATIONS · SMART INSIGHTS · WEEKLY PERFORMANCE',
+  },
+  {
+    key: 'edgeai',
+    index: '07',
+    id: 'analytics-group-edgeai',
+    title: 'EDGE AI',
+    short: 'Edge AI',
+    eyebrow: 'JOURNAL INTELLIGENCE · TRADE REVIEW · AI COACH · ASK JOURNAL',
+  },
+];
+
+function prefersReducedMotion() {
+  if (typeof window === 'undefined' || !window.matchMedia) return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+// Tracks the folder the reader is currently in. Uses a single
+// IntersectionObserver with a narrow viewport band so at most one section is
+// "active" at a time; this updates from threshold crossings (not a scroll
+// handler), so React state is never set on every scroll tick.
+function useSectionSpy(groups, enabled) {
+  const [activeKey, setActiveKey] = useState(groups[0]?.key || 'performance');
+  const sections = useRef({});
+
+  const register = useCallback(
+    (key) => (node) => {
+      sections.current[key] = node;
+    },
+    []
+  );
+
+  const scrollTo = useCallback(
+    (key) => {
+      setActiveKey(key);
+      const el = sections.current[key];
+      if (el && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!enabled || typeof IntersectionObserver === 'undefined') return undefined;
+    const els = groups.map((g) => sections.current[g.key]).filter(Boolean);
+    if (!els.length) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let best = null;
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const key = entry.target?.dataset?.sectionKey;
+          if (!key) continue;
+          const top = typeof entry.boundingClientRect?.top === 'number' ? entry.boundingClientRect.top : Number.POSITIVE_INFINITY;
+          if (!best || top < best.top) best = { key, top };
+        }
+        if (best) setActiveKey(best.key);
+      },
+      { rootMargin: '-30% 0px -55% 0px', threshold: 0 }
+    );
+
+    els.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [groups, enabled]);
+
+  return { activeKey, register, scrollTo };
+}
+
+// ---- Shared analytics render helpers (unchanged from the original page) ----
 
 function MoneyBarTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -173,35 +297,6 @@ function MetricsTable({ rows, columns }) {
   );
 }
 
-function SectionHeading({ number, title, subtitle, accent = '#7c3aed' }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      style={{ display: 'flex', alignItems: 'center', gap: 12 }}
-    >
-      <span
-        style={{
-          fontSize: 12,
-          fontWeight: 800,
-          letterSpacing: '0.05em',
-          color: accent,
-          background: `${accent}1a`,
-          padding: '4px 9px',
-          borderRadius: 8,
-        }}
-      >
-        {number}
-      </span>
-      <div>
-        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{title}</h3>
-        {subtitle && <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-faint)' }}>{subtitle}</p>}
-      </div>
-    </motion.div>
-  );
-}
-
 const TIMEFRAME_COLUMNS = [
   { key: 'label', label: 'Timeframe' },
   { key: 'trades', label: 'Trades', type: 'num' },
@@ -218,17 +313,148 @@ const DIRECTION_COLUMNS = [
   { key: 'avgRR', label: 'Avg R:R', type: 'rr' },
 ];
 
-export default function Analytics({ onNavigate }) {
-  const { trades } = useData();
-  const a = useMemo(() => computeAnalytics(trades.items), [trades.items]);
+// ---- Group content mapping: every original feature rendered once, under
+// the folder it belongs to. No metric was recalculated here. ----
 
-  const directionDonut = useMemo(
+function GroupContent({ groupKey, a, onNavigate }) {
+  switch (groupKey) {
+    case 'performance':
+      return (
+        <>
+          <PerformanceIntelligence />
+          <DeepPerformanceAnalytics />
+        </>
+      );
+    case 'risk':
+      return (
+        <>
+          <RiskAnalytics />
+          <EquityAnalytics />
+        </>
+      );
+    case 'institutional':
+      return (
+        <>
+          <InstitutionalInsights />
+          <RiskExecutionIntelligence />
+        </>
+      );
+    case 'trading':
+      return (
+        <>
+          <SetupIntelligence />
+          <SetupPerformanceDashboard />
+          <SessionAndPairIntelligence />
+          <PairSessionHeatmap />
+          <div className="dash-two-col-even">
+            <div className="card card-lift" style={{ padding: 22 }}>
+              <h3 className="section-title" style={{ marginBottom: 14 }}>
+                Trades by Strategy
+              </h3>
+              <GroupTable rows={a.byStrategy} firstColumnLabel="Strategy" />
+            </div>
+            <div className="card card-lift" style={{ padding: 22 }}>
+              <h3 className="section-title" style={{ marginBottom: 14 }}>
+                <Clock size={16} color="#7c3aed" /> Timeframe Performance
+              </h3>
+              <MetricsTable rows={a.byTimeframe} columns={TIMEFRAME_COLUMNS} />
+            </div>
+          </div>
+          <div className="card card-lift" style={{ padding: 22 }}>
+            <h3 className="section-title" style={{ marginBottom: 14 }}>
+              <Compass size={16} color="#2563eb" /> Direction Performance
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <MetricsTable rows={a.byDirection} columns={DIRECTION_COLUMNS} />
+              <DirectionDonut data={a.byDirection} />
+            </div>
+          </div>
+        </>
+      );
+    case 'pattern':
+      return (
+        <>
+          <PatternDetection />
+          <MistakeAnalytics />
+          <MistakePatternIntelligence />
+          <EmotionAnalytics />
+          <PsychologyInsights />
+          <RuleComplianceAnalytics />
+          <DisciplineScore20 />
+        </>
+      );
+    case 'action':
+      return (
+        <>
+          <Recommendations />
+          <SmartTradeInsights />
+          <div className="card card-lift" style={{ padding: 22 }}>
+            <h3 className="section-title" style={{ marginBottom: 14 }}>
+              Weekly Performance
+            </h3>
+            <PerformanceBarChart data={a.weeklyPerformance} xKey="label" />
+          </div>
+        </>
+      );
+    case 'edgeai':
+      // EXACTLY ONE AI Command Center remains on this page. All four AI
+      // features (Journal Intelligence, Trade Review, AI Coach, Ask Journal)
+      // live inside it and keep their explicit-trigger contracts untouched.
+      return <EdgeAICommandCenter onNavigate={onNavigate} />;
+    default:
+      return null;
+  }
+}
+
+function DirectionDonut({ data }) {
+  const donut = useMemo(
     () =>
-      a.byDirection
+      data
         .filter((d) => d.trades > 0)
         .map((d) => ({ name: d.label, value: d.trades, color: d.key === 'Buy' ? WIN_COLOR : d.key === 'Sell' ? LOSS_COLOR : '#9a9aa3' })),
-    [a.byDirection]
+    [data]
   );
+  return (
+    <div style={{ width: '100%', height: 200 }}>
+      <ResponsiveContainer>
+        <PieChart>
+          <Pie data={donut} dataKey="value" nameKey="name" innerRadius={44} outerRadius={72} paddingAngle={3}>
+            {donut.map((entry, i) => (
+              <Cell key={i} fill={entry.color} stroke="var(--card)" strokeWidth={2} />
+            ))}
+          </Pie>
+          <Legend verticalAlign="bottom" layout="horizontal" iconType="circle" wrapperStyle={{ fontSize: 12.5, color: 'var(--text-muted)' }} />
+          <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12.5 }} />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export default function Analytics({ onNavigate }) {
+  const { trades } = useData();
+  const { allAccounts, selectedAccount, accounts } = useAccounts();
+  const a = useMemo(() => computeAnalytics(trades.items), [trades.items]);
+
+  const { activeKey, register, scrollTo } = useSectionSpy(GROUPS, trades.items.length > 0);
+
+  const [expanded, setExpanded] = useState(() => Object.fromEntries(GROUPS.map((g) => [g.key, true])));
+
+  const handleToggle = useCallback((key) => {
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
+
+  // Tree / selector click: expand the folder (if collapsed) and smooth-scroll
+  // to it. Never reloads the page and never triggers AI.
+  const handleSelect = useCallback(
+    (key) => {
+      setExpanded((prev) => ({ ...prev, [key]: true }));
+      scrollTo(key);
+    },
+    [scrollTo]
+  );
+
+  const scopeLabel = allAccounts ? 'All Accounts' : selectedAccount?.name || (accounts.length ? accounts[0].name : 'This account');
 
   if (trades.items.length === 0) {
     return (
@@ -243,113 +469,29 @@ export default function Analytics({ onNavigate }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
+    <div className="analytics-page">
+      <div className="analytics-layout">
+        <AnalyticsTree groups={GROUPS} activeKey={activeKey} expanded={expanded} onSelect={handleSelect} />
 
-      {/* SECTION 01 — Performance Intelligence (executive summary) */}
-      <SectionHeading number="01" title="Performance Intelligence" subtitle="Your executive summary — live edge, streaks and standout trades, recomputed from real history." accent="#7c3aed" />
-      <PerformanceIntelligence />
-      <DeepPerformanceAnalytics />
+        <div className="analytics-content">
+          <AnalyticsSectionSelector groups={GROUPS} activeKey={activeKey} onSelect={handleSelect} />
 
-      {/* Trades by Strategy + Weekly */}
-      <div className="dash-two-col-even">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card card-lift" style={{ padding: 22 }}>
-          <h3 className="section-title" style={{ marginBottom: 14 }}>
-            Trades by Strategy
-          </h3>
-          <GroupTable rows={a.byStrategy} firstColumnLabel="Strategy" />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }} className="card card-lift" style={{ padding: 22 }}>
-          <h3 className="section-title" style={{ marginBottom: 14 }}>
-            Weekly Performance
-          </h3>
-          <PerformanceBarChart data={a.weeklyPerformance} xKey="label" />
-        </motion.div>
+          <AnalyticsHeader scopeLabel={scopeLabel} />
+
+          {GROUPS.map((g, order) => (
+            <AnalyticsSection
+              key={g.key}
+              group={g}
+              expanded={expanded[g.key]}
+              onToggle={() => handleToggle(g.key)}
+              registerSection={register}
+              order={order + 1}
+            >
+              <GroupContent groupKey={g.key} a={a} onNavigate={onNavigate} />
+            </AnalyticsSection>
+          ))}
+        </div>
       </div>
-
-      {/* Timeframe + Direction */}
-      <div className="dash-two-col-even">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card card-lift" style={{ padding: 22 }}>
-          <h3 className="section-title" style={{ marginBottom: 14 }}>
-            <Clock size={16} color="#7c3aed" /> Timeframe Performance
-          </h3>
-          <MetricsTable rows={a.byTimeframe} columns={TIMEFRAME_COLUMNS} />
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }} className="card card-lift" style={{ padding: 22 }}>
-          <h3 className="section-title" style={{ marginBottom: 14 }}>
-            <Compass size={16} color="#2563eb" /> Direction Performance
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <MetricsTable rows={a.byDirection} columns={DIRECTION_COLUMNS} />
-            <div style={{ width: '100%', height: 200 }}>
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie data={directionDonut} dataKey="value" nameKey="name" innerRadius={44} outerRadius={72} paddingAngle={3}>
-                    {directionDonut.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} stroke="var(--card)" strokeWidth={2} />
-                    ))}
-                  </Pie>
-                  <Legend verticalAlign="bottom" layout="horizontal" iconType="circle" wrapperStyle={{ fontSize: 12.5, color: 'var(--text-muted)' }} />
-                  <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12.5 }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* SECTION 02 — Risk & Equity */}
-      <SectionHeading number="02" title="Risk & Equity" subtitle="Exposure, drawdown, growth and your account's equity run from its starting balance." accent="#dc2626" />
-      <RiskAnalytics />
-      <EquityAnalytics />
-
-      {/* SECTION 03 — Institutional Insights */}
-      <SectionHeading number="03" title="Institutional Insights" subtitle="Statistically derived edge and risk observations, computed from real history." accent="#16a34a" />
-      <InstitutionalInsights />
-
-      {/* SECTION 04 — Smart Trade Insights */}
-      <SectionHeading number="04" title="Smart Trade Insights" subtitle="Interpreted observations of your edges and leaks across performance, risk, execution, psychology, mistakes and consistency." accent="#c026d3" />
-      <SmartTradeInsights />
-
-      {/* SECTION 05 — Setup / Model Performance */}
-      <SectionHeading number="05" title="Setup / Model Performance" subtitle="Which trading models are actually paying off — ranked by a balanced score, guarded by minimum sample size." accent="#c026d3" />
-      <SetupIntelligence />
-      <SetupPerformanceDashboard />
-
-      {/* SECTION 06 — Session & Pair Intelligence */}
-      <SectionHeading number="06" title="Session & Pair Intelligence" subtitle="Contextual edges across trading pairs, sessions and their combination — guarded by minimum sample size." accent="#e07b00" />
-      <SessionAndPairIntelligence />
-      <PairSessionHeatmap />
-
-      {/* SECTION 07 — Risk & Execution Intelligence */}
-      <SectionHeading number="07" title="Risk & Execution Intelligence" subtitle="How your sizing and execution behaviour relate to outcomes — interpreted relationships, guarded by sample size." accent="#e11d48" />
-      <RiskExecutionIntelligence />
-
-      {/* SECTION 08 — Trading Pattern Detection */}
-      <SectionHeading number="08" title="Trading Pattern Detection" subtitle="Repeated behavioural patterns in your trade sequence — descriptive only, never predictive." accent="#0d9488" />
-      <PatternDetection />
-
-      {/* SECTION 09 — Psychology (Emotion Analytics + Psychology Insights) */}
-      <SectionHeading number="09" title="Psychology" subtitle="Emotion distribution, trends and statistically derived psychology insights — every emotion metric shown once." accent="#7c3aed" />
-      <EmotionAnalytics />
-      <PsychologyInsights />
-
-      {/* SECTION 10 — Mistake Analytics */}
-      <SectionHeading number="07" title="Mistake Analytics" subtitle="What you did wrong, how often, and the real cost — tracked from every logged trade." accent="#dc2626" />
-      <MistakeAnalytics />
-      <MistakePatternIntelligence />
-
-{/* SECTION 11 — Rule Compliance */}
-      <SectionHeading number="11" title="Rule Compliance" subtitle="How faithfully you follow your own rules, and the discipline it builds — live from your checklists." accent="#16a34a" />
-      <RuleComplianceAnalytics />
-
-      {/* SECTION 11B — Discipline Score 2.0 */}
-      <SectionHeading number="11B" title="Discipline Score 2.0" subtitle="A transparent, weighted 0–100 across risk, planning, execution, mistake control and review — built only from real data." accent="#f59e0b" />
-      <DisciplineScore20 />
-
-      {/* SECTION 12 — Action Recommendations */}
-      <SectionHeading number="12" title="Action Recommendations" subtitle="Practical next steps drawn from your detected patterns — decision support, not a signal generator." accent="#f59e0b" />
-      <Recommendations />
     </div>
   );
 }

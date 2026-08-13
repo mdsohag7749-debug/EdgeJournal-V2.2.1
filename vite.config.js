@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { devApiPlugin } from './vite.dev-proxy.js'
 
 export default defineConfig({
   test: {
@@ -10,10 +11,11 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.js'],
     css: false,
-    include: ['src/**/*.test.{js,jsx}'],
+    include: ['src/**/*.test.{js,jsx}', 'server/**/*.test.{js,jsx}'],
   },
   plugins: [
     react(),
+    devApiPlugin(),
     VitePWA({
       // Service worker updates itself in the background and takes over
       // on the next load — no "click to update" flow needed for a
