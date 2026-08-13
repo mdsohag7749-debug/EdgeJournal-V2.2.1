@@ -8,3 +8,5 @@ dev-dist
 *.local
 dev-server*.log
 dev.log
+.vercel
+.env*
