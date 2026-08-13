@@ -28,6 +28,7 @@ import {
   ArrowRight,
   Activity,
   BarChart3,
+  Target,
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAccounts } from '../../context/AccountContext';
@@ -371,16 +372,37 @@ function SectionHeading({ children }) {
 function SuccessState({ result }) {
   const keys = (arr) => (Array.isArray(arr) ? arr.filter((x) => typeof x === 'string' && x.trim()) : []);
   const strengths = keys(result.strengths);
+  const weaknesses = keys(result.weaknesses);
   const improvementAreas = keys(result.improvementAreas);
   const watchlist = keys(result.watchlist);
   const setupInsights = keys(result.setupInsights);
   const pairSessionInsights = keys(result.pairSessionInsights);
   const disciplineInsights = keys(result.disciplineInsights);
   const keyInsights = Array.isArray(result.keyInsights) ? result.keyInsights : [];
+  const keyPatterns = Array.isArray(result.keyPatterns) ? result.keyPatterns : [];
   const recurringIssues = Array.isArray(result.recurringIssues) ? result.recurringIssues : [];
   const dq = result.dataQuality && typeof result.dataQuality === 'object' ? result.dataQuality : {};
+  const performance = result.performance && typeof result.performance === 'object' ? result.performance : null;
+  const risk = result.risk && typeof result.risk === 'object' ? result.risk : null;
+  const psychology = result.psychology && typeof result.psychology === 'object' ? result.psychology : null;
+  const actionPlan = result.actionPlan && typeof result.actionPlan === 'object' ? result.actionPlan : null;
 
-  const showAnything = !!result.summary || keyInsights.length || strengths.length || recurringIssues.length || setupInsights.length || pairSessionInsights.length || disciplineInsights.length || improvementAreas.length || watchlist.length;
+  const showAnything =
+    !!result.summary ||
+    !!performance ||
+    !!risk ||
+    !!psychology ||
+    !!actionPlan ||
+    keyInsights.length ||
+    keyPatterns.length ||
+    strengths.length ||
+    weaknesses.length ||
+    recurringIssues.length ||
+    setupInsights.length ||
+    pairSessionInsights.length ||
+    disciplineInsights.length ||
+    improvementAreas.length ||
+    watchlist.length;
 
   if (!showAnything) {
     return (
@@ -401,6 +423,8 @@ function SuccessState({ result }) {
           </div>
         </section>
       )}
+
+      {performance && <PerformanceSection perf={performance} />}
 
       {keyInsights.length > 0 && (
         <section>
@@ -441,6 +465,45 @@ function SuccessState({ result }) {
         </section>
       )}
 
+      {keyPatterns.length > 0 && (
+        <section>
+          <SectionHeading>Key Patterns</SectionHeading>
+          <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {keyPatterns.map((ins, i) => (
+              <li key={i} style={{ display: 'flex', gap: 10 }}>
+                <span
+                  style={{
+                    flexShrink: 0,
+                    width: 26,
+                    height: 26,
+                    borderRadius: 8,
+                    background: 'rgba(192,38,211,0.14)',
+                    color: '#c026d3',
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  {ins.title && <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{ins.title}</div>}
+                  {ins.observation && <div style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 2 }}>{ins.observation}</div>}
+                  {ins.evidence && <div style={{ fontSize: 12, color: 'var(--text-faint)', lineHeight: 1.45, marginTop: 3 }}>{ins.evidence}</div>}
+                  {ins.confidence !== undefined && ins.confidence !== null && (
+                    <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>
+                      Confidence: <strong style={{ color: 'var(--text-muted)' }}>{confidenceLabel(ins.confidence)}</strong>
+                    </div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
       {strengths.length > 0 && (
         <section>
           <SectionHeading>Strengths</SectionHeading>
@@ -448,6 +511,20 @@ function SuccessState({ result }) {
             {strengths.map((s, i) => (
               <li key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                 <CheckCircle size={14} style={{ color: 'var(--win)', marginTop: 2, flexShrink: 0 }} aria-hidden />
+                <span style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.5 }}>{s}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {weaknesses.length > 0 && (
+        <section>
+          <SectionHeading>Weaknesses</SectionHeading>
+          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 7, maxWidth: 720 }}>
+            {weaknesses.map((s, i) => (
+              <li key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <AlertTriangle size={14} style={{ color: 'var(--red)', marginTop: 2, flexShrink: 0 }} aria-hidden />
                 <span style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.5 }}>{s}</span>
               </li>
             ))}
@@ -473,6 +550,9 @@ function SuccessState({ result }) {
         </section>
       )}
 
+      {risk && <RiskSection risk={risk} />}
+      {psychology && <PsychologySection psychology={psychology} />}
+
       {setupInsights.length > 0 && <InsightList title="Setup Intelligence" items={setupInsights} accent="#c026d3" />}
       {pairSessionInsights.length > 0 && <InsightList title="Pair & Session Intelligence" items={pairSessionInsights} accent="#e07b00" />}
       {disciplineInsights.length > 0 && <InsightList title="Discipline" items={disciplineInsights} accent="#f59e0b" />}
@@ -490,6 +570,8 @@ function SuccessState({ result }) {
           </ul>
         </section>
       )}
+
+      {actionPlan && <ActionPlanSection plan={actionPlan} />}
 
       {watchlist.length > 0 && (
         <section>
@@ -555,6 +637,243 @@ function InsightList({ title, items, accent }) {
           </li>
         ))}
       </ul>
+    </section>
+  );
+}
+
+const fmt = (v) => (typeof v === 'number' && Number.isFinite(v) ? v.toLocaleString(undefined, { maximumFractionDigits: 1 }) : '—');
+
+const fmtMoney = (v) => {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return '—';
+  const abs = Math.abs(v);
+  const str = abs >= 1000 ? abs.toLocaleString(undefined, { maximumFractionDigits: 0 }) : abs.toFixed(2);
+  return `${v < 0 ? '-' : '+'}${str}`;
+};
+
+const fmtPct = (v) => (typeof v === 'number' && Number.isFinite(v) ? `${v.toFixed(1)}%` : '—');
+
+const fmtPnlColor = (v) => {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return 'var(--text-muted)';
+  if (v > 0) return 'var(--win)';
+  if (v < 0) return 'var(--loss)';
+  return 'var(--text-muted)';
+};
+
+function Metric({ label, value, tone, title }) {
+  return (
+    <div className="ejc-metric" style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }} title={title}>
+      <span className="ejc-metric-label" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-faint)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {label}
+      </span>
+      <span className="ejc-metric-value" style={{ fontSize: 14.5, fontWeight: 800, color: tone || 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function PerformanceSection({ perf }) {
+  const color = fmtPnlColor(perf.netPnl);
+  const metrics = [
+    { label: 'Trades', value: fmt(perf.total) },
+    { label: 'Win Rate', value: fmtPct(perf.winRate) },
+    { label: 'Net P&L', value: fmtMoney(perf.netPnl), tone: color },
+    { label: 'Avg RR', value: fmt(perf.avgRR) },
+    { label: 'Profit Factor', value: fmt(perf.profitFactor) },
+    { label: 'Avg Win', value: fmtMoney(perf.avgWin) },
+    { label: 'Avg Loss', value: fmtMoney(perf.avgLoss) },
+    { label: 'Best', value: fmtMoney(perf.bestTrade) },
+    { label: 'Worst', value: fmtMoney(perf.worstTrade) },
+    { label: 'Win Streak', value: perf.currentWinStreak !== null && perf.currentWinStreak !== undefined ? String(perf.currentWinStreak) : '—', title: `Longest win streak: ${fmt(perf.longestWinStreak)}` },
+    { label: 'Loss Streak', value: perf.currentLossStreak !== null && perf.currentLossStreak !== undefined ? String(perf.currentLossStreak) : '—', title: `Longest loss streak: ${fmt(perf.longestLossStreak)}` },
+  ];
+  return (
+    <section>
+      <SectionHeading>Performance</SectionHeading>
+      <div className="ejc-metric-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 }}>
+        {metrics.map((m) => (
+          <Metric key={m.label} {...m} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RiskSection({ risk }) {
+  const flags = Array.isArray(risk.flags) ? risk.flags.filter((x) => typeof x === 'string' && x.trim()) : [];
+  const observations = Array.isArray(risk.observations) ? risk.observations.filter((x) => typeof x === 'string' && x.trim()) : [];
+  const distribution = Array.isArray(risk.distribution) ? risk.distribution : [];
+  const sizing = risk.sizing && typeof risk.sizing === 'object' ? risk.sizing : null;
+
+  const hasMetrics = risk.avgRiskPct !== null || risk.maxDrawdown !== null || risk.longestLossStreak !== null || risk.avgRewardPct !== null;
+  const hasContent = flags.length > 0 || observations.length > 0 || distribution.length > 0 || hasMetrics;
+
+  if (!hasContent) return null;
+
+  return (
+    <section>
+      <SectionHeading>Risk</SectionHeading>
+      <div className="card" style={{ padding: '12px 14px', background: 'var(--bg)' }}>
+        {(hasMetrics || sizing) && (
+          <div className="ejc-metric-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8, marginBottom: observations.length || flags.length ? 12 : 0 }}>
+            {risk.avgRiskPct !== null && <Metric label="Avg Risk" value={fmtPct(risk.avgRiskPct)} />}
+            {risk.avgRewardPct !== null && <Metric label="Avg Reward" value={fmtPct(risk.avgRewardPct)} />}
+            {sizing && sizing.avg !== null && (
+              <Metric
+                label="Sizing (CV)"
+                value={sizing.cv !== null ? `${sizing.avg.toFixed(2)}% (${sizing.cv.toFixed(0)}%)` : `${sizing.avg.toFixed(2)}%`}
+                title={`Position sizing consistency across ${sizing.count} trade(s) with risk %. Higher CV = more inconsistent.`}
+              />
+            )}
+            {risk.longestLossStreak !== null && <Metric label="Longest Loss Streak" value={String(risk.longestLossStreak)} />}
+            {risk.maxDrawdown !== null && <Metric label="Max Drawdown" value={fmtMoney(risk.maxDrawdown)} />}
+          </div>
+        )}
+
+        {flags.length > 0 && (
+          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {flags.map((f, i) => (
+              <li key={`f${i}`} style={{ display: 'flex', gap: 7, alignItems: 'flex-start', fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.45 }}>
+                <AlertTriangle size={13} style={{ color: '#f59e0b', marginTop: 2, flexShrink: 0 }} aria-hidden />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {observations.length > 0 && (
+          <ul style={{ margin: flags.length ? '8px 0 0' : 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {observations.map((o, i) => (
+              <li key={`o${i}`} style={{ display: 'flex', gap: 7, alignItems: 'flex-start', fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.45 }}>
+                <Activity size={13} style={{ color: 'var(--text-faint)', marginTop: 2, flexShrink: 0 }} aria-hidden />
+                <span>{o}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {distribution.length > 0 && (
+          <div style={{ marginTop: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--text-faint)', marginBottom: 6 }}>
+              Win Rate by Risk Band
+            </div>
+            <div className="ejc-metric-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 }}>
+              {distribution.map((d, i) => (
+                <div key={i} className="ejc-metric" style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-faint)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {d.label}
+                  </span>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>{d.trades ?? '—'} trades</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{d.winRate !== undefined && d.winRate !== null ? `${d.winRate.toFixed(0)}% WR` : 'no WR'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function PsychologySection({ psychology }) {
+  const summary = typeof psychology.summary === 'string' ? psychology.summary.trim() : '';
+  const observations = Array.isArray(psychology.observations) ? psychology.observations.filter((x) => typeof x === 'string' && x.trim()) : [];
+  const possiblePatterns = Array.isArray(psychology.possiblePatterns) ? psychology.possiblePatterns.filter((x) => typeof x === 'string' && x.trim()) : [];
+  if (!summary && !observations.length && !possiblePatterns.length) return null;
+
+  return (
+    <section>
+      <SectionHeading>Psychology</SectionHeading>
+      <div className="card" style={{ padding: '12px 14px', background: 'var(--bg)' }}>
+        {summary && <p style={{ margin: 0, fontSize: 13, color: 'var(--text)', lineHeight: 1.55 }}>{summary}</p>}
+        {observations.length > 0 && (
+          <ul style={{ margin: summary ? '10px 0 0' : 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {observations.map((o, i) => (
+              <li key={`o${i}`} style={{ display: 'flex', gap: 7, alignItems: 'flex-start', fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.45 }}>
+                <BarChart3 size={13} style={{ color: 'var(--text-faint)', marginTop: 2, flexShrink: 0 }} aria-hidden />
+                <span>{o}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {possiblePatterns.length > 0 && (
+          <div style={{ marginTop: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--text-faint)', marginBottom: 6 }}>
+              Possible Patterns
+            </div>
+            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {possiblePatterns.map((p, i) => (
+                <li key={i} style={{ display: 'flex', gap: 7, alignItems: 'flex-start', fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.45 }}>
+                  <Activity size={13} style={{ color: '#7c3aed', marginTop: 2, flexShrink: 0 }} aria-hidden />
+                  <span>{p}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ActionPlanSection({ plan }) {
+  const keepDoing = Array.isArray(plan.keepDoing) ? plan.keepDoing.filter((x) => typeof x === 'string' && x.trim()) : [];
+  const stopDoing = Array.isArray(plan.stopDoing) ? plan.stopDoing.filter((x) => typeof x === 'string' && x.trim()) : [];
+  const startDoing = Array.isArray(plan.startDoing) ? plan.startDoing.filter((x) => typeof x === 'string' && x.trim()) : [];
+  const nextSessionFocus = typeof plan.nextSessionFocus === 'string' ? plan.nextSessionFocus.trim() : '';
+  if (!keepDoing.length && !stopDoing.length && !startDoing.length && !nextSessionFocus) return null;
+
+  return (
+    <section>
+      <SectionHeading>Action Plan</SectionHeading>
+      <div className="card" style={{ padding: '12px 14px', background: 'var(--bg)' }}>
+        <div className="ejc-action-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
+          {keepDoing.length > 0 && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--win)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <CheckCircle size={12} aria-hidden /> Keep Doing
+              </div>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {keepDoing.map((s, i) => (
+                  <li key={i} style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.45 }}>{s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {stopDoing.length > 0 && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--red)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <AlertTriangle size={12} aria-hidden /> Stop Doing
+              </div>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {stopDoing.map((s, i) => (
+                  <li key={i} style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.45 }}>{s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {startDoing.length > 0 && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#7c3aed', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <ArrowRight size={12} aria-hidden /> Start Doing
+              </div>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {startDoing.map((s, i) => (
+                  <li key={i} style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.45 }}>{s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+        {nextSessionFocus && (
+          <div style={{ display: 'flex', gap: 7, alignItems: 'flex-start', marginTop: 12, borderTop: '1px solid var(--border)', paddingTop: 10 }}>
+            <Target size={14} style={{ color: 'var(--text-muted)', marginTop: 2, flexShrink: 0 }} aria-hidden />
+            <div style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.45 }}>
+              <strong style={{ color: 'var(--text)' }}>Next session focus:</strong> {nextSessionFocus}
+            </div>
+          </div>
+        )}
+      </div>
     </section>
   );
 }

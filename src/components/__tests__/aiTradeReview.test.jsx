@@ -16,7 +16,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AITradeReview from '../tradeReview/AITradeReview';
-import { safeErrorMessage } from '../../lib/ai/tradeReview';
+import { safeErrorMessage, buildTradeReviewCalculations } from '../../lib/ai/tradeReview';
 
 function makeTrade(overrides = {}) {
   return {
@@ -163,7 +163,9 @@ describe('AITradeReview — production Journal review flow', () => {
     });
 
     // The panel's canonical duration is passed through verbatim; the AI layer
-    // receives the same recorded metrics the journal already stored.
+    // receives the same recorded metrics the journal already stored. The
+    // component does NOT re-implement the builder — the captured values are
+    // byte-identical to the canonical tradeReview.buildTradeReviewCalculations.
     expect(capturedRequest.context.calculations).toMatchObject({
       pnl: 80,
       realizedRR: 2.05,
@@ -172,6 +174,7 @@ describe('AITradeReview — production Journal review flow', () => {
       winLoss: 'Win',
       duration: '3h 15m',
     });
+    expect(capturedRequest.context.calculations).toEqual(buildTradeReviewCalculations(makeTrade(), { duration: '3h 15m' }));
     expect(capturedRequest.context.metadata.accountId).toBe('acc-0001');
   });
 

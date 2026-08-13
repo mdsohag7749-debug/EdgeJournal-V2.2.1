@@ -24,9 +24,9 @@
 // how often each context appears on trades carrying a mistake. Language always
 // says "associated with", never "caused".
 
-import { applyPeriodFilter } from './setupPerformance';
-import { memoizeByArgs } from './memoize';
-import { SESSION_WINDOWS } from './utils';
+import { applyPeriodFilter } from './setupPerformance.js';
+import { memoizeByArgs } from './memoize.js';
+import { SESSION_WINDOWS } from './utils.js';
 
 export const NO_DATA = 0;
 export const OCCASIONAL_MAX = 2;

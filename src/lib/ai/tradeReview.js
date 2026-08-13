@@ -18,9 +18,9 @@
 // balances, PnL, RR, risk, or stored journal data, and it never computes a
 // canonical metric itself (they arrive pre-recorded / pre-computed).
 
-import { buildAITradeContext } from './context';
-import { createAIProvider } from './provider';
-import { AI_ERROR_CODES } from './types';
+import { buildAITradeContext } from './context.js';
+import { createAIProvider } from './provider.js';
+import { AI_ERROR_CODES } from './types.js';
 
 export const AI_REQUEST_KIND_TRADE_REVIEW = 'tradeReview';
 const TRADE_REVIEW_KIND = AI_REQUEST_KIND_TRADE_REVIEW;

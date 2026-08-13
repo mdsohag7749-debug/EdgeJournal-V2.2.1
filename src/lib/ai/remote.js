@@ -11,8 +11,8 @@
 //   - the server response is re-validated by the client's normal sanitizer
 //     pipeline (defense in depth), because createAIProvider() always sanitizes
 
-import { AIError } from './errors';
-import { AI_ERROR_CODES, AI_STATUS_OK } from './types';
+import { AIError } from './errors.js';
+import { AI_ERROR_CODES, AI_STATUS_OK } from './types.js';
 
 const HEALTH_URL = '/api/ai/health';
 const ANALYZE_URL = '/api/ai/analyze';

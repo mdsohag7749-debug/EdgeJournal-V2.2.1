@@ -16,8 +16,8 @@
 // `fetcher` / `endpoint` are injectable so deterministic tests can exercise
 // the request shape, timeout and error normalization without network access.
 
-import { AIError } from '../../../src/lib/ai/errors';
-import { AI_ERROR_CODES, AI_STATUS_OK } from '../../../src/lib/ai/types';
+import { AIError } from '../../../src/lib/ai/errors.js';
+import { AI_ERROR_CODES, AI_STATUS_OK } from '../../../src/lib/ai/types.js';
 
 const FAIL_SAFE_TIMEOUT_MS = 30000;
 

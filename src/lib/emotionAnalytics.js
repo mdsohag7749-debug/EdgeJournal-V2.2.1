@@ -9,7 +9,7 @@
 //     (1–5) -> per-emotion averages, most common emotion, confidence mean,
 //              fear / greed frequency, distribution, and monthly trend.
 
-import { monthLabel } from './utils';
+import { monthLabel } from './utils.js';
 
 const PSYCH_KEYS = [
   'Confidence',

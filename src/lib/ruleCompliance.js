@@ -18,7 +18,7 @@
 //   - weekly/monthly      compliancePct bucketed by calendar week / month
 //   - trend               asymmetric weekly compliance series for a sparkline
 
-import { mondayKey, monthLabel, weekLabel } from './utils';
+import { mondayKey, monthLabel, weekLabel } from './utils.js';
 
 function monthKey(dateStr) {
   return (dateStr || '').slice(0, 7);

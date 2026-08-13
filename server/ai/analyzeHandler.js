@@ -8,15 +8,15 @@
 // The browser is NEVER trusted for account ownership, provider selection,
 // billing entitlement, or system prompts.
 
-import { AI_ERROR_CODES } from './errors';
-import { toSafeAIError } from './errors';
-import { createAIConfig } from './config';
-import { sanitizeAnalyzeRequest, createRequestId } from './requestSchema';
-import { resolveAccountScope } from './accountScope';
-import { createRateLimiter } from './rateLimit';
-import { runServerAnalysis } from './provider';
-import { systemPromptFor } from './prompts';
-import { safeLog } from './log';
+import { AI_ERROR_CODES } from './errors.js';
+import { toSafeAIError } from './errors.js';
+import { createAIConfig } from './config.js';
+import { sanitizeAnalyzeRequest, createRequestId } from './requestSchema.js';
+import { resolveAccountScope } from './accountScope.js';
+import { createRateLimiter } from './rateLimit.js';
+import { runServerAnalysis } from './provider.js';
+import { systemPromptFor } from './prompts.js';
+import { safeLog } from './log.js';
 
 // Module-scoped bounded guard: per instance only (serverless best effort —
 // enough to stop accidental storms without persistence). One limiter per

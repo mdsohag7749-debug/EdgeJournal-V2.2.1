@@ -373,6 +373,13 @@ describe('G — Response safety (reuses existing sanitizers)', () => {
     expect(() => sanitizeForKind(JOURNAL_KIND, { summary: 'buy now for a sure win', confidence: 1 })).toThrow(AIError);
   });
 
+  it('rejects directive / guarantee language in trade review output (base contract)', () => {
+    expect(() => sanitizeForKind(TRADE_KIND, { summary: 'Buy now and lock in guaranteed profit.' })).toThrow(AIError);
+    expect(() => sanitizeForKind(TRADE_KIND, { observations: ['go long for the session'] })).toThrow(AIError);
+    expect(() => sanitizeForKind(TRADE_KIND, { risks: ['increase your risk on the next setup'] })).toThrow(AIError);
+    expect(() => sanitizeForKind(TRADE_KIND, { improvements: ['100% profit guaranteed'] })).toThrow(AIError);
+  });
+
   it('rejects guarantee language in coaching output (guaranteed profit)', () => {
     expect(() => sanitizeForKind('coaching', { summary: 'guaranteed profit strategy' })).toThrow(AIError);
   });

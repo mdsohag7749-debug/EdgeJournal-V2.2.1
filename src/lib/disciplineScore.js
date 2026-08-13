@@ -35,11 +35,11 @@
 // Analytics page, applied BEFORE any scoring, exactly like the other additive
 // intelligence modules.
 
-import { applyPeriodFilter } from './setupPerformance';
-import { memoizeByArgs } from './memoize';
-import { mondayKey, monthLabel, weekLabel, SESSION_WINDOWS } from './utils';
-import { mistakesOf } from './mistakePattern';
-import { isClosedTrade, reviewScoreForTrade } from './calculations';
+import { applyPeriodFilter } from './setupPerformance.js';
+import { memoizeByArgs } from './memoize.js';
+import { mondayKey, monthLabel, weekLabel, SESSION_WINDOWS } from './utils.js';
+import { mistakesOf } from './mistakePattern.js';
+import { isClosedTrade, reviewScoreForTrade } from './calculations.js';
 
 export const UNASSIGNED_LABEL = 'Unassigned';
 

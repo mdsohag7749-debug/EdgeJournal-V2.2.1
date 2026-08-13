@@ -15,9 +15,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import { Sparkles, Loader2, ShieldAlert, CheckCircle, ArrowRight, AlertTriangle } from 'lucide-react';
-import { analyzeTradeReview, safeErrorMessage, confidenceLabel } from '../../lib/ai/tradeReview';
-
-const has = (v) => v !== undefined && v !== null && v !== '';
+import { analyzeTradeReview, buildTradeReviewCalculations, safeErrorMessage, confidenceLabel } from '../../lib/ai/tradeReview';
 
 const LIST_SECTIONS = [
   { key: 'strengths', label: 'Strengths', icon: CheckCircle, tone: 'var(--win)' },
@@ -35,7 +33,8 @@ export default function AITradeReview({ trade, accountId, accountName, provider,
 
   // Canonical pass-through only: recorded fields + the panel's canonical
   // duration. Nothing (PnL / RR / risk / lot / duration) is recomputed here.
-  const calculations = useMemo(() => buildCalculations(trade, duration), [trade, duration]);
+  // The single source of truth is tradeReview.buildTradeReviewCalculations.
+  const calculations = useMemo(() => buildTradeReviewCalculations(trade, { duration }), [trade, duration]);
 
   const busy = phase === 'loading';
 
@@ -214,21 +213,4 @@ function SuccessState({ result }) {
       </footer>
     </div>
   );
-}
-
-// Canonical pass-through: exactly the fields the journal already records —
-// PnL, RR, risk %, lot size, result. No metric is recomputed here. Duration
-// is the panel's canonical value (computeDerived), passed down from
-// TradeReviewPanel — never derived locally.
-function buildCalculations(trade, duration) {
-  if (!trade || typeof trade !== 'object') return {};
-  const out = {};
-  if (has(trade.netPnl)) out.pnl = Number(trade.netPnl);
-  if (has(trade.rr)) out.realizedRR = Number(trade.rr);
-  if (has(trade.riskPercent)) out.riskPercent = Number(trade.riskPercent);
-  if (has(trade.positionSize)) out.lotSize = Number(trade.positionSize);
-  else if (has(trade.contracts)) out.lotSize = Number(trade.contracts);
-  if (has(trade.result)) out.winLoss = trade.result;
-  if (has(duration)) out.duration = duration;
-  return out;
 }

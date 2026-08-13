@@ -4,8 +4,8 @@
 // body, normalizes it, and routes it through the shared secure analyze
 // handler. The provider key lives only in server env vars — never here.
 
-import { handleAnalyze } from '../../server/ai/analyzeHandler';
-import { readRawBody, sendJson, clientIpFrom } from '../../server/ai/http';
+import { handleAnalyze } from '../../server/ai/analyzeHandler.js';
+import { readRawBody, sendJson, clientIpFrom } from '../../server/ai/http.js';
 
 export default async function handler(req, res) {
   const rawBody = await readRawBody(req);

@@ -5,8 +5,8 @@
 // markers, system prompts — is rejected before it reaches any provider.
 
 import { randomUUID } from 'node:crypto';
-import { AIError } from '../../src/lib/ai/errors';
-import { AI_ERROR_CODES } from '../../src/lib/ai/types';
+import { AIError } from '../../src/lib/ai/errors.js';
+import { AI_ERROR_CODES } from '../../src/lib/ai/types.js';
 
 // The only kinds the server will ever dispatch. Mirrors the existing
 // AI_REQUEST_KIND_* constants in src/lib/ai.

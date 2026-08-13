@@ -13,8 +13,8 @@
 // currently selected account (or all accounts), so nothing extra is needed
 // here for account-aware behavior.
 
-import { computeAnalytics } from './analytics';
-import { dateKey } from './utils';
+import { computeAnalytics } from './analytics.js';
+import { dateKey } from './utils.js';
 
 export const FOCUS_PERIODS = [
   { value: 'all', label: 'All Time' },

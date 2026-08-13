@@ -10,6 +10,6 @@ export {
   aiAccountScopeError,
   toSafeAIError,
   toSafeAIResult,
-} from '../../src/lib/ai/errors';
+} from '../../src/lib/ai/errors.js';
 
-export { AI_ERROR_CODES, AI_STATUS_OK, AI_PLANS, planForKey } from '../../src/lib/ai/types';
+export { AI_ERROR_CODES, AI_STATUS_OK, AI_PLANS, planForKey } from '../../src/lib/ai/types.js';

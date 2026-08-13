@@ -29,18 +29,53 @@
 // The React UI lives in src/components/ai/AIJournalIntelligence.jsx; this
 // module owns all orchestration, prompt design and the response contract.
 
-import { AIError } from './errors';
-import { AI_ERROR_CODES, AI_DISCLAIMER } from './types';
-import { createAIProvider } from './provider';
-import { freezeDeep } from './safety';
-import { computeAnalytics } from '../analytics';
-import { applyPeriodFilter, computeSetupPerformance, UNASSIGNED_LABEL } from '../setupPerformance';
-import { computePairSessionHeatmap, sessionKey } from '../heatmap';
-import { computeMistakePattern } from '../mistakePattern';
-import { computeDisciplineScore20 } from '../disciplineScore';
-import { computeRiskAnalytics } from '../riskAnalytics';
-import { computeEmotionAnalytics } from '../emotionAnalytics';
-import { computePatternDetection } from '../patternDetection';
+import { AIError } from './errors.js';
+import { AI_ERROR_CODES, AI_DISCLAIMER } from './types.js';
+import { createAIProvider } from './provider.js';
+import { freezeDeep, AI_DIRECTIVE_PATTERN, rejectDirectiveText as rejectDirectiveLanguage } from './safety.js';
+import { computeAnalytics } from '../analytics.js';
+import { applyPeriodFilter, computeSetupPerformance, UNASSIGNED_LABEL } from '../setupPerformance.js';
+import { computePairSessionHeatmap, sessionKey } from '../heatmap.js';
+import { computeMistakePattern } from '../mistakePattern.js';
+import { computeDisciplineScore20 } from '../disciplineScore.js';
+import { computeRiskAnalytics } from '../riskAnalytics.js';
+import { computeEmotionAnalytics } from '../emotionAnalytics.js';
+import { computePatternDetection } from '../patternDetection.js';
+import {
+  AI_JOURNAL_MAX_RECENT_TRADES,
+  DATA_COVERAGE,
+  DATA_LIMITED_MAX,
+  DATA_EARLY_MAX,
+  DATA_NORMAL_MIN,
+  classifyDataCoverage,
+  dataCoverageLabel,
+  buildJournalDataQuality,
+  buildJournalPerformance,
+  buildJournalRiskBlock,
+  buildJournalCompleteness,
+  buildCompletenessLimitations,
+  assertJournalAccountScope,
+  buildCanonicalJournalContext,
+} from './canonicalContext.js';
+
+// Canonical single source of truth (audit P1). Every deterministic journal
+// block, coverage classifier and projection now lives in canonicalContext.js;
+// this module re-exports them so existing consumers keep a single surface.
+export {
+  AI_JOURNAL_MAX_RECENT_TRADES,
+  DATA_COVERAGE,
+  DATA_LIMITED_MAX,
+  DATA_EARLY_MAX,
+  DATA_NORMAL_MIN,
+  classifyDataCoverage,
+  dataCoverageLabel,
+  buildJournalDataQuality,
+  buildJournalPerformance,
+  buildJournalRiskBlock,
+  buildJournalCompleteness,
+  buildCompletenessLimitations,
+  assertJournalAccountScope,
+} from './canonicalContext.js';
 
 export const AI_REQUEST_KIND_JOURNAL_INTELLIGENCE = 'journalIntelligence';
 
@@ -48,26 +83,6 @@ export const AI_REQUEST_KIND_JOURNAL_INTELLIGENCE = 'journalIntelligence';
 // controlled code so consumers render one safe message for it without the
 // provider ever being touched.
 export const AI_NOT_ENOUGH_DATA = 'AI_NOT_ENOUGH_DATA';
-
-// Small-sample guardrails (whole-journal scope). Per-setup/pair statuses still
-// use the canonical engines' own "Limited data / Normal" guards (MIN_NORMAL=5),
-// which are passed through verbatim — these thresholds are for the journal as
-// a whole and never conflict with them.
-export const DATA_LIMITED_MAX = 4;
-export const DATA_EARLY_MAX = 9;
-export const DATA_NORMAL_MIN = 10;
-
-export const DATA_COVERAGE = {
-  NOT_ENOUGH_DATA: 'NOT_ENOUGH_DATA', // 0 trades
-  LIMITED_DATA: 'LIMITED_DATA', // 1-4
-  EARLY_PATTERN: 'EARLY_PATTERN', // 5-9
-  NORMAL_PATTERN_ANALYSIS: 'NORMAL_PATTERN_ANALYSIS', // 10+
-};
-
-// Hard cap on how many individual (already account-scoped) trade records may
-// travel to the model for pattern interpretation. Aggregates are preferred;
-// this exists only to ground qualitative observations.
-export const AI_JOURNAL_MAX_RECENT_TRADES = 20;
 
 // Response fields that MUST NEVER appear in a journal-level AI response.
 // Structural fields are dropped by the allow-list sanitizer; directive
@@ -98,12 +113,18 @@ export const JOURNAL_FORBIDDEN_FIELDS = [
 // RESPONSE_CONTRACT (which this feature extends with the journal sections).
 export const JOURNAL_RESPONSE_KEYS = [
   'summary',
+  'performance',
+  'keyPatterns',
   'keyInsights',
   'strengths',
+  'weaknesses',
   'recurringIssues',
+  'risk',
+  'psychology',
   'setupInsights',
   'pairSessionInsights',
   'disciplineInsights',
+  'actionPlan',
   'improvementAreas',
   'watchlist',
   'dataQuality',
@@ -114,6 +135,7 @@ export const JOURNAL_RESPONSE_KEYS = [
 // Free-form list sections (arrays of strings).
 export const JOURNAL_RESPONSE_LIST_KEYS = [
   'strengths',
+  'weaknesses',
   'setupInsights',
   'pairSessionInsights',
   'disciplineInsights',
@@ -121,18 +143,18 @@ export const JOURNAL_RESPONSE_LIST_KEYS = [
   'watchlist',
 ];
 
-// Object-list sections (keyInsights / recurringIssues) with the fields each
-// item may carry.
+// Object-list sections (keyInsights / keyPatterns / recurringIssues) with the
+// fields each item may carry.
 export const JOURNAL_INSIGHT_SCHEMA = {
   keyInsights: ['title', 'observation', 'evidence', 'confidence'],
+  keyPatterns: ['title', 'observation', 'evidence', 'confidence'],
   recurringIssues: ['title', 'observation', 'evidence'],
 };
 
-// Strong directive / guarantee language that even a sanitized response must
-// reject (never reaches the UI). Descriptive words ("entered early", "exit")
-// are fine; explicit execution orders, signals and profit promises are not.
-const DIRECTIVE_PATTERN =
-  /\b(?:buy now|sell now|buy signal|sell signal|entry signal|exit signal|place a buy|place a sell|place buy|place sell|buy at|sell at|guaranteed profit|guarantee.? profit|guaranteed returns|price prediction|market prediction|predicted price|predicted profit|lot recommendation|recommended lot|increase your risk|decrease your risk|trade this signal|trade the signal|recommended entry|recommended exit|100% profit)\b/i;
+// Structured sub-objects: risk and psychology carry nested lists.
+export const JOURNAL_RISK_SCHEMA = ['observations', 'flags'];
+export const JOURNAL_PSYCHOLOGY_SCHEMA = ['summary', 'observations', 'possiblePatterns'];
+export const JOURNAL_ACTION_PLAN_SCHEMA = ['keepDoing', 'stopDoing', 'startDoing', 'nextSessionFocus'];
 
 // System instruction sent to the model alongside the journal context. Kept
 // OUT of the React component on purpose; future features reuse or extend it.
@@ -152,12 +174,17 @@ export const JOURNAL_INTELLIGENCE_INSTRUCTION = (
   'Your purpose is to help the user understand their recorded behavior, execution and journal patterns — not to make trading decisions.\n\n' +
   'REPLY ONLY with a JSON object using SOME or ALL of these keys:\n' +
   '  summary: string\n' +
+  '  keyPatterns: array of { title: string, observation: string, evidence: string, confidence?: number 0-1 }\n' +
   '  keyInsights: array of { title: string, observation: string, evidence: string, confidence?: number 0-1 }\n' +
   '  strengths: string[]\n' +
+  '  weaknesses: string[]\n' +
   '  recurringIssues: array of { title: string, observation: string, evidence: string }\n' +
+  '  risk: { observations: string[], flags: string[] } — observations only; the canonical risk metrics and discipline flags are supplied and must not be repeated as numbers\n' +
+  '  psychology: { summary: string, observations: string[], possiblePatterns: string[] } — use careful, non-diagnostic language such as "possible pattern" or "may indicate"; never claim certainty about the user psychology\n' +
   '  setupInsights: string[]\n' +
   '  pairSessionInsights: string[]\n' +
   '  disciplineInsights: string[]\n' +
+  '  actionPlan: { keepDoing: string[], stopDoing: string[], startDoing: string[], nextSessionFocus: string } — practical process improvements only, never trading directives\n' +
   '  improvementAreas: string[]\n' +
   '  watchlist: string[]\n' +
   '  dataQuality: { tradeCount: number, coverage: string, limitations: string[] }\n' +
@@ -165,56 +192,9 @@ export const JOURNAL_INTELLIGENCE_INSTRUCTION = (
   '  disclaimer: string\n'
 );
 
-// Sample-coverage classification for the whole analyzed scope.
-export function classifyDataCoverage(tradeCount) {
-  const n = Number(tradeCount);
-  const count = Number.isFinite(n) ? n : 0;
-  if (count <= 0) return DATA_COVERAGE.NOT_ENOUGH_DATA;
-  if (count <= DATA_LIMITED_MAX) return DATA_COVERAGE.LIMITED_DATA;
-  if (count <= DATA_EARLY_MAX) return DATA_COVERAGE.EARLY_PATTERN;
-  return DATA_COVERAGE.NORMAL_PATTERN_ANALYSIS;
-}
-
-export function dataCoverageLabel(coverage) {
-  switch (coverage) {
-    case DATA_COVERAGE.NOT_ENOUGH_DATA:
-      return 'No data';
-    case DATA_COVERAGE.LIMITED_DATA:
-      return 'Limited data';
-    case DATA_COVERAGE.EARLY_PATTERN:
-      return 'Early pattern';
-    case DATA_COVERAGE.NORMAL_PATTERN_ANALYSIS:
-      return 'Normal';
-    default:
-      return 'No data';
-  }
-}
-
-// Canonical data-quality block for the analyzed scope. tradeCount and coverage
-// are facts about the supplied dataset, never something the model decides.
-export function buildJournalDataQuality(tradeCount, extraLimitations = []) {
-  const count = Number.isFinite(Number(tradeCount)) ? Number(tradeCount) : 0;
-  const coverage = classifyDataCoverage(count);
-  const limitations = Array.isArray(extraLimitations) ? [...extraLimitations] : [];
-
-  if (coverage === DATA_COVERAGE.NOT_ENOUGH_DATA) {
-    limitations.push('No trades fall within the analyzed scope.');
-  } else if (coverage === DATA_COVERAGE.LIMITED_DATA) {
-    limitations.push(`Only ${count} trade${count === 1 ? '' : 's'} in this scope — conclusions carry limited confidence.`);
-  } else if (coverage === DATA_COVERAGE.EARLY_PATTERN) {
-    limitations.push(`Only ${count} trades in this scope — treat findings as early patterns, not proven edges.`);
-  }
-  if (coverage !== DATA_COVERAGE.NOT_ENOUGH_DATA) {
-    limitations.push('Analysis is based only on recorded journal data and reflects what has already happened, not the future.');
-  }
-
-  return {
-    tradeCount: count,
-    coverage,
-    label: dataCoverageLabel(coverage),
-    limitations,
-  };
-}
+// Sample-coverage classification, data-quality block and the deterministic
+// intelligence blocks (performance / risk / completeness / limitations) live
+// in canonicalContext.js — see the re-export block at the top of this file.
 
 // ---------------------------------------------------------------------------
 // Scope / filter awareness — reuses the canonical period filter and the same
@@ -277,46 +257,10 @@ export function createScopeFingerprint(trades, { accountId, period = 'all', pair
 }
 
 // ---------------------------------------------------------------------------
-// Account isolation — the cross-account guard for a whole scope.
-// ---------------------------------------------------------------------------
-export function assertJournalAccountScope(trades, accountId) {
-  if (!Array.isArray(trades)) return;
-  const required = typeof accountId === 'string' && accountId !== '' ? accountId : null;
-  const present = new Set();
-  trades.forEach((t) => {
-    const ta = t && typeof t.accountId === 'string' && t.accountId !== '' ? t.accountId : null;
-    if (ta) present.add(ta);
-  });
-
-  if (required) {
-    if (present.size && !present.has(required)) {
-      throw new AIError(
-        AI_ERROR_CODES.AI_ACCOUNT_SCOPE_ERROR,
-        'Account isolation: trades outside the requested account reached the journal AI context.',
-        { detail: `expected=${required}` }
-      );
-    }
-    if (present.size > 1) {
-      throw new AIError(
-        AI_ERROR_CODES.AI_ACCOUNT_SCOPE_ERROR,
-        'Account isolation: a mix of accounts reached the journal AI context.',
-        { detail: `expected=${required}, accounts=${[...present].join(',')}` }
-      );
-    }
-    return;
-  }
-  if (present.size > 1) {
-    throw new AIError(
-      AI_ERROR_CODES.AI_ACCOUNT_SCOPE_ERROR,
-      'Account isolation: a single requested account is required to build a journal AI context.',
-      { detail: `accounts=${[...present].join(',')}` }
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Journal context builder — pure, deterministic, deeply frozen.
-// All numbers arrive pre-computed from the canonical engines.
+// All numbers arrive pre-computed from the canonical engines; the deterministic
+// blocks (performance / risk / completeness / data quality) and projections are
+// the canonicalContext single source of truth.
 // ---------------------------------------------------------------------------
 export function buildAIJournalContext({
   trades = [],
@@ -332,15 +276,31 @@ export function buildAIJournalContext({
   patterns,
   scope = {},
   dataQuality,
+  performance,
+  riskBlock,
+  completeness,
 } = {}) {
   if (!Array.isArray(trades)) {
     throw new AIError(AI_ERROR_CODES.AI_ACCOUNT_SCOPE_ERROR, 'A trades array is required to build a journal AI context.');
   }
   assertJournalAccountScope(trades, accountId);
 
-  // Deep-immune projection: only what the AI may see. Never the raw trade
-  // rows, never user profile data, never credentials.
-  const recent = collectRecentTrades(trades, AI_JOURNAL_MAX_RECENT_TRADES);
+  const canonical = buildCanonicalJournalContext({
+    trades,
+    accountId,
+    analytics,
+    setupPerformance,
+    heatmap,
+    mistakeIntelligence,
+    disciplineScore,
+    risk,
+    emotion,
+    patterns,
+    dataQuality,
+    performance,
+    riskBlock,
+    completeness,
+  });
 
   const context = {
     account: {
@@ -356,224 +316,10 @@ export function buildAIJournalContext({
       dateFrom: scope.dateFrom || null,
       dateTo: scope.dateTo || null,
     },
-    dataQuality: dataQuality || buildJournalDataQuality(trades.length),
-    summary: pickSummary(analytics),
-    analytics: pickAnalytics(analytics),
-    setupPerformance: pickSetupPerformance(setupPerformance),
-    heatmap: pickHeatmap(heatmap),
-    mistakeIntelligence: pickMistake(mistakeIntelligence),
-    disciplineScore: pickDisciplineScore(disciplineScore),
-    risk: pickRisk(risk),
-    emotion: pickEmotion(emotion),
-    patterns: pickPatterns(patterns),
-    recentTrades: recent,
+    ...canonical,
   };
 
   return freezeDeep(context);
-}
-
-function num(v) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-function pickSummary(a) {
-  if (!a || typeof a !== 'object') return {};
-  const out = {};
-  const keys = ['total', 'wins', 'losses', 'breakevens', 'winRate', 'netPnl', 'avgRR', 'avgWin', 'avgLoss', 'profitFactor', 'bestTrade', 'worstTrade', 'currentWinStreak', 'currentLossStreak', 'longestWinStreak', 'tradingDays'];
-  keys.forEach((k) => {
-    const v = a[k];
-    if (v !== undefined && v !== null) out[k] = v;
-  });
-  return out;
-}
-
-function pickAnalytics(a) {
-  if (!a || typeof a !== 'object') return {};
-  return {
-    byPair: pickRows(a.byPair, ['label', 'trades', 'wins', 'losses', 'winRate', 'netPnl', 'avgRR', 'avgWin', 'avgLoss', 'profitFactor']),
-    bySession: pickRows(a.bySession, ['label', 'trades', 'wins', 'losses', 'winRate', 'netPnl', 'avgRR', 'avgWin', 'avgLoss', 'profitFactor']),
-    byStrategy: pickRows(a.byStrategy, ['label', 'trades', 'wins', 'losses', 'winRate', 'netPnl', 'avgRR', 'avgWin', 'avgLoss', 'profitFactor']),
-  };
-}
-
-function pickRows(rows, keys) {
-  if (!Array.isArray(rows)) return [];
-  return rows.slice(0, 20).map((r) => {
-    const out = {};
-    keys.forEach((k) => {
-      if (r[k] !== undefined && r[k] !== null) out[k] = r[k];
-    });
-    return out;
-  });
-}
-
-function pickSetupPerformance(setup) {
-  if (!setup || !Array.isArray(setup.setups)) return { setups: [] };
-  return {
-    totalTrades: setup.totalTrades ?? 0,
-    decidedCount: setup.decidedCount ?? 0,
-    minNormal: setup.minNormal ?? 5,
-    setups: setup.setups.slice(0, 12).map((s) => ({
-      label: s.label,
-      trades: s.trades,
-      wins: s.wins,
-      losses: s.losses,
-      decided: s.decided,
-      winRate: num(s.winRate),
-      avgRR: num(s.avgRR),
-      netPnl: num(s.netPnl),
-      avgPnl: num(s.avgPnl),
-      avgWin: num(s.avgWin),
-      avgLoss: num(s.avgLoss),
-      profitFactor: s.profitFactor === Infinity ? 'Infinite' : num(s.profitFactor),
-      bestTrade: num(s.bestTrade),
-      worstTrade: num(s.worstTrade),
-      status: s.status,
-    })),
-  };
-}
-
-function pickHeatmap(h) {
-  if (!h || !Array.isArray(h.rows)) return {};
-  const cells = [];
-  h.rows.forEach((row) => {
-    if (!Array.isArray(row.cells)) return;
-    row.cells.forEach((c) => {
-      if (!c || c.decided === 0) return;
-      cells.push({
-        pair: c.pair,
-        session: c.session,
-        trades: c.trades,
-        decided: c.decided,
-        winRate: num(c.winRate),
-        netPnl: num(c.netPnl),
-        avgRR: num(c.avgRR),
-        status: c.status,
-      });
-    });
-  });
-  cells.sort((x, y) => y.trades - x.trades || (x.pair || '').localeCompare(y.pair || ''));
-  return { cells: cells.slice(0, 20) };
-}
-
-function pickMistake(m) {
-  if (!m || !Array.isArray(m.rows)) return {};
-  return {
-    affectedTradeCount: m.affectedTradeCount ?? 0,
-    totalOccurrences: m.totalOccurrences ?? 0,
-    patterns: m.rows.slice(0, 10).map((r) => ({
-      name: r.name,
-      occurrences: r.occurrences,
-      affectedTrades: r.affectedTrades,
-      wins: r.wins,
-      losses: r.losses,
-      winRate: num(r.winRate),
-      netPnl: num(r.netPnl),
-      avgPnl: num(r.avgPnl),
-      status: r.status,
-      setups: pickContext(r.setups),
-      pairs: pickContext(r.pairs),
-      sessions: pickContext(r.sessions),
-    })),
-    insights: Array.isArray(m.insights) ? m.insights.slice(0, 5) : [],
-  };
-}
-
-function pickContext(rows) {
-  if (!Array.isArray(rows)) return [];
-  return rows.slice(0, 5).map((c) => ({ label: c.label, count: c.count }));
-}
-
-function pickDisciplineScore(d) {
-  if (!d || typeof d !== 'object') return {};
-  return {
-    score: d.score !== undefined && d.score !== null ? d.score : null,
-    coveragePct: d.coveragePct ?? 0,
-    band: d.band ? { label: d.band.label, min: d.band.min, max: d.band.max } : null,
-    components: Array.isArray(d.components)
-      ? d.components.map((c) => ({ key: c.key, label: c.label, weight: c.weight, score: c.score, available: c.available, note: c.note }))
-      : [],
-    improvements: Array.isArray(d.improvements) ? d.improvements.slice(0, 6) : [],
-  };
-}
-
-function pickRisk(r) {
-  if (!r || typeof r !== 'object') return {};
-  return {
-    avgRiskPct: num(r.avgRiskPct),
-    avgRewardPct: num(r.avgRewardPct),
-    longestWinStreak: r.longestWinStreak ?? 0,
-    longestLossStreak: r.longestLossStreak ?? 0,
-    maxDrawdown: num(r.maxDrawdown),
-    currentDrawdown: num(r.currentDrawdown),
-    averageDrawdown: num(r.averageDrawdown),
-    recoveryDays: num(r.recoveryDays),
-  };
-}
-
-function pickEmotion(e) {
-  if (!e || typeof e !== 'object') return {};
-  return {
-    total: e.total ?? 0,
-    mostCommonEmotion: e.mostCommonEmotion ? { key: e.mostCommonEmotion.key, avg: num(e.mostCommonEmotion.avg), tone: e.mostCommonEmotion.tone } : null,
-    avgConfidence: num(e.avgConfidence),
-    avgFocus: num(e.avgFocus),
-    avgPatience: num(e.avgPatience),
-    fomoFreq: num(e.fomoFreq),
-    stressFreq: num(e.stressFreq),
-  };
-}
-
-function pickPatterns(p) {
-  if (!p || !Array.isArray(p.patterns)) return {};
-  return {
-    decidedCount: p.decidedCount ?? 0,
-    patterns: p.patterns.slice(0, 10).map((x) => ({
-      category: x.category,
-      title: x.title,
-      detail: x.detail,
-      observations: x.observations,
-      strength: x.strength,
-      confidence: x.confidence,
-    })),
-  };
-}
-
-// Deterministically ordered, capped, projected subset of the most recent trade
-// records (in the analyzed scope) for pattern grounding. Only analysis fields
-// travel; secrets / profile data / user ids never cross this border.
-function collectRecentTrades(list, cap) {
-  if (!Array.isArray(list)) return [];
-  const sorted = [...list]
-    .filter((t) => t && typeof t === 'object')
-    .sort((a, b) => (b.date + (b.entryTime || '')).localeCompare(a.date + (a.entryTime || '')) || String(b.id || '').localeCompare(String(a.id || '')));
-  return sorted.slice(0, cap).map(projectTrade);
-}
-
-function projectTrade(t) {
-  const out = {};
-  if (typeof t.id === 'string' && t.id) out.id = t.id;
-  if (t.date) out.date = t.date;
-  if (t.instrument) out.instrument = t.instrument;
-  if (t.direction) out.direction = t.direction;
-  if (t.session) out.session = t.session;
-  if (t.timeframe) out.timeframe = t.timeframe;
-  if (typeof t.model === 'string' && t.model.trim()) out.setup = t.model.trim();
-  if (t.result) out.result = t.result;
-  const pnl = num(t.netPnl);
-  if (pnl !== null) out.pnl = pnl;
-  const rr = num(t.rr);
-  if (rr !== null) out.rr = rr;
-  const risk = num(t.riskPercent);
-  if (risk !== null) out.riskPercent = risk;
-  if (t.tradeGrade) out.tradeGrade = t.tradeGrade;
-  if (typeof t.emotion === 'string' && t.emotion) out.emotion = t.emotion;
-  if (t.mistakes && typeof t.mistakes === 'object') {
-    const names = Object.keys(t.mistakes).filter((k) => t.mistakes[k]);
-    if (names.length) out.mistakes = names;
-  }
-  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -587,9 +333,18 @@ export function sanitizeJournalResponse(raw) {
   const source = raw;
   const out = {
     summary: typeof source.summary === 'string' ? source.summary.trim() : '',
+    // performance is canonical-only: always null after sanitization, replaced
+    // by the deterministic block in mergeCanonicalAnalysis(). The model is
+    // never allowed to author numbers.
+    performance: null,
     keyInsights: toInsightList(source.keyInsights, JOURNAL_INSIGHT_SCHEMA.keyInsights),
+    keyPatterns: toInsightList(source.keyPatterns, JOURNAL_INSIGHT_SCHEMA.keyPatterns),
     strengths: toTextList(source.strengths),
+    weaknesses: toTextList(source.weaknesses),
     recurringIssues: toInsightList(source.recurringIssues, JOURNAL_INSIGHT_SCHEMA.recurringIssues),
+    risk: toSubobjectList(source.risk, JOURNAL_RISK_SCHEMA),
+    psychology: toPsychologyBlock(source.psychology),
+    actionPlan: toActionPlan(source.actionPlan),
     setupInsights: toTextList(source.setupInsights),
     pairSessionInsights: toTextList(source.pairSessionInsights),
     disciplineInsights: toTextList(source.disciplineInsights),
@@ -597,7 +352,7 @@ export function sanitizeJournalResponse(raw) {
     watchlist: toTextList(source.watchlist),
     // Structural hole for model limitation notes only. tradeCount / coverage
     // are recomputed from the canonical scope and override this in
-    // mergeCanonicalDataQuality().
+    // mergeCanonicalAnalysis().
     dataQuality: source.dataQuality && typeof source.dataQuality === 'object' ? { limitations: toTextList(source.dataQuality.limitations) } : { limitations: [] },
     confidence: toConfidence(source.confidence),
     disclaimer: typeof source.disclaimer === 'string' && source.disclaimer.trim() ? source.disclaimer.trim() : AI_DISCLAIMER,
@@ -635,24 +390,72 @@ function toInsightList(value, keys) {
   return rows;
 }
 
+// Structured sub-objects (risk / psychology) — only allow-listed string-list
+// keys survive; anything else the model returns is dropped.
+function toSubobjectList(value, allowedKeys) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    const empty = {};
+    allowedKeys.forEach((k) => (empty[k] = []));
+    return empty;
+  }
+  const out = {};
+  allowedKeys.forEach((k) => (out[k] = toTextList(value[k])));
+  return out;
+}
+
+// Psychology block — summary is a single string; observations / possiblePatterns
+// are string lists. Non-allow-listed keys are dropped.
+function toPsychologyBlock(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return { summary: '', observations: [], possiblePatterns: [] };
+  }
+  return {
+    summary: typeof value.summary === 'string' ? value.summary.trim() : '',
+    observations: toTextList(value.observations),
+    possiblePatterns: toTextList(value.possiblePatterns),
+  };
+}
+
+// Action plan — four specific string fields; the rest is dropped.
+function toActionPlan(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return { keepDoing: [], stopDoing: [], startDoing: [], nextSessionFocus: '' };
+  }
+  return {
+    keepDoing: toTextList(value.keepDoing),
+    stopDoing: toTextList(value.stopDoing),
+    startDoing: toTextList(value.startDoing),
+    nextSessionFocus: typeof value.nextSessionFocus === 'string' ? value.nextSessionFocus.trim() : '',
+  };
+}
+
 function rejectDirectiveText(out) {
   const text = [
     out.summary,
     ...out.strengths,
+    ...out.weaknesses,
     ...out.setupInsights,
     ...out.pairSessionInsights,
     ...out.disciplineInsights,
     ...out.improvementAreas,
     ...out.watchlist,
     ...out.keyInsights.flatMap((i) => [i.title, i.observation, i.evidence]),
+    ...out.keyPatterns.flatMap((i) => [i.title, i.observation, i.evidence]),
     ...out.recurringIssues.flatMap((i) => [i.title, i.observation, i.evidence]),
+    ...out.risk.observations,
+    ...out.risk.flags,
+    ...out.psychology.summary,
+    ...out.psychology.observations,
+    ...out.psychology.possiblePatterns,
+    ...out.actionPlan.keepDoing,
+    ...out.actionPlan.stopDoing,
+    ...out.actionPlan.startDoing,
+    out.actionPlan.nextSessionFocus,
   ]
     .filter(Boolean)
     .join(' \n ');
 
-  if (DIRECTIVE_PATTERN.test(text)) {
-    throw new AIError(AI_ERROR_CODES.AI_INVALID_RESPONSE, 'AI returned directive or guarantee language.');
-  }
+  rejectDirectiveLanguage(text);
 }
 
 // Structural validation of an already-sanitized journal response.
@@ -669,6 +472,12 @@ export function validateJournalResponse(response) {
   Object.keys(JOURNAL_INSIGHT_SCHEMA).forEach((k) => {
     if (target[k] !== undefined && !Array.isArray(target[k])) errors.push(`${k} must be an array`);
   });
+  if (target.performance !== undefined && target.performance !== null && (typeof target.performance !== 'object' || Array.isArray(target.performance))) {
+    errors.push('performance must be null or an object');
+  }
+  if (target.risk !== undefined && (typeof target.risk !== 'object' || Array.isArray(target.risk))) errors.push('risk must be an object');
+  if (target.psychology !== undefined && (typeof target.psychology !== 'object' || Array.isArray(target.psychology))) errors.push('psychology must be an object');
+  if (target.actionPlan !== undefined && (typeof target.actionPlan !== 'object' || Array.isArray(target.actionPlan))) errors.push('actionPlan must be an object');
   if (target.confidence !== undefined && target.confidence !== null && (typeof target.confidence !== 'number' || target.confidence < 0 || target.confidence > 1)) {
     errors.push('confidence must be a number between 0 and 1, or null');
   }
@@ -729,6 +538,7 @@ export async function analyzeJournalIntelligence({
   // Canonical analytics — reuse the verified engines only. No formula is
   // recomputed by the AI layer.
   let context;
+  let canonical = { dataQuality };
   try {
     assertJournalAccountScope(focused, accountId);
     const analytics = computeAnalytics(focused);
@@ -745,6 +555,19 @@ export async function analyzeJournalIntelligence({
     const emotion = computeEmotionAnalytics(focused);
     const patterns = computePatternDetection(focused, 'all');
 
+    // Deterministic intelligence blocks (performance / risk / data quality) are
+    // computed once here and merged back over the model output, so the UI can
+    // never show model-invented numbers.
+    const performance = buildJournalPerformance(analytics, risk);
+    const riskBlock = buildJournalRiskBlock(risk, patterns, focused);
+    const completeness = buildJournalCompleteness(focused);
+    const completenessLimits = buildCompletenessLimitations(completeness);
+    canonical = {
+      dataQuality: buildJournalDataQuality(focused.length, completenessLimits),
+      performance,
+      riskBlock,
+    };
+
     context = buildAIJournalContext({
       trades: focused,
       accountId,
@@ -758,7 +581,10 @@ export async function analyzeJournalIntelligence({
       emotion,
       patterns,
       scope,
-      dataQuality,
+      dataQuality: canonical.dataQuality,
+      performance,
+      riskBlock,
+      completeness,
     });
   } catch (err) {
     return toJournalResult(err, { dataQuality });
@@ -774,9 +600,9 @@ export async function analyzeJournalIntelligence({
 
   try {
     const result = await activeProvider.analyze(request);
-    return toJournalResult(result, { dataQuality });
+    return toJournalResult(result, canonical);
   } catch (err) {
-    return toJournalResult(err, { dataQuality });
+    return toJournalResult(err, canonical);
   }
 }
 
@@ -811,24 +637,41 @@ export function toJournalResult(input, canonical = {}) {
   };
 }
 
-// Data quality is a fact from the canonical scope — never let the model present
-// its own trade count / coverage. Merge only the model's limitation notes.
+// Data quality / performance / risk are facts from the canonical scope — never
+// let the model present its own trade count, coverage, numbers, or discipline
+// flags. The model only adds limitation notes and risk/psychology observations.
 function mergeCanonicalAnalysis(analysis, canonical) {
-  const dq = canonical && canonical.dataQuality;
-  if (!dq) return analysis;
-  const limitations = Array.isArray(dq.limitations) ? [...dq.limitations] : [];
-  const modelLimits = analysis?.dataQuality?.limitations;
-  if (Array.isArray(modelLimits)) {
-    modelLimits.forEach((l) => {
-      if (typeof l !== 'string') return;
-      const s = l.trim();
-      if (s && !limitations.includes(s)) limitations.push(s);
-    });
+  if (!canonical) return analysis;
+  const out = { ...analysis };
+
+  const dq = canonical.dataQuality;
+  if (dq) {
+    const limitations = Array.isArray(dq.limitations) ? [...dq.limitations] : [];
+    const modelLimits = analysis?.dataQuality?.limitations;
+    if (Array.isArray(modelLimits)) {
+      modelLimits.forEach((l) => {
+        if (typeof l !== 'string') return;
+        const s = l.trim();
+        if (s && !limitations.includes(s)) limitations.push(s);
+      });
+    }
+    out.dataQuality = { ...dq, limitations };
   }
-  return {
-    ...analysis,
-    dataQuality: { ...dq, limitations },
-  };
+
+  if (canonical.performance) {
+    // Always canonical. Any numbers the model authored were dropped during
+    // sanitization (performance is null there) and never reach the UI.
+    out.performance = canonical.performance;
+  }
+
+  if (canonical.riskBlock) {
+    // Canonical metrics + deterministic discipline flags; the model may only
+    // contribute qualitative observations on top.
+    const observations = Array.isArray(out.risk?.observations) ? out.risk.observations : [];
+    out.risk = { ...canonical.riskBlock, observations };
+  }
+
+  return out;
 }
 
 // Safe, human-readable journal messages — never provider internals.

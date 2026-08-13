@@ -29,9 +29,9 @@
 // Confidence = Low / Medium / High, derived from observation count and the
 // size of the observed difference.
 
-import { applyFocusFilter } from './performanceInsights';
-import { memoizeByArgs } from './memoize';
-import { MISTAKE_NAMES, SESSION_WINDOWS } from './utils';
+import { applyFocusFilter } from './performanceInsights.js';
+import { memoizeByArgs } from './memoize.js';
+import { MISTAKE_NAMES, SESSION_WINDOWS } from './utils.js';
 
 export const MIN_OBS = 3;
 export const MIN_EMERGING = 5;

@@ -41,6 +41,10 @@ import {
   assertJournalResponse,
   analyzeJournalIntelligence,
   safeJournalErrorMessage,
+  buildJournalPerformance,
+  buildJournalRiskBlock,
+  buildJournalCompleteness,
+  buildCompletenessLimitations,
   AI_NOT_ENOUGH_DATA,
   DATA_COVERAGE,
   AI_JOURNAL_MAX_RECENT_TRADES,
@@ -117,6 +121,12 @@ function makeSuite(n, { accountId = ACC_A, start = '2024-01-01' } = {}) {
       accountId,
     });
   });
+}
+
+// Total net P&L of a trade set — the deterministic value the canonical engine
+// produces for the same set.
+function analyticsTotalPnl(trades) {
+  return trades.reduce((sum, t) => sum + (Number(t.netPnl) || 0), 0);
 }
 
 // The canonical sections exactly as the production orchestration builds them.
@@ -211,6 +221,13 @@ describe('AI Journal Intelligence — Sprint 9.3', () => {
       expect(typeof aiPublic.createScopeFingerprint).toBe('function');
       expect(typeof aiPublic.sanitizeJournalResponse).toBe('function');
       expect(typeof aiPublic.buildJournalDataQuality).toBe('function');
+      expect(typeof aiPublic.buildJournalPerformance).toBe('function');
+      expect(typeof aiPublic.buildJournalRiskBlock).toBe('function');
+      expect(typeof aiPublic.buildJournalCompleteness).toBe('function');
+      expect(typeof aiPublic.buildCompletenessLimitations).toBe('function');
+      expect(aiPublic.buildJournalPerformance).toBe(buildJournalPerformance);
+      expect(aiPublic.buildJournalRiskBlock).toBe(buildJournalRiskBlock);
+      expect(aiPublic.buildJournalCompleteness).toBe(buildJournalCompleteness);
       expect(typeof aiPublic.assertJournalAccountScope).toBe('function');
       expect(typeof aiPublic.safeJournalErrorMessage).toBe('function');
     });
@@ -396,6 +413,24 @@ describe('AI Journal Intelligence — Sprint 9.3', () => {
       expect(typeof ctx.emotion).toBe('object');
       expect(typeof ctx.risk).toBe('object');
     });
+    it('carries the deterministic performance / risk / completeness blocks', () => {
+      const ctx = built();
+      expect(typeof ctx.performance).toBe('object');
+      expect(ctx.performance.total).toBe(12);
+      expect(typeof ctx.performance.winRate).toBe('number');
+      expect(typeof ctx.performance.netPnl).toBe('number');
+      expect(typeof ctx.risk).toBe('object');
+      expect(Array.isArray(ctx.risk.flags)).toBe(true);
+      expect(typeof ctx.risk.sizing).toBe('object');
+      expect(typeof ctx.completeness).toBe('object');
+      expect(ctx.completeness.total).toBe(12);
+      expect(isDeepFrozen(ctx)).toBe(true);
+    });
+    it('exposes byDirection / byTimeframe analytics for pattern grounding', () => {
+      const ctx = built();
+      expect(Array.isArray(ctx.analytics.byDirection)).toBe(true);
+      expect(Array.isArray(ctx.analytics.byTimeframe)).toBe(true);
+    });
     it('passes canonical aggregate values through verbatim (never recomputed)', () => {
       const ctx = built();
       // summary + analytics arrive from analytics.js; contents are its output.
@@ -423,6 +458,85 @@ describe('AI Journal Intelligence — Sprint 9.3', () => {
     });
   });
 
+  // E2: DETERMINISTIC INTELLIGENCE BLOCKS (never model-authored numbers)
+  describe('E2 — deterministic performance / risk / completeness blocks', () => {
+    const suite = makeSuite(12);
+    const risk = computeRiskAnalytics(suite);
+    const patterns = computePatternDetection(suite, 'all');
+    const analytics = computeAnalytics(suite);
+
+    it('buildJournalPerformance mirrors the canonical analytics totals verbatim', () => {
+      const perf = buildJournalPerformance(analytics, risk);
+      expect(perf.total).toBe(analytics.total);
+      expect(perf.wins).toBe(analytics.wins);
+      expect(perf.losses).toBe(analytics.losses);
+      expect(perf.netPnl).toBe(analytics.netPnl);
+      expect(perf.winRate).toBe(analytics.winRate);
+      expect(perf.longestLossStreak).toBe(risk.longestLossStreak);
+      expect(Object.isFrozen(perf)).toBe(true);
+    });
+
+    it('buildJournalPerformance normalizes a non-finite profit factor to null', () => {
+      const perf = buildJournalPerformance({ total: 5, wins: 5, losses: 0, profitFactor: Infinity, netPnl: 400 }, {});
+      expect(perf.profitFactor).toBeNull();
+      expect(perf.total).toBe(5);
+    });
+
+    it('buildJournalRiskBlock reports sizing consistency + over-risking deterministically', () => {
+      const trades = [
+        makeTrade({ id: 'a', riskPercent: 1, accountId: ACC_A }),
+        makeTrade({ id: 'b', riskPercent: 1, accountId: ACC_A }),
+        makeTrade({ id: 'c', riskPercent: 5, accountId: ACC_A }),
+      ];
+      const block = buildJournalRiskBlock(computeRiskAnalytics(trades), computePatternDetection(trades, 'all'), trades);
+      expect(block.sizing.count).toBe(3);
+      expect(block.sizing.avg).toBeCloseTo(2.33, 1);
+      expect(block.sizing.cv).toBeGreaterThan(50); // wide spread flagged
+      expect(block.overRisking).toBe(1); // one trade at 3%+
+      expect(block.flags.some((f) => /inconsistent/i.test(f))).toBe(true);
+      expect(block.flags.some((f) => /3%\+ risk/i.test(f))).toBe(true);
+      expect(Object.isFrozen(block)).toBe(true);
+    });
+
+    it('buildJournalRiskBlock never invents flags when nothing is present', () => {
+      const trades = [makeTrade({ id: 'a', riskPercent: 1, accountId: ACC_A })];
+      const block = buildJournalRiskBlock(computeRiskAnalytics(trades), computePatternDetection(trades, 'all'), trades);
+      expect(block.overRisking).toBe(0);
+      expect(block.flags.some((f) => /inconsistent/i.test(f))).toBe(false);
+    });
+
+    it('buildJournalCompleteness counts missing fields and inconsistencies', () => {
+      const trades = [
+        makeTrade({ id: 'a', netPnl: undefined, rr: '', riskPercent: null, accountId: ACC_A }),
+        makeTrade({ id: 'b', result: 'Win', netPnl: -10, accountId: ACC_A }), // inconsistent result/PnL
+        makeTrade({ id: 'c', notes: '', lessonsLearned: '', psychology: null, accountId: ACC_A }),
+        makeTrade({ id: 'd', accountId: ACC_A }),
+      ];
+      const c = buildJournalCompleteness(trades);
+      expect(c.total).toBe(4);
+      expect(c.missing.netPnl).toBe(1);
+      expect(c.missing.rr).toBe(1);
+      expect(c.missing.riskPercent).toBe(1);
+      expect(c.missing.notes).toBe(1);
+      expect(c.missing.psychology).toBe(1);
+      expect(c.inconsistencyCount).toBe(1);
+      expect(Object.isFrozen(c)).toBe(true);
+    });
+
+    it('buildCompletenessLimitations turns gaps into human-readable caveats', () => {
+      const trades = [makeTrade({ id: 'a', netPnl: undefined, accountId: ACC_A })];
+      const limits = buildCompletenessLimitations(buildJournalCompleteness(trades));
+      expect(limits.some((l) => /no net P&L/.test(l))).toBe(true);
+    });
+
+    it('dataQuality limitations merge completeness caveats canonically', () => {
+      const trades = [makeTrade({ id: 'a', netPnl: undefined, accountId: ACC_A })];
+      const limits = buildCompletenessLimitations(buildJournalCompleteness(trades));
+      const dq = buildJournalDataQuality(trades.length, limits);
+      expect(dq.limitations.some((l) => /no net P&L/.test(l))).toBe(true);
+    });
+  });
+
   // F: SANITIZATION / RESPONSE CONTRACT (directives never reach the UI)
   describe('F — response sanitization & journal contract', () => {
     it('sanitizes a contract-conforming payload into the canonical shape', () => {
@@ -447,6 +561,42 @@ describe('AI Journal Intelligence — Sprint 9.3', () => {
       expect(out.strengths).toEqual([]);
       expect(out.confidence).toBeNull();
       expect(out.keyInsights).toHaveLength(1);
+    });
+    it('allow-lists the new journal sections and coerces their shapes', () => {
+      const out = sanitizeJournalResponse({
+        summary: 'ok',
+        performance: { total: 999, netPnl: 9999 }, // model-authored numbers must be dropped
+        keyPatterns: [{ title: 'T', observation: 'O', evidence: 'E', confidence: 0.8 }],
+        weaknesses: ['Late entries'],
+        risk: { observations: ['Risk varied'], flags: ['Not disciplined'] },
+        psychology: { summary: 'S', observations: ['O1'], possiblePatterns: ['P1'], diagnosis: 'dropped' },
+        actionPlan: { keepDoing: ['K'], stopDoing: ['S'], startDoing: ['St'], nextSessionFocus: 'N', sellNow: 'dropped' },
+      });
+      expect(out.performance).toBeNull(); // canonical-only
+      expect(out.keyPatterns).toHaveLength(1);
+      expect(out.keyPatterns[0]).toMatchObject({ title: 'T', confidence: 0.8 });
+      expect(out.weaknesses).toEqual(['Late entries']);
+      expect(out.risk.observations).toEqual(['Risk varied']);
+      expect(out.risk.flags).toEqual(['Not disciplined']);
+      expect(out.psychology.summary).toBe('S');
+      expect(out.psychology.possiblePatterns).toEqual(['P1']);
+      expect(out.psychology.diagnosis).toBeUndefined();
+      expect(out.actionPlan).toEqual({ keepDoing: ['K'], stopDoing: ['S'], startDoing: ['St'], nextSessionFocus: 'N' });
+      expect(out.actionPlan.sellNow).toBeUndefined();
+    });
+    it('defaults every new section to a safe empty shape', () => {
+      const out = sanitizeJournalResponse({ summary: 'only a summary' });
+      expect(out.performance).toBeNull();
+      expect(out.keyPatterns).toEqual([]);
+      expect(out.weaknesses).toEqual([]);
+      expect(out.risk).toEqual({ observations: [], flags: [] });
+      expect(out.psychology).toEqual({ summary: '', observations: [], possiblePatterns: [] });
+      expect(out.actionPlan).toEqual({ keepDoing: [], stopDoing: [], startDoing: [], nextSessionFocus: '' });
+    });
+    it('rejects directive / guarantee language inside the new sections', () => {
+      expect(() => sanitizeJournalResponse({ risk: { observations: ['You should buy now.'] } })).toThrow();
+      expect(() => sanitizeJournalResponse({ actionPlan: { keepDoing: ['Sell to guarantee profit'] } })).toThrow();
+      expect(() => sanitizeJournalResponse({ psychology: { possiblePatterns: ['This guarantees profit'] } })).toThrow();
     });
     it('rejects directive / guarantee language outright', () => {
       expect(() => sanitizeJournalResponse({ summary: 'You should buy now to capture gains.' })).toThrow();
@@ -515,6 +665,54 @@ describe('AI Journal Intelligence — Sprint 9.3', () => {
       expect(out.analysis.dataQuality.tradeCount).toBe(12);
       expect(out.analysis.dataQuality.coverage).toBe(DATA_COVERAGE.NORMAL_PATTERN_ANALYSIS);
       expect(out.analysis.dataQuality.limitations).toContain('Model-observed limitation note.');
+    });
+    it('merges the deterministic performance block over any model-authored numbers', async () => {
+      const provider = {
+        analyze: async () => ({
+          ok: true,
+          status: AI_STATUS_OK,
+          analysis: sanitizeJournalResponse({
+            summary: 'ok',
+            performance: { total: 999, netPnl: 99999, winRate: 99 }, // must be discarded
+          }),
+        }),
+      };
+      const out = await run({ provider });
+      expect(out.ok).toBe(true);
+      expect(out.analysis.performance.total).toBe(12);
+      expect(out.analysis.performance.netPnl).toBe(analyticsTotalPnl(suite));
+      expect(out.analysis.performance.total).not.toBe(999);
+    });
+    it('merges canonical risk metrics + discipline flags while keeping model observations', async () => {
+      const provider = {
+        analyze: async () => ({
+          ok: true,
+          status: AI_STATUS_OK,
+          analysis: sanitizeJournalResponse({
+            summary: 'ok',
+            risk: { observations: ['Risk profile looks contained.'], flags: ['Some made-up flag'] },
+          }),
+        }),
+      };
+      const out = await run({ provider });
+      expect(out.ok).toBe(true);
+      expect(out.analysis.risk.observations).toEqual(['Risk profile looks contained.']);
+      // Canonical risk block values are present and authoritative.
+      expect(typeof out.analysis.risk.avgRiskPct).toBe('number');
+      expect(Array.isArray(out.analysis.risk.distribution)).toBe(true);
+      expect(Array.isArray(out.analysis.risk.flags)).toBe(true);
+      // A flag the model invented is replaced by deterministic flags only.
+      expect(out.analysis.risk.flags).not.toContain('Some made-up flag');
+    });
+    it('merges completeness caveats into the canonical dataQuality block', async () => {
+      const trades = [makeTrade({ id: 'a', netPnl: undefined, accountId: ACC_A })];
+      const provider = {
+        analyze: async () => validAnalysis(),
+      };
+      const out = await analyzeJournalIntelligence({ trades, accountId: ACC_A, provider });
+      expect(out.ok).toBe(true);
+      expect(out.analysis.dataQuality.limitations.some((l) => /no net P&L/.test(l))).toBe(true);
+      expect(out.analysis.dataQuality.tradeCount).toBe(1);
     });
     it('never leaks provider internals on failure and keeps data intact', async () => {
       const out = await run({

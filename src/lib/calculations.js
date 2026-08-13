@@ -1,6 +1,6 @@
 // All calculations derive purely from the trades array.
 
-import { computeRuleCompliance } from './ruleCompliance';
+import { computeRuleCompliance } from './ruleCompliance.js';
 
 function sortByDate(trades) {
   return [...trades].sort((a, b) => (a.date + (a.entryTime || '')).localeCompare(b.date + (b.entryTime || '')));

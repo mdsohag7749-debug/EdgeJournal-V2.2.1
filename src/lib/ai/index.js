@@ -8,10 +8,10 @@
 // and gracefully until a later sprint wires a server-side provider in.
 
 // Context builder — pure, account-isolated, READ-ONLY structure for analysis.
-export { buildAITradeContext, assertAccountScoped } from './context';
+export { buildAITradeContext, assertAccountScoped } from './context.js';
 
 // Provider abstraction — swap-in adapters; browser sees no secrets.
-export { createAIProvider, registerAIAdapter, resolveAIConfig, AI_DEFAULT_CONFIG } from './provider';
+export { createAIProvider, registerAIAdapter, resolveAIConfig, AI_DEFAULT_CONFIG } from './provider.js';
 
 // Controlled error model — normalized AIError codes, never raw provider data.
 export {
@@ -22,20 +22,22 @@ export {
   toSafeAIResult,
   aiAccountScopeError,
   aiNotConfiguredError,
-} from './errors';
+} from './errors.js';
 
 // Domain vocabulary — codes, plans, response contract, disclaimer.
-export { RESPONSE_CONTRACT, AI_DISCLAIMER, AI_ERROR_CODES, AI_PLANS } from './types';
+export { RESPONSE_CONTRACT, AI_DISCLAIMER, AI_ERROR_CODES, AI_PLANS } from './types.js';
 
 // Safety layer — response sanitization + validation, deep-freeze helpers.
 export {
   AI_SAFETY_RULES,
+  AI_DIRECTIVE_PATTERN,
+  rejectDirectiveText,
   sanitizeResponse as sanitizeAIResponse,
   validateResponseContract,
   assertResponseContract,
   freezeDeep,
   isDeepFrozen,
-} from './safety';
+} from './safety.js';
 
 // AI Trade Review — production feature orchestration (prompt kept separate).
 export {
@@ -46,7 +48,7 @@ export {
   confidenceLabel,
   TRADE_REVIEW_INSTRUCTION,
   AI_REQUEST_KIND_TRADE_REVIEW,
-} from './tradeReview';
+} from './tradeReview.js';
 
 // AI Journal Intelligence — Sprint 9.3 journal-level analytical intelligence.
 // Read-only, account-isolated, built entirely on the canonical Sprint 8
@@ -64,10 +66,17 @@ export {
   JOURNAL_RESPONSE_KEYS,
   JOURNAL_RESPONSE_LIST_KEYS,
   JOURNAL_INSIGHT_SCHEMA,
+  JOURNAL_RISK_SCHEMA,
+  JOURNAL_PSYCHOLOGY_SCHEMA,
+  JOURNAL_ACTION_PLAN_SCHEMA,
   JOURNAL_INTELLIGENCE_INSTRUCTION,
   classifyDataCoverage,
   dataCoverageLabel,
   buildJournalDataQuality,
+  buildJournalPerformance,
+  buildJournalRiskBlock,
+  buildJournalCompleteness,
+  buildCompletenessLimitations,
   scopeLabel,
   analyzedScopeLabel,
   applyJournalScope,
@@ -80,7 +89,29 @@ export {
   analyzeJournalIntelligence,
   toJournalResult,
   safeJournalErrorMessage,
-} from './journalIntelligence';
+} from './journalIntelligence.js';
+
+// Canonical journal intelligence context — the single source of truth (audit
+// P1) behind Journal Intelligence, Coaching and Ask Journal. Deterministic
+// blocks, coverage classification and deep-immune projections live here; the
+// feature modules re-export them for backward compatibility.
+export {
+  buildCanonicalJournalContext,
+  classifyJournalQuestionIntent,
+  buildJournalPerformance,
+  buildJournalRiskBlock,
+  buildJournalCompleteness,
+  buildCompletenessLimitations,
+  classifyDataCoverage,
+  dataCoverageLabel,
+  buildJournalDataQuality,
+  DATA_COVERAGE,
+  DATA_LIMITED_MAX,
+  DATA_EARLY_MAX,
+  DATA_NORMAL_MIN,
+  AI_JOURNAL_MAX_RECENT_TRADES,
+  assertJournalAccountScope,
+} from './canonicalContext.js';
 
 // AI Coaching & Action Plan — Sprint 9.4 process coaching.
 // Read-only, account-isolated, horizon-scoped (Daily/Weekly/Monthly). Consumes
@@ -112,7 +143,7 @@ export {
   generateAICoaching,
   toCoachingResult,
   safeCoachingErrorMessage,
-} from './coaching';
+} from './coaching.js';
 
 // AI Ask Journal — Sprint 9.5 analytical journal assistant.
 // The user asks a natural-language question about THEIR OWN journal data; the
@@ -155,4 +186,4 @@ export {
   buildJournalDataQuality,
   AI_NOT_ENOUGH_DATA,
   DATA_COVERAGE,
-} from './askJournal';
+} from './askJournal.js';

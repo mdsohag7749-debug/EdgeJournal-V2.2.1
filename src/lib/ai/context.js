@@ -13,9 +13,9 @@
 //     values that were passed in from the existing calculation engine. This
 //     module never computes PnL, RR, risk, or lot size itself.
 
-import { AIError } from './errors';
-import { AI_ERROR_CODES } from './types';
-import { freezeDeep } from './safety';
+import { AIError } from './errors.js';
+import { AI_ERROR_CODES } from './types.js';
+import { freezeDeep } from './safety.js';
 
 // From `fromTradeRow` (src/lib/tradesApi.js) app-shape → AI key. Only what is
 // necessary for analysis; no userId, screenshot, createdAt, tags, offline

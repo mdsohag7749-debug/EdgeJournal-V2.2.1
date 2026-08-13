@@ -4,8 +4,8 @@
 // for recorded facts or canonical metrics. This module encodes that contract
 // in rules, a response shape, and defensive immutability helpers.
 
-import { AIError } from './errors';
-import { AI_ERROR_CODES, AI_DISCLAIMER, RESPONSE_KEYS, RESPONSE_LIST_KEYS } from './types';
+import { AIError } from './errors.js';
+import { AI_ERROR_CODES, AI_DISCLAIMER, RESPONSE_KEYS, RESPONSE_LIST_KEYS } from './types.js';
 
 // Machine-readable guard rails. Used by future UI/tests; not a moderation
 // system — each rule is a single assertion a reviewer or test can verify.
@@ -18,6 +18,23 @@ export const AI_SAFETY_RULES = [
   { id: 'no-cross-account', label: 'AI never mixes data across accounts.' },
   { id: 'canonical-authoritative', label: 'Recorded and calculated metrics remain the source of truth.' },
 ];
+
+// Shared directive / guarantee vocabulary enforced on EVERY sanitized AI
+// output (including the base contract used by trade review). Descriptive words
+// ("entered early", "exit review") are fine; explicit execution orders,
+// directional commands, signals, risk-sizing orders and profit promises are
+// not. This is the single strictest union reused by all features.
+export const AI_DIRECTIVE_PATTERN =
+  /\b(?:buy now|sell now|buy signal|sell signal|entry signal|exit signal|place a buy|place a sell|place buy|place sell|buy at|sell at|go long|go short|long now|short now|buy only|sell only|only buy|only sell|take this trade|take the trade|take the position|guaranteed profit|guarantee.? profit|guaranteed returns|guaranteed outcome|guarantee.? outcome|price prediction|market prediction|predicted price|predicted profit|next (week|session|month).? price|lot recommendation|recommended lot|increase your risk|decrease your risk|increase risk|decrease risk|raise your risk|lower your risk|risk more|risk less|trade this signal|trade the signal|recommended entry|recommended exit|execute (this|the|a)? ?trade|automated trade|100% profit|stop trading|buy this pair|sell this pair|no.?risk|sure thing|guaranteed win)\b/i;
+
+// Throws a controlled AI_INVALID_RESPONSE when free text contains directive /
+// guarantee language. Every feature sanitizer funnels its collected text
+// through this so there is exactly ONE vocabulary across the product.
+export function rejectDirectiveText(text) {
+  if (AI_DIRECTIVE_PATTERN.test(text)) {
+    throw new AIError(AI_ERROR_CODES.AI_INVALID_RESPONSE, 'AI returned directive or guarantee language.');
+  }
+}
 
 // Recursively freezes an (already copied) object graph so downstream AI code
 // literally cannot mutate the structured context/response it was handed.
@@ -61,6 +78,14 @@ export function sanitizeResponse(raw, { disclaimer = AI_DISCLAIMER } = {}) {
     confidence,
     disclaimer: typeof source.disclaimer === 'string' && source.disclaimer ? source.disclaimer : disclaimer,
   };
+
+  // The base contract (trade review) is advisory-only too: directive /
+  // guarantee language never reaches the UI even when it slips past the model.
+  rejectDirectiveText(
+    [sanitized.summary, ...sanitized.observations, ...sanitized.strengths, ...sanitized.weaknesses, ...sanitized.risks, ...sanitized.improvements]
+      .filter(Boolean)
+      .join(' \n ')
+  );
 
   return freezeDeep(sanitized);
 }

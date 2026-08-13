@@ -18,10 +18,10 @@
 // Missing / empty / unknown setup values are grouped under a single
 // "No Setup" bucket so trades are NEVER silently discarded.
 
-import { computeAnalytics } from './analytics';
-import { applyFocusFilter } from './performanceInsights';
-import { memoizeByArgs } from './memoize';
-import { dateKey, SESSION_WINDOWS } from './utils';
+import { computeAnalytics } from './analytics.js';
+import { applyFocusFilter } from './performanceInsights.js';
+import { memoizeByArgs } from './memoize.js';
+import { dateKey, SESSION_WINDOWS } from './utils.js';
 
 // Sample-size guardrails. A setup needs this many *decided* trades (Win or
 // Loss) before its performance is treated as a real sample; anything smaller

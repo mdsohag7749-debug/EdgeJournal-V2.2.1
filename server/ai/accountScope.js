@@ -14,8 +14,8 @@
 // check is what stops an authenticated user of Account A from analyzing
 // Account B.
 
-import { AIError } from '../../src/lib/ai/errors';
-import { AI_ERROR_CODES } from '../../src/lib/ai/types';
+import { AIError } from '../../src/lib/ai/errors.js';
+import { AI_ERROR_CODES } from '../../src/lib/ai/types.js';
 
 // Extracts the ONE account id carried by a validated context.
 export function extractAccountId(kind, context) {

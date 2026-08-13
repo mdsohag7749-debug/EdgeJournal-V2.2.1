@@ -23,9 +23,9 @@
 // to the selected account). Period / pair / session filters operate on the
 // same filtered dataset used elsewhere on Analytics.
 
-import { applyPeriodFilter } from './setupPerformance';
-import { memoizeByArgs } from './memoize';
-import { SESSION_WINDOWS } from './utils';
+import { applyPeriodFilter } from './setupPerformance.js';
+import { memoizeByArgs } from './memoize.js';
+import { SESSION_WINDOWS } from './utils.js';
 
 export const MIN_NORMAL = 5; // 5+ decided trades  -> Normal analysis
 export const MAX_LIMITED = 4; // 1-4 decided trades -> Limited data

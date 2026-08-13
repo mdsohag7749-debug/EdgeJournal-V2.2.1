@@ -2,7 +2,7 @@
 // AIError carrying one of the AI_ERROR_CODES — never a raw provider/HTTP error
 // that could leak an internal hostname, status text, or key material.
 
-import { AI_ERROR_CODES } from './types';
+import { AI_ERROR_CODES } from './types.js';
 
 export class AIError extends Error {
   constructor(code, message, options = {}) {

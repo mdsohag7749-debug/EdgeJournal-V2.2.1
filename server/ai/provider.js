@@ -6,12 +6,12 @@
 // analyze→sanitize→normalize and health pipelines. Raw provider errors never
 // escape here — everything becomes an existing controlled AI error/status.
 
-import { AIError } from './errors';
-import { AI_ERROR_CODES, AI_STATUS_OK } from './errors';
-import { toSafeAIError } from './errors';
-import { createGeminiAdapter } from './adapters/gemini';
-import { sanitizeForKind } from './safety';
-import { frameContextForProvider } from './prompts';
+import { AIError } from './errors.js';
+import { AI_ERROR_CODES, AI_STATUS_OK } from './errors.js';
+import { toSafeAIError } from './errors.js';
+import { createGeminiAdapter } from './adapters/gemini.js';
+import { sanitizeForKind } from './safety.js';
+import { frameContextForProvider } from './prompts.js';
 
 // Resolves a config to a concrete adapter. Unknown/missing provider deploys
 // degrade safely to AI_UNAVAILABLE instead of fabricating output.

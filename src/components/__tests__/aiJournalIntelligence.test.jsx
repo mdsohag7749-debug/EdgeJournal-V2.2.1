@@ -212,6 +212,75 @@ describe('AI Journal Intelligence — production Analytics flow (Sprint 9.3)', (
     expect(screen.queryByText(/100% profit/i)).not.toBeInTheDocument();
   });
 
+  it('renders the deterministic Performance and Risk sections from canonical data', async () => {
+    render(<AIJournalIntelligence provider={successProvider} />);
+    fireEvent.click(screen.getByRole('button', { name: /analyze journal/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/executive read of your recorded journal/i)).toBeInTheDocument();
+    });
+
+    // Performance section — canonical metrics render even though the provider
+    // returned no performance object (they are computed, not model-authored).
+    expect(screen.getByText(/^performance$/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/win rate/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/net p&l/i)).toBeInTheDocument();
+    expect(screen.getByText(/profit factor/i)).toBeInTheDocument();
+
+    // Risk section — canonical risk metrics + flags.
+    expect(screen.getByText(/^risk$/i)).toBeInTheDocument();
+    expect(screen.getByText(/avg risk/i)).toBeInTheDocument();
+
+    // With an all-win 12-trade scope there are no discipline flags to render.
+    expect(screen.queryByText(/3%\+ risk/i)).not.toBeInTheDocument();
+  });
+
+  it('renders the model-authored Psychology, Weaknesses, and Action Plan sections', async () => {
+    const richProvider = {
+      analyze: async () => ({
+        ok: true,
+        status: 'ok',
+        analysis: {
+          summary: 'Rich journal read.',
+          psychology: {
+            summary: 'Focus dips after losses.',
+            observations: ['Possible pattern of impatience after a losing trade.'],
+            possiblePatterns: ['Revenge trading may appear after losing streaks.'],
+          },
+          weaknesses: ['Skipped checklist review'],
+          actionPlan: {
+            keepDoing: ['Keep journaling every trade'],
+            stopDoing: ['Stop ignoring the checklist'],
+            startDoing: ['Start reviewing notes before entry'],
+            nextSessionFocus: 'Focus on execution discipline',
+          },
+          keyPatterns: [{ title: 'Recurring entry delay', observation: 'Entries drift late.', evidence: 'Multiple journal notes flag this.' }],
+          confidence: 0.6,
+          disclaimer: 'Not financial advice.',
+        },
+      }),
+    };
+    render(<AIJournalIntelligence provider={richProvider} />);
+    fireEvent.click(screen.getByRole('button', { name: /analyze journal/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/rich journal read/i)).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/^psychology$/i)).toBeInTheDocument();
+    expect(screen.getByText(/possible pattern of impatience after a losing trade/i)).toBeInTheDocument();
+    expect(screen.getByText(/possible patterns/i)).toBeInTheDocument();
+    expect(screen.getByText(/^weaknesses$/i)).toBeInTheDocument();
+    expect(screen.getByText(/skipped checklist review/i)).toBeInTheDocument();
+    expect(screen.getByText(/^action plan$/i)).toBeInTheDocument();
+    expect(screen.getByText(/keep doing/i)).toBeInTheDocument();
+    expect(screen.getByText(/stop doing/i)).toBeInTheDocument();
+    expect(screen.getByText(/start doing/i)).toBeInTheDocument();
+    expect(screen.getByText(/next session focus/i)).toBeInTheDocument();
+    expect(screen.getByText(/^key patterns$/i)).toBeInTheDocument();
+    expect(screen.getByText(/recurring entry delay/i)).toBeInTheDocument();
+  });
+
   it('marks a previous result STALE the moment the scope changes', async () => {
     render(<AIJournalIntelligence provider={successProvider} />);
     fireEvent.click(screen.getByRole('button', { name: /analyze journal/i }));

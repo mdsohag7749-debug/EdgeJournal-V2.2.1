@@ -11,7 +11,7 @@
 // edited, or removed anywhere else in the app (Trading Journal) — no
 // separate wiring needed here.
 
-import { mondayKey, monthLabel, weekLabel, SESSION_WINDOWS } from './utils';
+import { mondayKey, monthLabel, weekLabel, SESSION_WINDOWS } from './utils.js';
 
 function sortByDate(trades) {
   return [...trades].sort((a, b) => (a.date + (a.entryTime || '')).localeCompare(b.date + (b.entryTime || '')));

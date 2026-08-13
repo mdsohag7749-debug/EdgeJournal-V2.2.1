@@ -369,6 +369,70 @@ describe('I — Response contract validation', () => {
     expect(out.unknown).toBeUndefined();
   });
 
+  it('sanitizeResponse() (base contract / trade review) rejects directive & guarantee language', () => {
+    expect(() => sanitizeResponse({ summary: 'Buy now and lock in guaranteed profit.' })).toThrow(AIError);
+    expect(() => sanitizeResponse({ observations: ['go long for the session'] })).toThrow(AIError);
+    expect(() => sanitizeResponse({ risks: ['increase your risk on the next setup'] })).toThrow(AIError);
+    expect(() => sanitizeResponse({ strengths: ['100% profit guaranteed'] })).toThrow(AIError);
+    // Descriptive text stays allowed.
+    const out = sanitizeResponse({ summary: 'Executed a clean pullback with good risk control.', observations: ['Held through the London open'] });
+    expect(out.summary).toBe('Executed a clean pullback with good risk control.');
+    expect(out.observations).toEqual(['Held through the London open']);
+  });
+
+  it('AI_DIRECTIVE_PATTERN is the strict shared union across features', () => {
+    const pattern = aiPublic.AI_DIRECTIVE_PATTERN;
+    // Strict vocabulary from every feature must be caught by the single pattern.
+    for (const phrase of [
+      'buy now',
+      'sell now',
+      'go long',
+      'go short',
+      'long now',
+      'short now',
+      'buy only',
+      'sell only',
+      'take this trade',
+      'take the trade',
+      'take the position',
+      'guaranteed profit',
+      'guaranteed returns',
+      'guaranteed outcome',
+      'sure thing',
+      'guaranteed win',
+      'price prediction',
+      'predicted price',
+      'next week price',
+      'lot recommendation',
+      'recommended lot',
+      'increase your risk',
+      'decrease your risk',
+      'risk more',
+      'risk less',
+      'raise your risk',
+      'lower your risk',
+      'execute this trade',
+      'execute trade',
+      'execute the trade',
+      'automated trade',
+      '100% profit',
+      'stop trading',
+      'buy this pair',
+      'sell this pair',
+      'no-risk',
+      'no risk',
+      'recommended entry',
+      'recommended exit',
+      'trade this signal',
+    ]) {
+      expect(pattern.test(phrase), `expected "${phrase}" to match AI_DIRECTIVE_PATTERN`).toBe(true);
+    }
+    // Descriptive language must never match.
+    for (const phrase of ['entered early', 'exit review', 'stuck to the plan', 'tight risk control']) {
+      expect(pattern.test(phrase), `expected "${phrase}" NOT to match AI_DIRECTIVE_PATTERN`).toBe(false);
+    }
+  });
+
   it('the contract itself contains no execution- or guarantee-shaped fields', () => {
     const keys = RESPONSE_KEYS.join(' ');
     const banned = /\b(signal|buy|sell|entry_price|guarantee|guaranteed|profit_claim)\b/i;

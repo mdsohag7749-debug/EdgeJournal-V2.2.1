@@ -8,10 +8,10 @@
 // Never returns: the API key, provider secret, tokens, internal exceptions,
 // stack traces, or any environment values.
 
-import { createAIConfig } from './config';
-import { createRateLimiter } from './rateLimit';
-import { runServerHealth } from './provider';
-import { safeLog } from './log';
+import { createAIConfig } from './config.js';
+import { createRateLimiter } from './rateLimit.js';
+import { runServerHealth } from './provider.js';
+import { safeLog } from './log.js';
 
 const healthLimiter = createRateLimiter({ max: 60, windowMs: 60000 });
 

@@ -13,11 +13,11 @@
 // Providers are swap-in adapters registered by name (registerAIAdapter), so
 // Gemini / self-hosted / future models are drop-in replacements.
 
-import { AIError, toSafeAIResult } from './errors';
-import { planForKey } from './types';
-import { AI_ERROR_CODES, AI_STATUS_OK } from './types';
-import { sanitizeResponse } from './safety';
-import { createRemoteAdapter } from './remote';
+import { AIError, toSafeAIResult } from './errors.js';
+import { planForKey } from './types.js';
+import { AI_ERROR_CODES, AI_STATUS_OK } from './types.js';
+import { sanitizeResponse } from './safety.js';
+import { createRemoteAdapter } from './remote.js';
 
 export const AI_DEFAULT_CONFIG = {
   enabled: false,

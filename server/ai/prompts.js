@@ -8,10 +8,10 @@
 // (single source of truth); the server prepends the Sprint 9.6 master
 // instruction on top so every provider call carries the full contract.
 
-import { TRADE_REVIEW_INSTRUCTION } from '../../src/lib/ai/tradeReview';
-import { JOURNAL_INTELLIGENCE_INSTRUCTION } from '../../src/lib/ai/journalIntelligence';
-import { COACHING_INSTRUCTION } from '../../src/lib/ai/coaching';
-import { ASK_JOURNAL_INSTRUCTION } from '../../src/lib/ai/askJournal';
+import { TRADE_REVIEW_INSTRUCTION } from '../../src/lib/ai/tradeReview.js';
+import { JOURNAL_INTELLIGENCE_INSTRUCTION } from '../../src/lib/ai/journalIntelligence.js';
+import { COACHING_INSTRUCTION } from '../../src/lib/ai/coaching.js';
+import { ASK_JOURNAL_INSTRUCTION } from '../../src/lib/ai/askJournal.js';
 
 // The canonical EdgeJournal analytical-assistant instruction. Deliberately
 // server-side ONLY — never exposed to the browser bundle.
