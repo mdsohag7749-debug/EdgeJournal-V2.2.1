@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EdgeJournal - Add Trade</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#171f33",
+                        "on-tertiary": "#67001b",
+                        "surface-tint": "#c0c1ff",
+                        "surface-container-low": "#131b2e",
+                        "surface-container-lowest": "#060e20",
+                        "inverse-surface": "#dae2fd",
+                        "on-secondary-container": "#00311f",
+                        "inverse-on-surface": "#283044",
+                        "on-surface": "#dae2fd",
+                        "primary-container": "#8083ff",
+                        "secondary": "#4edea3",
+                        "primary": "#c0c1ff",
+                        "on-surface-variant": "#c7c4d7",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-primary-fixed": "#07006c",
+                        "secondary-fixed": "#6ffbbe",
+                        "inverse-primary": "#494bd6",
+                        "error": "#ffb4ab",
+                        "on-tertiary-fixed": "#40000d",
+                        "on-tertiary-container": "#5b0017",
+                        "outline": "#908fa0",
+                        "background": "#0b1326",
+                        "primary-fixed": "#e1e0ff",
+                        "secondary-container": "#00a572",
+                        "on-background": "#dae2fd",
+                        "surface-variant": "#2d3449",
+                        "tertiary-container": "#ff516a",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "surface-container-high": "#222a3d",
+                        "error-container": "#93000a",
+                        "on-primary": "#1000a9",
+                        "surface-container-highest": "#2d3449",
+                        "tertiary": "#ffb2b7",
+                        "surface-dim": "#0b1326",
+                        "tertiary-fixed": "#ffdadb",
+                        "on-secondary": "#003824",
+                        "tertiary-fixed-dim": "#ffb2b7",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-primary-container": "#0d0096",
+                        "outline-variant": "#464554",
+                        "surface": "#0b1326",
+                        "on-secondary-fixed": "#002113",
+                        "surface-bright": "#31394d",
+                        "on-error": "#690005",
+                        "on-tertiary-fixed-variant": "#92002a",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#c0c1ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "section-gap": "24px",
+                        "gutter": "12px",
+                        "unit": "4px",
+                        "container-margin": "16px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "display-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "data-mono": ["13px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "display-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .form-input-dark {
+            @apply bg-surface-container-high border border-outline-variant/30 text-on-surface rounded focus:ring-1 focus:ring-primary focus:border-primary px-3 py-2 w-full outline-none transition-colors;
+        }
+        .form-label {
+            @apply font-body-sm text-body-sm text-on-surface-variant mb-1 block;
+        }
+        .step-container {
+            display: none;
+        }
+        .step-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .nav-suppressed {
+            /* Hiding global navs as per instructions for transactional screens */
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col antialiased">
+<!-- Header / TopAppBar Equivalent for Transactional Flow -->
+<header class="sticky top-0 w-full z-40 flex justify-between items-center px-container-margin py-4 bg-background border-b border-outline-variant/20 shadow-md">
+<div class="flex items-center gap-3">
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity" onclick="history.back()">
+<span class="material-symbols-outlined">close</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight">Add Trade</h1>
+</div>
+<div class="text-on-surface-variant font-label-caps text-label-caps" id="step-indicator">
+            Step 1 of 4
+        </div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto px-container-margin py-6 pb-32">
+<!-- Step 1: Trade Basics -->
+<div class="step-container active" id="step-1">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-section-gap">Trade Basics</h2>
+<div class="space-y-4">
+<div>
+<label class="form-label">Account</label>
+<select class="form-input-dark">
+<option>Main Portfolio (USD)</option>
+<option>Prop Firm A</option>
+<option>Crypto Wallet</option>
+</select>
+</div>
+<div>
+<label class="form-label">Instrument</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-sm">search</span>
+<input class="form-input-dark pl-9" placeholder="e.g. NQ, EURUSD, BTC" type="text"/>
+</div>
+</div>
+<div>
+<label class="form-label">Direction</label>
+<div class="flex gap-2">
+<button class="flex-1 py-3 rounded border border-outline-variant/30 bg-surface-container-high text-on-surface hover:border-secondary hover:text-secondary focus:bg-secondary/10 focus:border-secondary transition-colors">
+                            Long
+                        </button>
+<button class="flex-1 py-3 rounded border border-outline-variant/30 bg-surface-container-high text-on-surface hover:border-error hover:text-error focus:bg-error/10 focus:border-error transition-colors">
+                            Short
+                        </button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="form-label">Date</label>
+<input class="form-input-dark" type="date"/>
+</div>
+<div>
+<label class="form-label">Time (Entry)</label>
+<input class="form-input-dark" type="time"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Step 2: Execution -->
+<div class="step-container" id="step-2">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-section-gap">Execution</h2>
+<div class="space-y-4">
+<div class="bg-surface-container rounded-lg p-4 border border-outline-variant/20">
+<label class="form-label">Entry Price</label>
+<input class="form-input-dark font-data-mono text-data-mono text-lg py-3" placeholder="0.00" step="0.01" type="number"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="form-label text-error">Stop Loss</label>
+<input class="form-input-dark font-data-mono text-data-mono" placeholder="0.00" step="0.01" type="number"/>
+</div>
+<div>
+<label class="form-label text-secondary">Take Profit</label>
+<input class="form-input-dark font-data-mono text-data-mono" placeholder="0.00" step="0.01" type="number"/>
+</div>
+</div>
+<div class="pt-2">
+<label class="form-label">Exit Price (Optional)</label>
+<input class="form-input-dark font-data-mono text-data-mono" placeholder="0.00" step="0.01" type="number"/>
+</div>
+<div>
+<label class="form-label">Size / Quantity</label>
+<input class="form-input-dark font-data-mono text-data-mono" placeholder="1.0" type="number"/>
+</div>
+</div>
+</div>
+<!-- Step 3: Journaling -->
+<div class="step-container" id="step-3">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-section-gap">Journaling</h2>
+<div class="space-y-4">
+<div>
+<label class="form-label">Setup</label>
+<select class="form-input-dark">
+<option>Breakout</option>
+<option>Mean Reversion</option>
+<option>Trend Following</option>
+<option>Order Block</option>
+</select>
+</div>
+<div>
+<label class="form-label">Session</label>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 rounded-full border border-primary/50 text-primary text-xs cursor-pointer hover:bg-primary/10">Asia</span>
+<span class="px-3 py-1 rounded-full border border-primary/50 text-primary text-xs cursor-pointer bg-primary/20">London</span>
+<span class="px-3 py-1 rounded-full border border-primary/50 text-primary text-xs cursor-pointer hover:bg-primary/10">New York</span>
+</div>
+</div>
+<div>
+<label class="form-label">Emotions / State</label>
+<div class="flex gap-2">
+<button class="p-2 rounded bg-surface-container border border-outline-variant/30 hover:border-primary"><span class="material-symbols-outlined text-on-surface-variant">sentiment_satisfied</span></button>
+<button class="p-2 rounded bg-surface-container border border-outline-variant/30 hover:border-primary"><span class="material-symbols-outlined text-on-surface-variant">sentiment_neutral</span></button>
+<button class="p-2 rounded bg-surface-container border border-outline-variant/30 hover:border-primary"><span class="material-symbols-outlined text-on-surface-variant">sentiment_dissatisfied</span></button>
+</div>
+</div>
+<div>
+<label class="form-label">Notes</label>
+<textarea class="form-input-dark min-h-[120px] resize-none" placeholder="What were you seeing? Confluences?"></textarea>
+</div>
+</div>
+</div>
+<!-- Step 4: Media -->
+<div class="step-container" id="step-4">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-section-gap">Media</h2>
+<div class="border-2 border-dashed border-outline-variant/40 rounded-lg p-8 flex flex-col items-center justify-center text-center bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-4xl text-primary mb-2">cloud_upload</span>
+<p class="font-body-lg text-body-lg text-on-surface mb-1">Upload Screenshots</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Drag and drop or tap to browse</p>
+</div>
+<div class="mt-4 grid grid-cols-2 gap-3">
+<!-- Example uploaded placeholder -->
+<div class="relative rounded-lg overflow-hidden h-24 border border-outline-variant/30 bg-surface-container">
+<div class="absolute inset-0 flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-3xl opacity-50">image</span>
+</div>
+<button class="absolute top-1 right-1 bg-surface-container-highest rounded-full p-1 shadow">
+<span class="material-symbols-outlined text-xs">close</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Sticky Bottom Actions -->
+<div class="fixed bottom-0 left-0 w-full z-50 bg-surface/90 backdrop-blur-md border-t border-outline-variant/20 px-container-margin py-4 flex justify-between items-center shadow-[0_-4px_15px_rgba(0,0,0,0.2)]">
+<button class="px-6 py-2.5 rounded font-label-caps text-label-caps text-on-surface-variant border border-outline-variant/40 hover:bg-surface-container transition-colors invisible" id="btn-prev">
+            Back
+        </button>
+<div class="flex gap-3">
+<button class="px-6 py-2.5 rounded font-label-caps text-label-caps text-on-surface border border-outline-variant/40 hover:bg-surface-container transition-colors">
+                Cancel
+            </button>
+<button class="px-6 py-2.5 rounded font-label-caps text-label-caps bg-primary text-on-primary hover:opacity-90 transition-opacity shadow-lg shadow-primary/20" id="btn-next">
+                Next
+            </button>
+<button class="px-6 py-2.5 rounded font-label-caps text-label-caps bg-primary text-on-primary hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 hidden" id="btn-save">
+                Save Trade
+            </button>
+</div>
+</div>
+<script>
+        let currentStep = 1;
+        const totalSteps = 4;
+        const stepContainers = document.querySelectorAll('.step-container');
+        const btnNext = document.getElementById('btn-next');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnSave = document.getElementById('btn-save');
+        const stepIndicator = document.getElementById('step-indicator');
+
+        function updateUI() {
+            // Update containers
+            stepContainers.forEach((container, index) => {
+                if (index + 1 === currentStep) {
+                    container.classList.add('active');
+                } else {
+                    container.classList.remove('active');
+                }
+            });
+
+            // Update buttons
+            if (currentStep === 1) {
+                btnPrev.classList.add('invisible');
+            } else {
+                btnPrev.classList.remove('invisible');
+            }
+
+            if (currentStep === totalSteps) {
+                btnNext.classList.add('hidden');
+                btnSave.classList.remove('hidden');
+            } else {
+                btnNext.classList.remove('hidden');
+                btnSave.classList.add('hidden');
+            }
+            
+            // Update indicator
+            stepIndicator.textContent = `Step ${currentStep} of ${totalSteps}`;
+        }
+
+        btnNext.addEventListener('click', () => {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateUI();
+                window.scrollTo(0,0);
+            }
+        });
+
+        btnPrev.addEventListener('click', () => {
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+                window.scrollTo(0,0);
+            }
+        });
+        
+        // Initial setup
+        updateUI();
+    </script>
+</body></html>

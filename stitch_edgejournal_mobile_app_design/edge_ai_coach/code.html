@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Edge AI Coach</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface-variant": "#c7c4d7",
+                    "inverse-on-surface": "#283044",
+                    "surface-bright": "#31394d",
+                    "surface-container-lowest": "#060e20",
+                    "secondary": "#4edea3",
+                    "on-secondary-fixed": "#002113",
+                    "error-container": "#93000a",
+                    "outline-variant": "#464554",
+                    "primary-fixed-dim": "#c0c1ff",
+                    "on-surface": "#dae2fd",
+                    "tertiary-fixed-dim": "#ffb2b7",
+                    "on-tertiary-fixed": "#40000d",
+                    "on-primary-fixed-variant": "#2f2ebe",
+                    "on-tertiary": "#67001b",
+                    "surface-dim": "#0b1326",
+                    "inverse-primary": "#494bd6",
+                    "on-tertiary-container": "#5b0017",
+                    "tertiary": "#ffb2b7",
+                    "on-secondary-fixed-variant": "#005236",
+                    "on-primary": "#1000a9",
+                    "surface-variant": "#2d3449",
+                    "on-tertiary-fixed-variant": "#92002a",
+                    "background": "#0b1326",
+                    "on-error-container": "#ffdad6",
+                    "surface": "#0b1326",
+                    "secondary-fixed": "#6ffbbe",
+                    "on-error": "#690005",
+                    "tertiary-fixed": "#ffdadb",
+                    "surface-container-highest": "#2d3449",
+                    "primary-fixed": "#e1e0ff",
+                    "error": "#ffb4ab",
+                    "surface-container": "#171f33",
+                    "on-secondary": "#003824",
+                    "secondary-container": "#00a572",
+                    "surface-container-high": "#222a3d",
+                    "on-background": "#dae2fd",
+                    "inverse-surface": "#dae2fd",
+                    "secondary-fixed-dim": "#4edea3",
+                    "on-primary-container": "#0d0096",
+                    "on-secondary-container": "#00311f",
+                    "tertiary-container": "#ff516a",
+                    "surface-tint": "#c0c1ff",
+                    "primary": "#c0c1ff",
+                    "surface-container-low": "#131b2e",
+                    "outline": "#908fa0",
+                    "on-primary-fixed": "#07006c",
+                    "primary-container": "#8083ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "gutter": "12px",
+                    "section-gap": "24px",
+                    "container-margin": "16px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "data-mono": ["JetBrains Mono"],
+                    "display-lg-mobile": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "data-mono": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "display-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(23, 31, 51, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(70, 69, 84, 0.3);
+        }
+        .ai-glow {
+            box-shadow: 0 0 20px rgba(192, 193, 255, 0.15);
+        }
+        .status-pillar {
+            width: 4px;
+            height: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+            border-radius: 0.125rem 0 0 0.125rem;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-lg antialiased pb-24 md:pb-0">
+<!-- TopAppBar (Mobile) -->
+<header class="sticky top-0 w-full z-40 flex justify-between items-center px-container-margin py-4 bg-background dark:bg-background border-b border-outline-variant/20 md:hidden">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="A highly detailed close up portrait of a professional trader in a dark, high-end minimalist environment. Moody lighting emphasizing focus and determination. High contrast, sharp focus, corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDi7f0hB3wpa9EkqBADpIpMz0oN77sMjIovlodSOy6Fla9BlrpYMNcrZwG7jpdw-GT8sl0TWsN8tJe8XjQ7l4UYLWKT7UeZ7mar3IYSxnIhnAK9wUK32ViL1I1vlFMwqGJpTvaBansAcG5nLAQqZB0GJ-Okkp2cF8us2X2R_me_C1Jck4ME6ukVbflFUqTF3wy2yPgbdvNbeFcblrtRZA71smvP6SZsFdqpvqAWy264J5Fp6saKdui6"/>
+</div>
+<span class="font-display-lg-mobile text-display-lg-mobile font-bold text-primary tracking-tight">Edge AI</span>
+</div>
+<button class="text-on-surface-variant hover:opacity-80 cursor-pointer transition-opacity">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet" data-weight="fill" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="max-w-7xl mx-auto md:grid md:grid-cols-12 md:gap-gutter px-container-margin py-section-gap">
+<!-- Desktop Nav Placeholder (Hidden on Mobile) -->
+<aside class="hidden md:flex md:col-span-3 lg:col-span-2 flex-col gap-unit sticky top-24 h-fit">
+<div class="font-display-lg text-display-lg font-bold text-primary tracking-tight mb-8">Edge AI</div>
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-body-sm text-body-sm">Home</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="import_contacts">import_contacts</span>
+<span class="font-body-sm text-body-sm">Journal</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="font-body-sm text-body-sm">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary-container/10 border border-primary/20 text-primary ai-glow" href="#">
+<span class="material-symbols-outlined" data-icon="psychology" data-weight="fill" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span class="font-body-sm text-body-sm font-semibold">Edge AI</span>
+</a>
+</nav>
+</aside>
+<!-- Canvas Area -->
+<div class="md:col-span-9 lg:col-span-10 flex flex-col gap-section-gap">
+<!-- AI Header -->
+<section class="flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary" data-icon="auto_awesome">auto_awesome</span>
+<h1 class="font-headline-md text-headline-md-mobile md:font-display-lg md:text-display-lg text-on-background">Your Weekly Briefing</h1>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-2xl">I've analyzed your recent journal entries and market activity. You're showing strong discipline in trending markets, but early exits are dampening your win rate.</p>
+</section>
+<!-- Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Current Focus Areas (Spans 2 cols on tablet+) -->
+<div class="glass-panel rounded-xl p-4 md:col-span-2 flex flex-col gap-4 relative overflow-hidden group">
+<div class="status-pillar bg-primary"></div>
+<div class="flex items-center justify-between">
+<h2 class="font-body-sm text-body-sm font-semibold text-on-surface uppercase tracking-wider">Current Focus Areas</h2>
+<span class="material-symbols-outlined text-primary-container text-sm" data-icon="target">target</span>
+</div>
+<div class="grid grid-cols-2 gap-2 mt-2">
+<div class="bg-surface-container-low border border-outline-variant/30 rounded-lg p-3 flex flex-col gap-1">
+<span class="font-data-mono text-data-mono text-on-surface-variant">Avg Win Hold</span>
+<span class="font-headline-md text-headline-md-mobile text-primary">45m</span>
+<div class="flex items-center gap-1 text-error text-[10px]">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_downward">arrow_downward</span>
+<span>-12m from target</span>
+</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant/30 rounded-lg p-3 flex flex-col gap-1">
+<span class="font-data-mono text-data-mono text-on-surface-variant">Risk/Reward</span>
+<span class="font-headline-md text-headline-md-mobile text-secondary">1:2.4</span>
+<div class="flex items-center gap-1 text-secondary text-[10px]">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>
+<span>Optimal zone</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Discipline Trends -->
+<div class="glass-panel rounded-xl p-4 flex flex-col gap-4 relative overflow-hidden">
+<div class="status-pillar bg-secondary"></div>
+<div class="flex items-center justify-between">
+<h2 class="font-body-sm text-body-sm font-semibold text-on-surface uppercase tracking-wider">Discipline Trends</h2>
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="monitoring">monitoring</span>
+</div>
+<div class="flex-1 flex items-end justify-center py-2">
+<!-- Pseudo chart -->
+<div class="flex items-end gap-1 w-full h-16 opacity-80">
+<div class="w-1/6 bg-outline-variant/50 h-1/3 rounded-t-sm"></div>
+<div class="w-1/6 bg-outline-variant/50 h-1/2 rounded-t-sm"></div>
+<div class="w-1/6 bg-outline-variant/50 h-2/3 rounded-t-sm"></div>
+<div class="w-1/6 bg-secondary/80 h-full rounded-t-sm ai-glow"></div>
+<div class="w-1/6 bg-secondary/60 h-5/6 rounded-t-sm"></div>
+<div class="w-1/6 bg-secondary/40 h-3/4 rounded-t-sm"></div>
+</div>
+</div>
+<p class="font-data-mono text-data-mono text-center text-on-surface-variant mt-2 text-[11px]">Consistent rule adherence +15%</p>
+</div>
+</div>
+<!-- AI Action Plan -->
+<section class="flex flex-col gap-4 mt-4">
+<h2 class="font-headline-md text-headline-md-mobile text-on-surface">Action Plan</h2>
+<div class="flex flex-col gap-3">
+<!-- Keep Doing -->
+<div class="bg-surface-container rounded-lg p-4 border border-outline-variant/20 flex gap-4 items-start">
+<div class="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center shrink-0 mt-1">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="check_circle">check_circle</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-body-sm text-body-sm font-semibold text-secondary">Keep Doing</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Logging trades within 15 minutes of execution. This context is invaluable for my analysis.</p>
+</div>
+</div>
+<!-- Stop Doing -->
+<div class="bg-surface-container rounded-lg p-4 border border-outline-variant/20 flex gap-4 items-start">
+<div class="w-8 h-8 rounded-full bg-error/10 flex items-center justify-center shrink-0 mt-1">
+<span class="material-symbols-outlined text-error text-[18px]" data-icon="cancel">cancel</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-body-sm text-body-sm font-semibold text-error">Stop Doing</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Moving stop losses closer to entry on pullbacks during high-volume sessions. You were stopped out unnecessarily 3 times this week.</p>
+</div>
+</div>
+<!-- Start Doing -->
+<div class="bg-surface-container rounded-lg p-4 border border-primary/30 flex gap-4 items-start ai-glow">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-1">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="rocket_launch">rocket_launch</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-body-sm text-body-sm font-semibold text-primary">Start Doing</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Scaling out in thirds rather than exiting full positions at first target. Let's aim for a 60m average hold time.</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl rounded-t-full bg-surface-container dark:bg-surface-container border-t border-outline-variant/30 shadow-lg md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-caps text-label-caps mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="import_contacts">import_contacts</span>
+<span class="font-label-caps text-label-caps mt-1">Journal</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="font-label-caps text-label-caps mt-1">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container/20 text-primary rounded-full px-3 py-1 shadow-[0_0_15px_rgba(192,193,255,0.2)] hover:text-primary transition-colors active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="psychology" data-weight="fill" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span class="font-label-caps text-label-caps mt-1">Edge AI</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+<span class="font-label-caps text-label-caps mt-1">More</span>
+</a>
+</nav>
+</body></html>

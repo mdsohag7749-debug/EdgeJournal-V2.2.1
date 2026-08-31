@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Goals Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#c7c4d7",
+                        "inverse-on-surface": "#283044",
+                        "surface-bright": "#31394d",
+                        "surface-container-lowest": "#060e20",
+                        "secondary": "#4edea3",
+                        "on-secondary-fixed": "#002113",
+                        "error-container": "#93000a",
+                        "outline-variant": "#464554",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-surface": "#dae2fd",
+                        "tertiary-fixed-dim": "#ffb2b7",
+                        "on-tertiary-fixed": "#40000d",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-tertiary": "#67001b",
+                        "surface-dim": "#0b1326",
+                        "inverse-primary": "#494bd6",
+                        "on-tertiary-container": "#5b0017",
+                        "tertiary": "#ffb2b7",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-primary": "#1000a9",
+                        "surface-variant": "#2d3449",
+                        "on-tertiary-fixed-variant": "#92002a",
+                        "background": "#0b1326",
+                        "on-error-container": "#ffdad6",
+                        "surface": "#0b1326",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#ffdadb",
+                        "surface-container-highest": "#2d3449",
+                        "primary-fixed": "#e1e0ff",
+                        "error": "#ffb4ab",
+                        "surface-container": "#171f33",
+                        "on-secondary": "#003824",
+                        "secondary-container": "#00a572",
+                        "surface-container-high": "#222a3d",
+                        "on-background": "#dae2fd",
+                        "inverse-surface": "#dae2fd",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-primary-container": "#0d0096",
+                        "on-secondary-container": "#00311f",
+                        "tertiary-container": "#ff516a",
+                        "surface-tint": "#c0c1ff",
+                        "primary": "#c0c1ff",
+                        "surface-container-low": "#131b2e",
+                        "outline": "#908fa0",
+                        "on-primary-fixed": "#07006c",
+                        "primary-container": "#8083ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "gutter": "12px",
+                        "section-gap": "24px",
+                        "container-margin": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "display-lg-mobile": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "data-mono": ["13px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "display-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                },
+            }
+        }
+    </script>
+<style>
+        body { background-color: theme('colors.background'); color: theme('colors.on-background'); }
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col pb-24">
+<!-- TopAppBar -->
+<header class="sticky top-0 w-full z-40 flex justify-between items-center px-container-margin py-4 bg-background dark:bg-background border-b border-outline-variant/20">
+<div class="flex items-center gap-3 cursor-pointer transition-opacity hover:opacity-80">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high border border-outline-variant/30">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="A macro shot of a sleek, minimalist metallic sphere reflecting soft blue neon lights in a dark corporate setting, conveying a sense of premium professionalism and high-tech precision. Deep slate gray background with subtle indigo gradients." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCserrtAbuNLnDrvoQVvLtBENfS3gswlemvRWPhnkhLn8H__LrKRf0MTT_tHUsxY3YBeGjBuwSzYefKfuyCjYFDfVhXt3ysfPU7YirSVZACE0mcFttld30zVi-BYTmJgmS5Fa40NLGDrNHuOIhmZ76J2IghcFe68TJ6a2LMgVNOUHCOQm62hw0m7k8cXnvrPWbkj1aDRMeu-DB2HG0m4--yAA5_H7cTNkEfVjB08Y00hSDX4h0tHOfq"/>
+</div>
+<span class="font-display-lg-mobile text-display-lg-mobile font-bold text-primary tracking-tight">EdgeJournal</span>
+</div>
+<div class="cursor-pointer transition-opacity hover:opacity-80 text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_balance_wallet</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-container-margin pt-section-gap flex flex-col gap-section-gap max-w-2xl mx-auto w-full">
+<!-- Header Section -->
+<div class="flex flex-col gap-unit">
+<h1 class="font-headline-md text-headline-md-mobile text-on-background">Trading Goals</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Track your discipline and profit milestones.</p>
+</div>
+<!-- Active Goals Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Goal Card 1: Discipline Focus -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-4 relative overflow-hidden flex flex-col gap-4 shadow-lg">
+<!-- Status Pillar -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary rounded-l-xl"></div>
+<div class="flex justify-between items-start pl-2">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-secondary uppercase tracking-wider">In Progress</span>
+<h2 class="font-body-lg text-body-lg font-semibold text-on-surface mt-1">Stick to Risk Rules</h2>
+</div>
+<span class="material-symbols-outlined text-outline" style="font-variation-settings: 'FILL' 0;">rule</span>
+</div>
+<div class="flex flex-col gap-2 pl-2 mt-2">
+<div class="flex justify-between items-end">
+<span class="font-data-mono text-data-mono text-on-surface">8 / 10 Trades</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">80%</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 80%;"></div>
+</div>
+</div>
+<div class="flex justify-between items-center pl-2 pt-2 border-t border-outline-variant/20 mt-auto">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span class="font-body-sm text-body-sm text-[12px]">Due: Today</span>
+</div>
+<div class="bg-secondary/10 px-2 py-1 rounded border border-secondary/20">
+<span class="font-label-caps text-label-caps text-secondary">High Priority</span>
+</div>
+</div>
+</div>
+<!-- Goal Card 2: Performance Focus -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-4 relative overflow-hidden flex flex-col gap-4 shadow-lg">
+<!-- Status Pillar (Active/Primary) -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl shadow-[0_0_10px_rgba(192,193,255,0.4)]"></div>
+<div class="flex justify-between items-start pl-2">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-primary uppercase tracking-wider">Target Active</span>
+<h2 class="font-body-lg text-body-lg font-semibold text-on-surface mt-1">Reach 5% Profit</h2>
+</div>
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+</div>
+<div class="flex flex-col gap-2 pl-2 mt-2">
+<div class="flex justify-between items-end">
+<span class="font-data-mono text-data-mono text-on-surface">3.2% / 5.0%</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">64%</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full relative" style="width: 64%;">
+<!-- Subtle glow on progress -->
+<div class="absolute right-0 top-0 bottom-0 w-4 bg-white/20 blur-sm rounded-r-full"></div>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center pl-2 pt-2 border-t border-outline-variant/20 mt-auto">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">calendar_month</span>
+<span class="font-body-sm text-body-sm text-[12px]">Ends: Friday</span>
+</div>
+<!-- AI Badge -->
+<div class="bg-primary/10 px-2 py-1 rounded-full border border-primary/20 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-primary">auto_awesome</span>
+<span class="font-label-caps text-label-caps text-primary">On Track</span>
+</div>
+</div>
+</div>
+<!-- Goal Card 3: Long Term -->
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/30 p-4 relative overflow-hidden flex flex-col gap-4 md:col-span-2">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-outline rounded-l-xl"></div>
+<div class="flex justify-between items-center pl-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-surface-container flex items-center justify-center border border-outline-variant/20">
+<span class="material-symbols-outlined text-on-surface-variant">account_balance</span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-body-lg text-body-lg font-semibold text-on-surface">Grow Account Size</h2>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-[12px]">Quarterly Milestone</span>
+</div>
+</div>
+<span class="font-data-mono text-data-mono text-on-surface">$10k / $25k</span>
+</div>
+<div class="pl-2 pr-2">
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-outline rounded-full" style="width: 40%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Add Goal Action -->
+<div class="flex justify-center mt-4">
+<button class="bg-primary/10 border border-primary/30 text-primary font-body-sm text-body-sm font-semibold py-3 px-6 rounded-lg flex items-center gap-2 hover:bg-primary/20 transition-colors active:scale-95 shadow-[0_0_15px_rgba(192,193,255,0.1)]">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                Create New Goal
+            </button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-t border-outline-variant/30 shadow-lg rounded-t-full md:hidden">
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150 cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150 cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">import_contacts</span>
+<span class="font-label-caps text-label-caps">Journal</span>
+</div>
+<!-- Active Goal Tab -->
+<div class="flex flex-col items-center justify-center bg-primary-container/20 text-primary rounded-full px-3 py-1 shadow-[0_0_15px_rgba(192,193,255,0.2)] active:scale-95 transition-transform duration-150 cursor-default">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150 cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">psychology</span>
+<span class="font-label-caps text-label-caps">Edge AI</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150 cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">more_horiz</span>
+<span class="font-label-caps text-label-caps">More</span>
+</div>
+</nav>
+</body></html>

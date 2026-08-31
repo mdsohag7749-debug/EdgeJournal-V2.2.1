@@ -11,3 +11,10 @@ dev-dist
 dev-server*.log
 dev.log
 .vercel
+.expo/
+.expo
+android/build/
+android/app/build/
+android/.gradle/
+*.keystore
+*.jks

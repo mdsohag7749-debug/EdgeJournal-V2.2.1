@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "EdgeJournal",
+    "slug": "edgejournal-mobile",
+    "scheme": "edgejournal",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0D11"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.edgejournal.mobile",
+      "buildNumber": "1.0.0"
+    },
+    "android": {
+      "package": "com.edgejournal.mobile",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0B0D11"
+      },
+      "permissions": [
+        "INTERNET",
+        "VIBRATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "apiBaseUrl": "https://edgejournal.app",
+      "supabaseUrl": "",
+      "supabaseAnonKey": "",
+      "eas": {
+        "projectId": "971b7fb5-fea2-475c-a8a5-3249f6170ea2"
+      }
+    },
+    "owner": "sohag19"
+  }
+}

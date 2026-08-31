@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EdgeJournal - Study Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "on-surface-variant": "#c7c4d7",
+                            "inverse-on-surface": "#283044",
+                            "surface-bright": "#31394d",
+                            "surface-container-lowest": "#060e20",
+                            "secondary": "#4edea3",
+                            "on-secondary-fixed": "#002113",
+                            "error-container": "#93000a",
+                            "outline-variant": "#464554",
+                            "primary-fixed-dim": "#c0c1ff",
+                            "on-surface": "#dae2fd",
+                            "tertiary-fixed-dim": "#ffb2b7",
+                            "on-tertiary-fixed": "#40000d",
+                            "on-primary-fixed-variant": "#2f2ebe",
+                            "on-tertiary": "#67001b",
+                            "surface-dim": "#0b1326",
+                            "inverse-primary": "#494bd6",
+                            "on-tertiary-container": "#5b0017",
+                            "tertiary": "#ffb2b7",
+                            "on-secondary-fixed-variant": "#005236",
+                            "on-primary": "#1000a9",
+                            "surface-variant": "#2d3449",
+                            "on-tertiary-fixed-variant": "#92002a",
+                            "background": "#0b1326",
+                            "on-error-container": "#ffdad6",
+                            "surface": "#0b1326",
+                            "secondary-fixed": "#6ffbbe",
+                            "on-error": "#690005",
+                            "tertiary-fixed": "#ffdadb",
+                            "surface-container-highest": "#2d3449",
+                            "primary-fixed": "#e1e0ff",
+                            "error": "#ffb4ab",
+                            "surface-container": "#171f33",
+                            "on-secondary": "#003824",
+                            "secondary-container": "#00a572",
+                            "surface-container-high": "#222a3d",
+                            "on-background": "#dae2fd",
+                            "inverse-surface": "#dae2fd",
+                            "secondary-fixed-dim": "#4edea3",
+                            "on-primary-container": "#0d0096",
+                            "on-secondary-container": "#00311f",
+                            "tertiary-container": "#ff516a",
+                            "surface-tint": "#c0c1ff",
+                            "primary": "#c0c1ff",
+                            "surface-container-low": "#131b2e",
+                            "outline": "#908fa0",
+                            "on-primary-fixed": "#07006c",
+                            "primary-container": "#8083ff"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.125rem",
+                            "lg": "0.25rem",
+                            "xl": "0.5rem",
+                            "full": "0.75rem"
+                    },
+                    "spacing": {
+                            "unit": "4px",
+                            "gutter": "12px",
+                            "section-gap": "24px",
+                            "container-margin": "16px"
+                    },
+                    "fontFamily": {
+                            "display-lg": ["Inter"],
+                            "body-lg": ["Inter"],
+                            "data-mono": ["JetBrains Mono"],
+                            "display-lg-mobile": ["Inter"],
+                            "label-caps": ["Inter"],
+                            "headline-md": ["Inter"],
+                            "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                            "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                            "data-mono": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
+                            "display-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                            "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                            "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                            "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0b1326; /* bg-background */
+            color: #dae2fd; /* text-on-background */
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .glass-card {
+            background: linear-gradient(145deg, rgba(23, 31, 51, 0.7) 0%, rgba(19, 27, 46, 0.4) 100%);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(70, 69, 84, 0.3);
+        }
+
+        .active-glow {
+            box-shadow: 0 0 15px rgba(192, 193, 255, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-background dark:bg-background text-on-background pb-24 md:hidden">
+<!-- TopAppBar Component -->
+<header class="sticky top-0 w-full z-40 flex justify-between items-center px-container-margin py-4 bg-background dark:bg-background border-b border-outline-variant/20">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high border border-outline-variant/30 flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A macro shot of a sleek, dark metallic user avatar placeholder icon against a deep navy background, reflecting a high-end minimalist corporate aesthetic. Subtle neon violet rim lighting accents the edge, creating a sophisticated professional trading tool vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBK52tyFR12nQ4NY6lWZN9tRfcu8W_q2wh96QHbj2djtcTtoZUGDhK0Gi2fO8p8hpUcJvh1mPS-wp03C85564btsL93LL4tksIQi34RDhZ3HuQJ3tC5qsQnIoReZk7jTkW7j-okINAkpp7ctTUWWX6orjIilwlhMjD55DKk3OVvc_EHKW2xHGj9XCh30U8f1gCDalY7LKIF59UoqRfzdnN98bFjtgXhH0uj4dI-1yXb0j1GyXhMSd45"/>
+</div>
+</div>
+<div class="font-display-lg-mobile text-display-lg-mobile font-bold text-primary tracking-tight">EdgeJournal</div>
+<div class="cursor-pointer transition-opacity hover:opacity-80 text-on-surface-variant flex items-center justify-center w-8 h-8">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet" data-weight="fill" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</div>
+</header>
+<main class="px-container-margin py-section-gap flex flex-col gap-section-gap">
+<!-- Header Section -->
+<div>
+<h1 class="font-headline-md text-headline-md-mobile text-on-background">Study Hub</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Master trading concepts and review your learning queue.</p>
+</div>
+<!-- Progress Overview Bento -->
+<div class="glass-card rounded-xl p-4 flex flex-col gap-4 relative overflow-hidden">
+<!-- Decorative background element -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex justify-between items-center z-10">
+<h2 class="font-body-lg text-body-lg font-semibold text-on-surface">Overall Progress</h2>
+<span class="font-data-mono text-data-mono text-primary">68%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden z-10">
+<div class="h-full bg-primary rounded-full w-[68%] transition-all duration-1000 ease-out"></div>
+</div>
+<div class="flex gap-4 mt-2 z-10">
+<div class="flex-1 bg-surface-container/50 rounded-lg p-3 border border-outline-variant/20">
+<div class="font-data-mono text-data-mono text-on-surface-variant mb-1">Modules</div>
+<div class="font-headline-md text-headline-md-mobile text-on-surface">12<span class="text-on-surface-variant text-sm font-normal">/24</span></div>
+</div>
+<div class="flex-1 bg-surface-container/50 rounded-lg p-3 border border-outline-variant/20">
+<div class="font-data-mono text-data-mono text-on-surface-variant mb-1">XP Points</div>
+<div class="font-headline-md text-headline-md-mobile text-secondary">3,450</div>
+</div>
+</div>
+</div>
+<!-- Revision Queue Section -->
+<section>
+<div class="flex justify-between items-center mb-4">
+<h2 class="font-body-lg text-body-lg font-semibold text-on-background">Revision Queue</h2>
+<span class="font-label-caps text-label-caps text-primary uppercase cursor-pointer hover:opacity-80">View All</span>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Queue Item 1 -->
+<div class="flex items-center gap-4 bg-surface-container-low rounded-lg p-3 border border-outline-variant/30 active-glow">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-primary" data-icon="candlestick_chart">candlestick_chart</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="font-body-sm text-body-sm font-semibold text-on-surface truncate">Market Structure Shifts</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1">Due today • 15 min read</div>
+</div>
+<button class="w-8 h-8 rounded-full border border-primary text-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="play_arrow" data-weight="fill" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+</div>
+<!-- Queue Item 2 -->
+<div class="flex items-center gap-4 bg-surface-container-lowest rounded-lg p-3 border border-outline-variant/20">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="water_drop">water_drop</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="font-body-sm text-body-sm font-semibold text-on-surface truncate">Liquidity Pools</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1">Due tomorrow • Quiz</div>
+</div>
+<button class="w-8 h-8 rounded-full border border-outline-variant text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="play_arrow">play_arrow</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Topics Grid -->
+<section>
+<div class="flex justify-between items-center mb-4">
+<h2 class="font-body-lg text-body-lg font-semibold text-on-background">Explore Topics</h2>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<!-- Topic Card 1 -->
+<div class="glass-card rounded-xl p-4 flex flex-col gap-6 relative group overflow-hidden cursor-pointer hover:bg-surface-container/50 transition-colors">
+<div class="absolute top-0 right-0 p-2 opacity-30 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-secondary" data-icon="bookmark" data-weight="fill" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="architecture">architecture</span>
+</div>
+<div>
+<div class="font-body-sm text-body-sm font-semibold text-on-surface">Market Structure</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1">8 Modules</div>
+</div>
+</div>
+<!-- Topic Card 2 -->
+<div class="glass-card rounded-xl p-4 flex flex-col gap-6 relative group overflow-hidden cursor-pointer hover:bg-surface-container/50 transition-colors">
+<div class="absolute top-0 right-0 p-2 opacity-30 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="bookmark">bookmark</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-high border border-outline-variant/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface" data-icon="psychology">psychology</span>
+</div>
+<div>
+<div class="font-body-sm text-body-sm font-semibold text-on-surface">Trading Psychology</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1">5 Modules</div>
+</div>
+</div>
+<!-- Topic Card 3 -->
+<div class="glass-card rounded-xl p-4 flex flex-col gap-6 relative group overflow-hidden cursor-pointer hover:bg-surface-container/50 transition-colors">
+<div class="absolute top-0 right-0 p-2 opacity-30 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="bookmark">bookmark</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-high border border-outline-variant/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface" data-icon="monitoring">monitoring</span>
+</div>
+<div>
+<div class="font-body-sm text-body-sm font-semibold text-on-surface">Risk Management</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1">10 Modules</div>
+</div>
+</div>
+<!-- Topic Card 4 -->
+<div class="glass-card rounded-xl p-4 flex flex-col gap-6 relative group overflow-hidden cursor-pointer hover:bg-surface-container/50 transition-colors">
+<div class="absolute top-0 right-0 p-2 opacity-30 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="bookmark">bookmark</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-high border border-outline-variant/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface" data-icon="currency_exchange">currency_exchange</span>
+</div>
+<div>
+<div class="font-body-sm text-body-sm font-semibold text-on-surface">Order Flow</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1">6 Modules</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar Component -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl rounded-t-full bg-surface-container dark:bg-surface-container shadow-lg">
+<!-- Home (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</a>
+<!-- Journal (Active - interpreting Study Hub as a primary learning destination closely tied to Journal/Knowledge) -->
+<a class="flex flex-col items-center justify-center bg-primary-container/20 text-primary rounded-full px-3 py-1 shadow-[0_0_15px_rgba(192,193,255,0.2)] hover:text-primary transition-colors active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="import_contacts" data-weight="fill" style="font-variation-settings: 'FILL' 1;">import_contacts</span>
+<span class="font-label-caps text-label-caps">Journal</span>
+</a>
+<!-- Analytics (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="leaderboard">leaderboard</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</a>
+<!-- Edge AI (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="psychology">psychology</span>
+<span class="font-label-caps text-label-caps">Edge AI</span>
+</a>
+<!-- More (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="more_horiz">more_horiz</span>
+<span class="font-label-caps text-label-caps">More</span>
+</a>
+</nav>
+</body></html>

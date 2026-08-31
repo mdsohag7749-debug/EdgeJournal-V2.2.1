@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Challenge Tracker</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#c7c4d7",
+                        "inverse-on-surface": "#283044",
+                        "surface-bright": "#31394d",
+                        "surface-container-lowest": "#060e20",
+                        "secondary": "#4edea3",
+                        "on-secondary-fixed": "#002113",
+                        "error-container": "#93000a",
+                        "outline-variant": "#464554",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-surface": "#dae2fd",
+                        "tertiary-fixed-dim": "#ffb2b7",
+                        "on-tertiary-fixed": "#40000d",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-tertiary": "#67001b",
+                        "surface-dim": "#0b1326",
+                        "inverse-primary": "#494bd6",
+                        "on-tertiary-container": "#5b0017",
+                        "tertiary": "#ffb2b7",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-primary": "#1000a9",
+                        "surface-variant": "#2d3449",
+                        "on-tertiary-fixed-variant": "#92002a",
+                        "background": "#0b1326",
+                        "on-error-container": "#ffdad6",
+                        "surface": "#0b1326",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#ffdadb",
+                        "surface-container-highest": "#2d3449",
+                        "primary-fixed": "#e1e0ff",
+                        "error": "#ffb4ab",
+                        "surface-container": "#171f33",
+                        "on-secondary": "#003824",
+                        "secondary-container": "#00a572",
+                        "surface-container-high": "#222a3d",
+                        "on-background": "#dae2fd",
+                        "inverse-surface": "#dae2fd",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-primary-container": "#0d0096",
+                        "on-secondary-container": "#00311f",
+                        "tertiary-container": "#ff516a",
+                        "surface-tint": "#c0c1ff",
+                        "primary": "#c0c1ff",
+                        "surface-container-low": "#131b2e",
+                        "outline": "#908fa0",
+                        "on-primary-fixed": "#07006c",
+                        "primary-container": "#8083ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "gutter": "12px",
+                        "section-gap": "24px",
+                        "container-margin": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "display-lg-mobile": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "data-mono": ["13px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "display-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .progress-bar-bg { background-color: #171f33; } /* surface-container */
+        .progress-bar-fill-profit { background-color: #4edea3; } /* secondary */
+        .progress-bar-fill-drawdown { background-color: #ffb4ab; } /* error */
+        
+        .status-pillar-active { background-color: #c0c1ff; } /* primary */
+        
+        /* Subtle glow for active state */
+        .glow-active { box-shadow: 0 0 15px rgba(192, 193, 255, 0.2); }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-lg">
+<!-- TopAppBar from JSON -->
+<header class="sticky top-0 w-full z-40 flex justify-between items-center px-container-margin py-4 bg-background border-b border-outline-variant/20">
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A small, professional user avatar portrait for a trading platform interface. Minimalist, dark-themed." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWIntd-GOaFYV36GL-x8L3lTeI3PLzGFbha8Q2R7oV-maSrIcdLgbXzQfESgCLlKJxT57eMVkH6WGBXU4qnLXhsQGPrsh2BnT3O2OsByk51NZ96D7cj1tcsv7pbtdHctfC7OUwtdrKqVS-9wBpx46VSHrZBmI13a6NdDh-8EzEaV4t19wOzm14DpvJC3vPRRA335Wy6jjPuHEiWvCpyeZTpiHOM1Q39mOkOVwIhOhZU8x6WtZl-gjt"/>
+</div>
+<div class="font-display-lg-mobile text-display-lg-mobile font-bold text-primary tracking-tight">
+            EdgeJournal
+        </div>
+<div class="cursor-pointer transition-opacity hover:opacity-80 text-on-surface-variant flex items-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_balance_wallet</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-container-margin pt-section-gap pb-32 flex flex-col gap-gutter">
+<!-- Challenge Header Card -->
+<section class="bg-surface-container rounded-xl p-4 border border-outline-variant/30 flex flex-col gap-3 relative overflow-hidden glow-active">
+<div class="absolute left-0 top-0 bottom-0 w-[4px] status-pillar-active rounded-l-xl"></div>
+<div class="flex justify-between items-start ml-2">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Apex Trading</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Phase 1 Evaluation</p>
+</div>
+<div class="bg-primary-container/20 text-primary font-label-caps text-label-caps px-2 py-1 rounded-full flex items-center gap-1 border border-primary/30">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+                    Active
+                </div>
+</div>
+<div class="ml-2 mt-2">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase">Account Size</p>
+<p class="font-data-mono text-data-mono text-xl mt-1">$100,000.00</p>
+</div>
+</section>
+<!-- Progress Grid (Bento Style) -->
+<section class="grid grid-cols-2 gap-unit">
+<!-- Profit Target Card (Full width on mobile grid, span 2) -->
+<div class="col-span-2 bg-surface-container-low rounded-lg p-4 border border-outline-variant/20">
+<div class="flex justify-between items-end mb-2">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> Current Profit
+                        </p>
+<p class="font-data-mono text-data-mono text-lg text-secondary mt-1">+$4,250.00</p>
+</div>
+<div class="text-right">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase">Target</p>
+<p class="font-data-mono text-data-mono text-sm mt-1">$8,000.00</p>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 progress-bar-bg rounded-full overflow-hidden mt-3">
+<div class="h-full progress-bar-fill-profit rounded-full" style="width: 53%;"></div>
+</div>
+<p class="font-data-mono text-[10px] text-right mt-1 text-on-surface-variant">53% Complete</p>
+</div>
+<!-- Daily Drawdown Card -->
+<div class="bg-surface-container-low rounded-lg p-4 border border-outline-variant/20">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase flex items-center gap-1 mb-2">
+<span class="material-symbols-outlined text-[14px]">trending_down</span> Daily DD
+                </p>
+<p class="font-data-mono text-data-mono text-base text-on-surface">-$1,100.00</p>
+<p class="font-data-mono text-[10px] text-on-surface-variant mt-1">Limit: -$5,000</p>
+<div class="w-full h-1.5 progress-bar-bg rounded-full overflow-hidden mt-2">
+<!-- Visual risk indicator, not solid red unless close -->
+<div class="h-full bg-outline rounded-full" style="width: 22%;"></div>
+</div>
+</div>
+<!-- Max Drawdown Card -->
+<div class="bg-surface-container-low rounded-lg p-4 border border-outline-variant/20">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase flex items-center gap-1 mb-2">
+<span class="material-symbols-outlined text-[14px]">warning</span> Max DD
+                </p>
+<p class="font-data-mono text-data-mono text-base text-on-surface">-$3,450.00</p>
+<p class="font-data-mono text-[10px] text-on-surface-variant mt-1">Limit: -$10,000</p>
+<div class="w-full h-1.5 progress-bar-bg rounded-full overflow-hidden mt-2">
+<div class="h-full bg-outline rounded-full" style="width: 34.5%;"></div>
+</div>
+</div>
+<!-- Remaining Days (Full width) -->
+<div class="col-span-2 bg-surface-container-highest rounded-lg p-4 border border-outline-variant/20 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase">Time Remaining</p>
+<p class="font-data-mono text-data-mono mt-0.5">14 Days</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-data-mono text-[11px] text-on-surface-variant">Min Trading Days: Met (12/10)</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar from JSON -->
+<!-- Assuming "More" is the active state for a general settings/tracker view if not explicitly matching Home/Journal/Analytics/Edge AI. 
+         Let's default to Home as the primary destination for a dashboard-like tracker -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface/80 backdrop-blur-xl border-t border-outline-variant/30 shadow-lg rounded-t-full">
+<!-- Home (Active) -->
+<div class="flex flex-col items-center justify-center bg-primary-container/20 text-primary rounded-full px-3 py-1 shadow-[0_0_15px_rgba(192,193,255,0.2)] active:scale-95 transition-transform duration-150 cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</div>
+<!-- Journal -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150 cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">import_contacts</span>
+<span class="font-label-caps text-label-caps">Journal</span>
+</div>
+<!-- Analytics -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150 cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">leaderboard</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</div>
+<!-- Edge AI -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150 cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">psychology</span>
+<span class="font-label-caps text-label-caps">Edge AI</span>
+</div>
+<!-- More -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150 cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">more_horiz</span>
+<span class="font-label-caps text-label-caps">More</span>
+</div>
+</nav>
+</body></html>

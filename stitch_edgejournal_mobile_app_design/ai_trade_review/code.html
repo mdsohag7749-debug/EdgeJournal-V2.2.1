@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EdgeJournal - AI Trade Review</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "on-surface-variant": "#c7c4d7",
+                            "inverse-on-surface": "#283044",
+                            "surface-bright": "#31394d",
+                            "surface-container-lowest": "#060e20",
+                            "secondary": "#4edea3",
+                            "on-secondary-fixed": "#002113",
+                            "error-container": "#93000a",
+                            "outline-variant": "#464554",
+                            "primary-fixed-dim": "#c0c1ff",
+                            "on-surface": "#dae2fd",
+                            "tertiary-fixed-dim": "#ffb2b7",
+                            "on-tertiary-fixed": "#40000d",
+                            "on-primary-fixed-variant": "#2f2ebe",
+                            "on-tertiary": "#67001b",
+                            "surface-dim": "#0b1326",
+                            "inverse-primary": "#494bd6",
+                            "on-tertiary-container": "#5b0017",
+                            "tertiary": "#ffb2b7",
+                            "on-secondary-fixed-variant": "#005236",
+                            "on-primary": "#1000a9",
+                            "surface-variant": "#2d3449",
+                            "on-tertiary-fixed-variant": "#92002a",
+                            "background": "#0b1326",
+                            "on-error-container": "#ffdad6",
+                            "surface": "#0b1326",
+                            "secondary-fixed": "#6ffbbe",
+                            "on-error": "#690005",
+                            "tertiary-fixed": "#ffdadb",
+                            "surface-container-highest": "#2d3449",
+                            "primary-fixed": "#e1e0ff",
+                            "error": "#ffb4ab",
+                            "surface-container": "#171f33",
+                            "on-secondary": "#003824",
+                            "secondary-container": "#00a572",
+                            "surface-container-high": "#222a3d",
+                            "on-background": "#dae2fd",
+                            "inverse-surface": "#dae2fd",
+                            "secondary-fixed-dim": "#4edea3",
+                            "on-primary-container": "#0d0096",
+                            "on-secondary-container": "#00311f",
+                            "tertiary-container": "#ff516a",
+                            "surface-tint": "#c0c1ff",
+                            "primary": "#c0c1ff",
+                            "surface-container-low": "#131b2e",
+                            "outline": "#908fa0",
+                            "on-primary-fixed": "#07006c",
+                            "primary-container": "#8083ff"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.125rem",
+                            "lg": "0.25rem",
+                            "xl": "0.5rem",
+                            "full": "0.75rem"
+                    },
+                    "spacing": {
+                            "unit": "4px",
+                            "gutter": "12px",
+                            "section-gap": "24px",
+                            "container-margin": "16px"
+                    },
+                    "fontFamily": {
+                            "display-lg": ["Inter"],
+                            "body-lg": ["Inter"],
+                            "data-mono": ["JetBrains Mono"],
+                            "display-lg-mobile": ["Inter"],
+                            "label-caps": ["Inter"],
+                            "headline-md": ["Inter"],
+                            "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                            "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                            "data-mono": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
+                            "display-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                            "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                            "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                            "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0b1326; /* surface */
+            color: #dae2fd; /* on-surface */
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Subtle glow effects */
+        .ai-glow-primary {
+            box-shadow: 0 0 20px rgba(192, 193, 255, 0.1); /* primary-fixed-dim glow */
+        }
+        
+        .ai-glow-secondary {
+            box-shadow: 0 0 15px rgba(78, 222, 163, 0.1);
+        }
+        
+        .ai-glow-error {
+            box-shadow: 0 0 15px rgba(255, 180, 171, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col md:flex-row relative overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- Mobile Top App Bar (Only visible on mobile) -->
+<header class="sticky top-0 w-full z-40 flex justify-between items-center px-container-margin py-4 md:hidden border-b border-outline-variant/20 bg-background dark:bg-background">
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="font-display-lg-mobile text-display-lg-mobile font-bold text-primary tracking-tight">AI Trade Review</div>
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</header>
+<!-- Desktop Navigation Shell - SideNav -->
+<aside class="hidden md:flex flex-col w-64 h-screen sticky top-0 border-r border-outline-variant/20 bg-surface-container-lowest flex-shrink-0 z-50">
+<div class="px-6 py-8 border-b border-outline-variant/20">
+<div class="font-display-lg text-display-lg font-bold text-primary tracking-tight">EdgeJournal</div>
+</div>
+<nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="font-body-sm text-body-sm">Home</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">import_contacts</span>
+<span class="font-body-sm text-body-sm">Journal</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">leaderboard</span>
+<span class="font-body-sm text-body-sm">Analytics</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg bg-primary-container/20 text-primary shadow-[0_0_15px_rgba(192,193,255,0.05)] border border-primary/20 transition-colors" href="#">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span class="font-body-sm text-body-sm font-semibold">Edge AI</span>
+</a>
+</nav>
+<div class="p-4 border-t border-outline-variant/20">
+<button class="flex items-center space-x-3 w-full px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a young male trader, dimly lit room with multiple glowing trading screens reflecting in his eyes, serious expression, wearing a sleek black turtleneck. Dark mode aesthetic, minimalist corporate." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUbySmu2b1e0HxUMKnJlMIR0G44nU-L0pzhBYAHJT58XPooN28gxJ_EIWDHmQ_P1fE8xxbklW2oMEiMkK5Fxw4ixyzqc3p0oJ4ovSrxVyrliPWrImJjdzvDw0qkVYuAU-rJPor2as98D_QhHoxgnbTocnaTKg60piuCVBHRdykIaA2ZsCT4uW84jwnak5_1s6XT-iOYlPAHJQ_h5OjtL0XEQvXJgqX4-nPLIh3wZPqCn0YMKU425tx"/>
+</div>
+<span class="font-body-sm text-body-sm">Profile Settings</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 w-full max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-8 overflow-y-auto pb-24 md:pb-8">
+<!-- Desktop Header & Back Action -->
+<div class="hidden md:flex items-center mb-section-gap space-x-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant/30 text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</button>
+<div>
+<h1 class="font-display-lg text-display-lg">Trade Review: NQ Long</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Oct 24, 2023 • 09:30 AM EST</p>
+</div>
+</div>
+<!-- AI Generating Indicator (Visual only, to emphasize AI context) -->
+<div class="flex items-center space-x-2 mb-section-gap bg-primary-container/10 border border-primary/20 px-4 py-2 rounded-full w-fit">
+<span class="material-symbols-outlined text-primary animate-pulse text-[18px]">auto_awesome</span>
+<span class="font-label-caps text-label-caps text-primary tracking-wider uppercase">AI Review Generated</span>
+</div>
+<!-- Trade Facts Bento Box -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-unit mb-section-gap">
+<!-- Result Card -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-5 relative overflow-hidden flex flex-col justify-between ai-glow-secondary">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary rounded-l-xl"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Result</span>
+<span class="material-symbols-outlined text-secondary bg-secondary/10 p-1.5 rounded-lg text-[18px]">trending_up</span>
+</div>
+<div>
+<div class="font-data-mono text-data-mono text-secondary text-2xl font-bold">+$1,450.00</div>
+<div class="flex items-center mt-2 space-x-3">
+<div class="flex items-center space-x-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">RR:</span>
+<span class="font-data-mono text-data-mono text-on-surface">3.2R</span>
+</div>
+<div class="flex items-center space-x-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">PNL %:</span>
+<span class="font-data-mono text-data-mono text-secondary">+1.45%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Instrument & Setup -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-5 flex flex-col justify-between">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Instrument</span>
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">candlestick_chart</span>
+</div>
+<div>
+<div class="font-headline-md text-headline-md-mobile md:text-headline-md font-bold">NQ (Nasdaq 100)</div>
+<div class="flex items-center mt-2 space-x-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-surface-variant text-on-surface border border-outline-variant/30">LONG</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-surface-variant text-on-surface border border-outline-variant/30">1m TIMEFRAME</span>
+</div>
+</div>
+</div>
+<!-- Risk Profile -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-5 flex flex-col justify-between">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Risk Context</span>
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">shield</span>
+</div>
+<div>
+<div class="font-body-sm text-body-sm text-on-surface">Initial Risk: <span class="font-data-mono text-data-mono font-bold">$450</span></div>
+<div class="w-full bg-surface-variant rounded-full h-1.5 mt-3 mb-1">
+<div class="bg-secondary h-1.5 rounded-full" style="width: 15%"></div>
+</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">0.45% of Account</div>
+</div>
+</div>
+</section>
+<!-- AI Insights Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<!-- Execution Observations -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-6 relative overflow-hidden group hover:border-primary/40 transition-colors">
+<!-- Background subtle gradient -->
+<div class="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors"></div>
+<div class="flex items-center space-x-3 mb-6 relative z-10">
+<div class="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">target</span>
+</div>
+<h3 class="font-headline-md text-headline-md-mobile md:text-headline-md text-on-surface">Execution Observations</h3>
+</div>
+<div class="space-y-4 relative z-10">
+<div class="flex items-start space-x-3">
+<span class="material-symbols-outlined text-secondary mt-0.5 text-[18px]">check_circle</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Entry was precise on the 1m shift in market structure following the liquidity sweep at 9:30 AM.</p>
+</div>
+<div class="flex items-start space-x-3">
+<span class="material-symbols-outlined text-secondary mt-0.5 text-[18px]">check_circle</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Partial profit taken at the 2R mark aligns perfectly with your defined trade plan rules.</p>
+</div>
+<div class="flex items-start space-x-3">
+<span class="material-symbols-outlined text-on-surface-variant mt-0.5 text-[18px]">info</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Execution speed from signal to fill was 1.2s, showing high focus during the open session.</p>
+</div>
+</div>
+</div>
+<!-- Risk Behavior -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-6 relative overflow-hidden group hover:border-primary/40 transition-colors">
+<div class="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors"></div>
+<div class="flex items-center space-x-3 mb-6 relative z-10">
+<div class="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">balance</span>
+</div>
+<h3 class="font-headline-md text-headline-md-mobile md:text-headline-md text-on-surface">Risk Behavior</h3>
+</div>
+<div class="space-y-4 relative z-10">
+<div class="flex items-start space-x-3">
+<span class="material-symbols-outlined text-secondary mt-0.5 text-[18px]">check_circle</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Risk sizing was consistent at ~0.5% of total equity, maintaining conservative exposure.</p>
+</div>
+<div class="flex items-start space-x-3">
+<span class="material-symbols-outlined text-on-surface-variant mt-0.5 text-[18px]">info</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Stop loss was moved to breakeven after price reached 1.5R. This protected capital but reduced breathing room.</p>
+</div>
+</div>
+</div>
+<!-- Possible Mistakes -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-6 relative overflow-hidden group hover:border-error/40 transition-colors ai-glow-error">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error rounded-l-xl"></div>
+<div class="flex items-center space-x-3 mb-6 relative z-10 pl-2">
+<div class="w-10 h-10 rounded-full bg-error/10 border border-error/20 flex items-center justify-center text-error">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<h3 class="font-headline-md text-headline-md-mobile md:text-headline-md text-on-surface">Possible Mistakes</h3>
+</div>
+<div class="space-y-4 relative z-10 pl-2">
+<div class="flex items-start space-x-3">
+<span class="material-symbols-outlined text-error mt-0.5 text-[18px]">error</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant"><span class="text-on-surface font-semibold">Trailing SL was too tight.</span> You trailed stop loss tick-by-tick after 2.5R, resulting in being stopped out right before a final push to your main target at 4R.</p>
+</div>
+<div class="bg-error/5 border border-error/20 rounded-lg p-3 mt-2">
+<p class="font-data-mono text-data-mono text-error/80 text-xs">Estimated missed PNL due to tight trail: <span class="font-bold text-error">+$450.00</span></p>
+</div>
+</div>
+</div>
+<!-- Improvement Notes -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-6 relative overflow-hidden group hover:border-primary/40 transition-colors ai-glow-primary">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl"></div>
+<div class="flex items-center space-x-3 mb-6 relative z-10 pl-2">
+<div class="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+</div>
+<h3 class="font-headline-md text-headline-md-mobile md:text-headline-md text-on-surface">Improvement Notes</h3>
+</div>
+<div class="space-y-4 relative z-10 pl-2">
+<div class="flex items-start space-x-3">
+<span class="material-symbols-outlined text-primary mt-0.5 text-[18px]">arrow_forward</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">For high-momentum morning sessions on NQ, consider using structural swing lows for trailing stops rather than fixed tick distances to avoid premature exits on natural retracements.</p>
+</div>
+</div>
+<div class="mt-6 pl-2">
+<button class="px-4 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg font-label-caps text-label-caps transition-colors flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px]">add_task</span>
+<span>ADD TO PLAYBOOK</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile Bottom Nav (Visible only on mobile) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-t border-outline-variant/30 md:hidden rounded-t-full shadow-lg">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined mb-1">import_contacts</span>
+<span class="font-label-caps text-label-caps">Journal</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined mb-1">leaderboard</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container/20 text-primary rounded-full px-3 py-1 shadow-[0_0_15px_rgba(192,193,255,0.2)] active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span class="font-label-caps text-label-caps">Edge AI</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined mb-1">more_horiz</span>
+<span class="font-label-caps text-label-caps">More</span>
+</a>
+</nav>
+</body></html>

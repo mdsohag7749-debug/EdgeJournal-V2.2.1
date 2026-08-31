@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EdgeJournal - Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                "tertiary-fixed": "#ffdcc5",
+                "surface-tint": "#c0c1ff",
+                "info-ai": "#818cf8",
+                "on-secondary-fixed-variant": "#2f3aa3",
+                "on-surface-variant": "#c7c4d7",
+                "surface-container-highest": "#2d3449",
+                "secondary-fixed-dim": "#bdc2ff",
+                "surface-container-lowest": "#060d20",
+                "primary": "#c0c1ff",
+                "secondary-fixed": "#e0e0ff",
+                "on-error-container": "#ffdad6",
+                "outline-variant": "#464554",
+                "primary-container": "#8083ff",
+                "on-primary-fixed": "#07006c",
+                "primary-fixed": "#e1e0ff",
+                "outline": "#908fa0",
+                "on-primary-container": "#0d0096",
+                "tertiary-container": "#d97721",
+                "border-subtle": "#ffffff1a",
+                "surface-variant": "#2d3449",
+                "on-primary-fixed-variant": "#2f2ebe",
+                "on-background": "#dbe2fd",
+                "on-tertiary-fixed": "#301400",
+                "surface-dim": "#0b1326",
+                "on-secondary-container": "#a8afff",
+                "on-tertiary-fixed-variant": "#703700",
+                "error": "#ef4444",
+                "primary-fixed-dim": "#c0c1ff",
+                "error-container": "#93000a",
+                "secondary-container": "#2f3aa3",
+                "surface-container-high": "#222a3e",
+                "on-error": "#690005",
+                "secondary": "#bdc2ff",
+                "inverse-on-surface": "#283044",
+                "on-secondary": "#131e8c",
+                "inverse-primary": "#494bd6",
+                "surface-container-low": "#131b2e",
+                "tertiary": "#ffb783",
+                "on-secondary-fixed": "#000767",
+                "on-primary": "#1000a9",
+                "surface-bright": "#31394e",
+                "inverse-surface": "#dbe2fd",
+                "on-tertiary-container": "#452000",
+                "surface-container": "#171f33",
+                "on-tertiary": "#4f2500",
+                "background": "#0b1326",
+                "success": "#22c55e",
+                "warning": "#f59e0b",
+                "on-surface": "#dbe2fd",
+                "surface": "#131b2e",
+                "tertiary-fixed-dim": "#ffb783"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "base": "4px",
+                      "md": "12px",
+                      "2xl": "32px",
+                      "xs": "4px",
+                      "page-margin": "16px",
+                      "xl": "24px",
+                      "sm": "8px",
+                      "lg": "16px",
+                      "section-gap": "24px",
+                      "gutter": "12px",
+                      "unit": "4px",
+                      "container-margin": "16px"
+              },
+              "fontFamily": {
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "display-lg-mobile": [
+                              "Inter"
+                      ],
+                      "title-sm": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "data-mono": [
+                              "JetBrains Mono"
+                      ]
+              },
+              "fontSize": {
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "title-sm": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-mono": [
+                              "13px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #0b1326; /* Fallback for bg-background */
+        }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-sm min-h-screen pb-[100px]">
+<!-- TopAppBar -->
+<header class="sticky top-0 w-full z-40 flex justify-between items-center px-container-margin py-4 bg-background border-b border-outline-variant/20 docked full-width top-0">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant/30 flex items-center justify-center">
+<!-- Avatar Placeholder -->
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">person</span>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile font-bold text-primary tracking-tight">EdgeJournal</h1>
+</div>
+<div class="cursor-pointer transition-opacity hover:opacity-80">
+<span class="material-symbols-outlined text-primary" data-weight="fill" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</div>
+</header>
+<main class="p-container-margin max-w-[1200px] mx-auto flex flex-col gap-section-gap">
+<!-- Header Section -->
+<section class="flex flex-col gap-2 pt-2">
+<h2 class="font-headline-md text-headline-md text-on-background">Analytics Overview</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Hub for deep performance data.</p>
+</section>
+<!-- High Level Stats Grid -->
+<section class="grid grid-cols-2 gap-gutter">
+<!-- Stat Card 1 -->
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant/30 flex flex-col gap-1 relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-unit bg-success opacity-80"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant pl-2">PROFIT FACTOR</span>
+<div class="flex items-baseline gap-2 pl-2">
+<span class="font-data-mono text-data-mono text-xl text-on-background">2.1</span>
+<span class="material-symbols-outlined text-success text-sm">trending_up</span>
+</div>
+</div>
+<!-- Stat Card 2 -->
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant/30 flex flex-col gap-1 relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-unit bg-success opacity-80"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant pl-2">WIN RATE</span>
+<div class="flex items-baseline gap-2 pl-2">
+<span class="font-data-mono text-data-mono text-xl text-on-background">64%</span>
+<span class="material-symbols-outlined text-success text-sm">trending_up</span>
+</div>
+</div>
+<!-- Stat Card 3 -->
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant/30 flex flex-col gap-1 relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-unit bg-primary-container opacity-80"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant pl-2">TOTAL TRADES</span>
+<div class="flex items-baseline gap-2 pl-2">
+<span class="font-data-mono text-data-mono text-xl text-on-background">152</span>
+</div>
+</div>
+<!-- Stat Card 4 -->
+<div class="bg-surface-container rounded-xl p-4 border border-outline-variant/30 flex flex-col gap-1 relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-unit bg-success opacity-80"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant pl-2">NET P&amp;L</span>
+<div class="flex items-baseline gap-2 pl-2">
+<span class="font-data-mono text-data-mono text-xl text-success">+$14,250</span>
+<span class="material-symbols-outlined text-success text-sm">arrow_upward</span>
+</div>
+</div>
+</section>
+<!-- Chart Section -->
+<section class="bg-surface-container rounded-xl border border-outline-variant/30 flex flex-col overflow-hidden">
+<div class="p-4 border-b border-outline-variant/20 flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-on-background">Daily P&amp;L</h3>
+<div class="flex gap-2">
+<button class="px-3 py-1 bg-surface-variant text-on-surface-variant font-label-caps text-label-caps rounded-lg hover:text-primary transition-colors">1W</button>
+<button class="px-3 py-1 bg-primary-container/20 text-primary font-label-caps text-label-caps rounded-lg">1M</button>
+<button class="px-3 py-1 bg-surface-variant text-on-surface-variant font-label-caps text-label-caps rounded-lg hover:text-primary transition-colors">3M</button>
+</div>
+</div>
+<div class="p-4 h-[250px] w-full flex items-end gap-1 relative">
+<!-- Mock Bar Chart -->
+<!-- Background Grid Lines -->
+<div class="absolute inset-0 flex flex-col justify-between p-4 pointer-events-none opacity-20">
+<div class="border-b border-outline w-full"></div>
+<div class="border-b border-outline w-full"></div>
+<div class="border-b border-outline w-full"></div>
+<div class="border-b border-outline w-full"></div>
+<div class="border-b border-outline w-full"></div>
+</div>
+<!-- Bars (Green = Profit, Red = Loss, Gray = neutral/small) -->
+<div class="flex-1 bg-success/80 rounded-t-sm h-[40%] hover:opacity-100 transition-opacity cursor-pointer"></div>
+<div class="flex-1 bg-success/80 rounded-t-sm h-[60%] hover:opacity-100 transition-opacity cursor-pointer"></div>
+<div class="flex-1 bg-error/80 rounded-t-sm h-[20%] hover:opacity-100 transition-opacity cursor-pointer"></div>
+<div class="flex-1 bg-success/80 rounded-t-sm h-[35%] hover:opacity-100 transition-opacity cursor-pointer"></div>
+<div class="flex-1 bg-success/80 rounded-t-sm h-[80%] hover:opacity-100 transition-opacity cursor-pointer"></div>
+<div class="flex-1 bg-error/80 rounded-t-sm h-[45%] hover:opacity-100 transition-opacity cursor-pointer"></div>
+<div class="flex-1 bg-success/80 rounded-t-sm h-[50%] hover:opacity-100 transition-opacity cursor-pointer"></div>
+<div class="flex-1 bg-success/80 rounded-t-sm h-[70%] hover:opacity-100 transition-opacity cursor-pointer"></div>
+<div class="flex-1 bg-surface-variant rounded-t-sm h-[10%] hover:opacity-100 transition-opacity cursor-pointer"></div>
+<div class="flex-1 bg-error/80 rounded-t-sm h-[30%] hover:opacity-100 transition-opacity cursor-pointer"></div>
+<div class="flex-1 bg-success/80 rounded-t-sm h-[65%] hover:opacity-100 transition-opacity cursor-pointer"></div>
+<div class="flex-1 bg-success/80 rounded-t-sm h-[90%] hover:opacity-100 transition-opacity cursor-pointer"></div>
+</div>
+</section>
+<!-- Categories Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Performance -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-4 hover:border-primary/50 transition-colors cursor-pointer group flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-primary">monitoring</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-on-background mb-1">Performance</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">Win rate trends, R distribution</p>
+</div>
+</div>
+<!-- Risk -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-4 hover:border-primary/50 transition-colors cursor-pointer group flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-primary">warning</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-on-background mb-1">Risk</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">Drawdown, position sizing consistency</p>
+</div>
+</div>
+<!-- Patterns -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-4 hover:border-primary/50 transition-colors cursor-pointer group flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-primary">category</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-on-background mb-1">Patterns</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">Best/Worst pairs, Best/Worst sessions</p>
+</div>
+</div>
+<!-- Behavior -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-4 hover:border-primary/50 transition-colors cursor-pointer group flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-primary">psychology</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-on-background mb-1">Behavior</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">Discipline, emotions</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface/80 backdrop-blur-xl font-label-caps text-label-caps border-t border-outline-variant/30">
+<!-- Home (Inactive) -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150 cursor-pointer">
+<span class="material-symbols-outlined mb-1 text-[24px]">home</span>
+<span>Home</span>
+</div>
+<!-- Journal (Inactive) -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150 cursor-pointer">
+<span class="material-symbols-outlined mb-1 text-[24px]">import_contacts</span>
+<span>Journal</span>
+</div>
+<!-- Analytics (Active) -->
+<div class="flex flex-col items-center justify-center bg-primary-container/20 text-primary rounded-xl px-4 py-1 active:scale-95 transition-transform duration-150 cursor-pointer">
+<span class="material-symbols-outlined mb-1 text-[24px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+<span>Analytics</span>
+</div>
+<!-- Edge AI (Inactive) -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150 cursor-pointer">
+<span class="material-symbols-outlined mb-1 text-[24px]">psychology</span>
+<span>Edge AI</span>
+</div>
+<!-- More (Inactive) -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150 cursor-pointer">
+<span class="material-symbols-outlined mb-1 text-[24px]">more_horiz</span>
+<span>More</span>
+</div>
+</nav>
+<!-- Desktop Side Nav Spacer (Hidden on Mobile, indicates structure if it existed) -->
+<div class="hidden md:flex fixed bottom-0 left-0 w-64 h-full bg-surface-container-low border-r border-outline-variant/20 -z-10"></div>
+<style>
+        @media (min-width: 768px) {
+            main {
+                margin-left: 16rem; /* Assuming side nav exists on desktop */
+                max-width: calc(100% - 16rem);
+            }
+        }
+    </style>
+</body></html>

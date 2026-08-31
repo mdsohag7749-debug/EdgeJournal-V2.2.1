@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EdgeJournal - Reflections</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#c7c4d7",
+                        "inverse-on-surface": "#283044",
+                        "surface-bright": "#31394d",
+                        "surface-container-lowest": "#060e20",
+                        "secondary": "#4edea3",
+                        "on-secondary-fixed": "#002113",
+                        "error-container": "#93000a",
+                        "outline-variant": "#464554",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-surface": "#dae2fd",
+                        "tertiary-fixed-dim": "#ffb2b7",
+                        "on-tertiary-fixed": "#40000d",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-tertiary": "#67001b",
+                        "surface-dim": "#0b1326",
+                        "inverse-primary": "#494bd6",
+                        "on-tertiary-container": "#5b0017",
+                        "tertiary": "#ffb2b7",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-primary": "#1000a9",
+                        "surface-variant": "#2d3449",
+                        "on-tertiary-fixed-variant": "#92002a",
+                        "background": "#0b1326",
+                        "on-error-container": "#ffdad6",
+                        "surface": "#0b1326",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#ffdadb",
+                        "surface-container-highest": "#2d3449",
+                        "primary-fixed": "#e1e0ff",
+                        "error": "#ffb4ab",
+                        "surface-container": "#171f33",
+                        "on-secondary": "#003824",
+                        "secondary-container": "#00a572",
+                        "surface-container-high": "#222a3d",
+                        "on-background": "#dae2fd",
+                        "inverse-surface": "#dae2fd",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-primary-container": "#0d0096",
+                        "on-secondary-container": "#00311f",
+                        "tertiary-container": "#ff516a",
+                        "surface-tint": "#c0c1ff",
+                        "primary": "#c0c1ff",
+                        "surface-container-low": "#131b2e",
+                        "outline": "#908fa0",
+                        "on-primary-fixed": "#07006c",
+                        "primary-container": "#8083ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "gutter": "12px",
+                        "section-gap": "24px",
+                        "container-margin": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "display-lg-mobile": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "data-mono": ["13px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "display-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .status-pillar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            border-top-left-radius: inherit;
+            border-bottom-left-radius: inherit;
+        }
+        .status-pillar.success { background-color: theme('colors.secondary'); }
+        .status-pillar.danger { background-color: theme('colors.error'); }
+        .status-pillar.neutral { background-color: theme('colors.primary'); }
+        
+        .glow-effect:active, .glow-effect:focus-within {
+            box-shadow: 0 0 20px -5px theme('colors.primary-container');
+            border-color: theme('colors.primary');
+        }
+        
+        /* Hide scrollbar for clean horizontal scrolls */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-lg min-h-screen pb-24 selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="sticky top-0 w-full z-40 flex justify-between items-center px-container-margin py-4 bg-background border-b border-outline-variant/20">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container border border-outline-variant/30 flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile font-bold text-primary tracking-tight">EdgeJournal</h1>
+</div>
+<button class="text-on-surface-variant hover:opacity-80 cursor-pointer transition-opacity">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</button>
+</header>
+<main class="px-container-margin py-section-gap flex flex-col gap-section-gap">
+<!-- Header & Emotion State -->
+<section class="flex flex-col gap-gutter">
+<div class="flex justify-between items-end">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1">Daily Reflection</p>
+<h2 class="font-headline-md text-headline-md">Oct 24, 2023</h2>
+</div>
+<button class="px-3 py-1.5 rounded-full bg-surface-container border border-outline-variant/30 text-on-surface-variant flex items-center gap-2 hover:border-primary/50 transition-colors">
+<span class="material-symbols-outlined text-sm">calendar_month</span>
+<span class="font-body-sm text-body-sm">History</span>
+</button>
+</div>
+<div class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-4 mt-2">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-3">Pre-Market State</p>
+<div class="flex justify-between items-center bg-surface-container rounded-lg p-1 border border-outline-variant/20">
+<button class="flex-1 py-2 flex flex-col items-center gap-1 rounded-md text-on-surface-variant hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined text-error">sentiment_dissatisfied</span>
+<span class="font-label-caps text-[9px]">Anxious</span>
+</button>
+<button class="flex-1 py-2 flex flex-col items-center gap-1 rounded-md text-on-surface-variant hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined text-tertiary">sentiment_neutral</span>
+<span class="font-label-caps text-[9px]">Neutral</span>
+</button>
+<button class="flex-1 py-2 flex flex-col items-center gap-1 rounded-md bg-primary-container/20 border border-primary/30 text-primary shadow-[0_0_10px_rgba(192,193,255,0.1)]">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">sentiment_satisfied</span>
+<span class="font-label-caps text-[9px]">Focused</span>
+</button>
+<button class="flex-1 py-2 flex flex-col items-center gap-1 rounded-md text-on-surface-variant hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined text-secondary">mood</span>
+<span class="font-label-caps text-[9px]">Confident</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Performance Summary Bento -->
+<section class="grid grid-cols-2 gap-unit">
+<div class="bg-surface-container border border-outline-variant/30 rounded-lg p-3 relative overflow-hidden pl-5">
+<div class="status-pillar success"></div>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Net PnL</p>
+<div class="flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span class="font-data-mono text-data-mono text-base">+$1,240.50</span>
+</div>
+</div>
+<div class="bg-surface-container border border-outline-variant/30 rounded-lg p-3 relative overflow-hidden pl-5">
+<div class="status-pillar neutral"></div>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Win Rate</p>
+<div class="flex items-center gap-1 text-primary">
+<span class="font-data-mono text-data-mono text-base">65%</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">(13/20)</span>
+</div>
+</div>
+<div class="col-span-2 bg-surface-container border border-outline-variant/30 rounded-lg p-3 relative overflow-hidden flex justify-between items-center pl-5">
+<div class="status-pillar neutral"></div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">AI Insight</p>
+<p class="font-body-sm text-body-sm">Patience during morning session improved entry precision.</p>
+</div>
+<div class="h-8 w-8 rounded-full bg-primary-container/20 flex items-center justify-center shrink-0 ml-2">
+<span class="material-symbols-outlined text-primary text-sm">psychology</span>
+</div>
+</div>
+</section>
+<!-- Journal Entries -->
+<section class="flex flex-col gap-unit">
+<h3 class="font-headline-md text-headline-md mb-2">Session Notes</h3>
+<!-- What went well -->
+<div class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-4 relative overflow-hidden glow-effect transition-all focus-within:bg-surface-container">
+<div class="status-pillar success"></div>
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">thumb_up</span>
+<h4 class="font-body-lg text-body-lg font-semibold text-secondary">What went well</h4>
+</div>
+<textarea class="w-full bg-transparent border-none text-on-surface font-body-sm text-body-sm p-0 focus:ring-0 resize-none placeholder-on-surface-variant/50" placeholder="Identify your strongest plays today..." rows="3"></textarea>
+</div>
+<!-- What went wrong -->
+<div class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-4 relative overflow-hidden glow-effect transition-all focus-within:bg-surface-container mt-2">
+<div class="status-pillar danger"></div>
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+<h4 class="font-body-lg text-body-lg font-semibold text-error">What went wrong</h4>
+</div>
+<textarea class="w-full bg-transparent border-none text-on-surface font-body-sm text-body-sm p-0 focus:ring-0 resize-none placeholder-on-surface-variant/50" placeholder="Analyze mistimed entries or ignored stops..." rows="3"></textarea>
+</div>
+<!-- Lessons -->
+<div class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-4 relative overflow-hidden glow-effect transition-all focus-within:bg-surface-container mt-2">
+<div class="status-pillar neutral"></div>
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+<h4 class="font-body-lg text-body-lg font-semibold text-primary">Mistakes &amp; Lessons</h4>
+</div>
+<textarea class="w-full bg-transparent border-none text-on-surface font-body-sm text-body-sm p-0 focus:ring-0 resize-none placeholder-on-surface-variant/50" placeholder="Key takeaways for tomorrow's session..." rows="3"></textarea>
+</div>
+</section>
+<!-- Save Action -->
+<button class="w-full bg-primary text-on-primary font-body-lg text-body-lg font-semibold py-3 rounded-lg hover:bg-primary-container transition-colors shadow-[0_4px_14px_rgba(192,193,255,0.15)] flex items-center justify-center gap-2 mt-4">
+<span class="material-symbols-outlined text-sm">save</span>
+            Save Reflection
+        </button>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface/90 backdrop-blur-xl border-t border-outline-variant/30 rounded-t-xl shadow-lg md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-caps text-label-caps mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container/20 text-primary rounded-xl px-4 py-1.5 shadow-[0_0_15px_rgba(192,193,255,0.2)] active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">import_contacts</span>
+<span class="font-label-caps text-label-caps mt-1">Journal</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-label-caps text-label-caps mt-1">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">psychology</span>
+<span class="font-label-caps text-label-caps mt-1">Edge AI</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">more_horiz</span>
+<span class="font-label-caps text-label-caps mt-1">More</span>
+</a>
+</nav>
+</body></html>

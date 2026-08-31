@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trade Detail - EdgeJournal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#171f33",
+                        "on-tertiary": "#67001b",
+                        "surface-tint": "#c0c1ff",
+                        "surface-container-low": "#131b2e",
+                        "surface-container-lowest": "#060e20",
+                        "inverse-surface": "#dae2fd",
+                        "on-secondary-container": "#00311f",
+                        "inverse-on-surface": "#283044",
+                        "on-surface": "#dae2fd",
+                        "primary-container": "#8083ff",
+                        "secondary": "#4edea3",
+                        "primary": "#c0c1ff",
+                        "on-surface-variant": "#c7c4d7",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-primary-fixed": "#07006c",
+                        "secondary-fixed": "#6ffbbe",
+                        "inverse-primary": "#494bd6",
+                        "error": "#ffb4ab",
+                        "on-tertiary-fixed": "#40000d",
+                        "on-tertiary-container": "#5b0017",
+                        "outline": "#908fa0",
+                        "background": "#0b1326",
+                        "primary-fixed": "#e1e0ff",
+                        "secondary-container": "#00a572",
+                        "on-background": "#dae2fd",
+                        "surface-variant": "#2d3449",
+                        "tertiary-container": "#ff516a",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "surface-container-high": "#222a3d",
+                        "error-container": "#93000a",
+                        "on-primary": "#1000a9",
+                        "surface-container-highest": "#2d3449",
+                        "tertiary": "#ffb2b7",
+                        "surface-dim": "#0b1326",
+                        "tertiary-fixed": "#ffdadb",
+                        "on-secondary": "#003824",
+                        "tertiary-fixed-dim": "#ffb2b7",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-primary-container": "#0d0096",
+                        "outline-variant": "#464554",
+                        "surface": "#0b1326",
+                        "on-secondary-fixed": "#002113",
+                        "surface-bright": "#31394d",
+                        "on-error": "#690005",
+                        "on-tertiary-fixed-variant": "#92002a",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#c0c1ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "section-gap": "24px",
+                        "gutter": "12px",
+                        "unit": "4px",
+                        "container-margin": "16px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "display-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "data-mono": ["13px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "display-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }]
+                    }
+                },
+            },
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        /* Custom scrollbar for deep dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b1326;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2d3449;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #464554;
+        }
+        
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-sm text-body-sm antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Header Section (Suppressed standard shell due to linear task-focused view, replacing with specific back-nav header) -->
+<header class="sticky top-0 z-40 w-full bg-background/90 backdrop-blur-md border-b border-outline-variant/20 px-container-margin py-4 flex items-center justify-between">
+<div class="flex items-center gap-gutter">
+<button aria-label="Back to Journal" class="flex items-center justify-center p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-full transition-colors cursor-pointer group">
+<span class="material-symbols-outlined group-hover:-translate-x-1 transition-transform">arrow_back</span>
+</button>
+<div>
+<h1 class="font-headline-md text-headline-md text-on-surface">NQ1! Long</h1>
+<div class="font-data-mono text-data-mono text-on-surface-variant flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(78,222,163,0.6)]"></span>
+                    Oct 24, 2023 • 09:30 AM
+                </div>
+</div>
+</div>
+<div class="flex gap-2">
+<button aria-label="Edit Trade" class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button aria-label="Delete Trade" class="p-2 text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 w-full max-w-7xl mx-auto px-container-margin py-section-gap grid grid-cols-1 md:grid-cols-12 gap-section-gap pb-[100px]">
+<!-- Left Column: Core Data -->
+<div class="md:col-span-4 flex flex-col gap-section-gap">
+<!-- Summary Card -->
+<section class="bg-surface-container rounded-xl border border-outline-variant/30 p-4 relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary shadow-[0_0_12px_rgba(78,222,163,0.5)]"></div>
+<h2 class="font-label-caps text-label-caps text-on-surface-variant mb-4 tracking-wider">Performance Summary</h2>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Net P&amp;L</div>
+<div class="font-data-mono text-data-mono text-secondary text-lg flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">arrow_upward</span>
+                            +$1,595.00
+                        </div>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">ROI</div>
+<div class="font-data-mono text-data-mono text-secondary text-lg">
+                            +1.59%
+                        </div>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">R:R Achieved</div>
+<div class="font-data-mono text-data-mono text-on-surface text-lg">
+                            1:2.4
+                        </div>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Duration</div>
+<div class="font-data-mono text-data-mono text-on-surface text-lg">
+                            42m 15s
+                        </div>
+</div>
+</div>
+</section>
+<!-- Trade Facts Card -->
+<section class="bg-surface-container rounded-xl border border-outline-variant/30 p-4">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant mb-4 tracking-wider">Execution Facts</h2>
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+<span class="text-on-surface-variant">Account</span>
+<span class="font-data-mono text-data-mono bg-surface-container-high px-2 py-1 rounded border border-outline-variant/20">FTMO 100K</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+<span class="text-on-surface-variant">Entry Price</span>
+<span class="font-data-mono text-data-mono text-on-surface">18,240.50</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+<span class="text-on-surface-variant">Exit Price</span>
+<span class="font-data-mono text-data-mono text-on-surface">18,320.25</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+<span class="text-on-surface-variant">Stop Loss</span>
+<span class="font-data-mono text-data-mono text-error">18,200.00</span>
+</div>
+<div class="flex justify-between items-center py-2">
+<span class="text-on-surface-variant">Take Profit</span>
+<span class="font-data-mono text-data-mono text-secondary">18,350.00</span>
+</div>
+</div>
+</section>
+<!-- Psychology Card -->
+<section class="bg-surface-container rounded-xl border border-outline-variant/30 p-4">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant mb-4 tracking-wider">Psychology &amp; Rules</h2>
+<div class="flex flex-col gap-4">
+<div>
+<div class="flex justify-between mb-1">
+<span class="text-on-surface-variant text-sm">Rule Compliance</span>
+<span class="font-data-mono text-data-mono text-secondary">100%</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5">
+<div class="bg-secondary h-1.5 rounded-full" style="width: 100%"></div>
+</div>
+</div>
+<div class="flex gap-2 flex-wrap mt-2">
+<span class="inline-flex items-center gap-1 bg-surface-container-high border border-outline-variant/30 px-3 py-1.5 rounded-full text-sm">
+<span class="material-symbols-outlined text-[16px] text-primary">sentiment_satisfied</span>
+                            Calm
+                        </span>
+<span class="inline-flex items-center gap-1 bg-surface-container-high border border-outline-variant/30 px-3 py-1.5 rounded-full text-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span>
+                            No Mistakes
+                        </span>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Visuals & Notes -->
+<div class="md:col-span-8 flex flex-col gap-section-gap">
+<!-- Chart Screenshot -->
+<section class="bg-surface-container rounded-xl border border-outline-variant/30 overflow-hidden flex flex-col">
+<div class="px-4 py-3 border-b border-outline-variant/20 flex justify-between items-center">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant tracking-wider">Execution Chart</h2>
+<button class="text-on-surface-variant hover:text-primary transition-colors text-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">fullscreen</span>
+                        Expand
+                    </button>
+</div>
+<div class="relative w-full h-[400px] bg-surface-container-lowest">
+<img class="w-full h-full object-cover opacity-80 mix-blend-screen" data-alt="A professional dark-mode trading chart interface showing a successful long trade execution on the NASDAQ (NQ1!). The chart features crisp Japanese candlesticks in subtle green and red against a deep slate background. Technical overlays like moving averages and volume bars are visible. The entry and exit points are marked with precise glowing indicators, conveying a highly analytical and technical aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIwyj_2GL0s7qcVfDMuI79cZCVy730K9mzAMl8u08VfU9hhyObLOF9wV9W4r-AVjl3dlZ9YjkIAlRl_4mgZJzyFG099IVe68c5Y8oJWuj62pJY-CIoRO6aLyLp8Iigm2VkQ6di-fsDf6Xm8v757bY7o3UAD5Qok7rbWocXzlFzQuLlz8xBvXKCIUlTqiGFaRiZyho4Q1PjTFFvol6EM_oFYXZt4TiJ4JpSkNNj2Bsq35KkAhwiXPVs"/>
+<!-- Mock chart crosshair overlay for realism -->
+<div class="absolute top-0 bottom-0 left-1/3 w-[1px] bg-outline-variant/30 border-r border-dashed border-outline-variant/50"></div>
+<div class="absolute left-0 right-0 top-1/2 h-[1px] bg-outline-variant/30 border-b border-dashed border-outline-variant/50"></div>
+</div>
+</section>
+<!-- Trader Notes -->
+<section class="bg-surface-container rounded-xl border border-outline-variant/30 p-4 flex-1">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant mb-4 tracking-wider">Journal Notes</h2>
+<div class="prose prose-invert prose-sm max-w-none text-on-surface-variant font-body-lg text-body-lg">
+<p class="mb-4">Identified a strong accumulation zone at the NY open. Price tapped into the 15m order block and showed immediate rejection with high volume. Entered long on the 1m market structure shift.</p>
+<p>Managed to hold through the initial chop, trusting the higher timeframe bias. Took profit slightly ahead of the major resistance level to secure the bag before lunchtime low volume.</p>
+</div>
+</section>
+</div>
+</main>
+<!-- Fixed Bottom Action Area for prominent primary action -->
+<div class="fixed bottom-0 left-0 w-full z-50 p-4 bg-background/80 backdrop-blur-xl border-t border-outline-variant/20 flex justify-center items-center shadow-[0_-10px_30px_rgba(11,19,38,0.8)]">
+<button class="w-full max-w-md bg-primary-container text-on-primary-container font-headline-md text-headline-md flex items-center justify-center gap-2 py-3 px-6 rounded-full hover:bg-primary-fixed transition-all hover:shadow-[0_0_20px_rgba(128,131,255,0.4)] active:scale-[0.98]">
+<span class="material-symbols-outlined fill text-inverse-primary">psychology</span>
+            Review with Edge AI
+        </button>
+</div>
+</body></html>

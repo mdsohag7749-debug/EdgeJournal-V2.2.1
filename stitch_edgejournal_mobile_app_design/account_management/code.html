@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Account Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-surface-variant": "#c7c4d7",
+                      "inverse-on-surface": "#283044",
+                      "surface-bright": "#31394d",
+                      "surface-container-lowest": "#060e20",
+                      "secondary": "#4edea3",
+                      "on-secondary-fixed": "#002113",
+                      "error-container": "#93000a",
+                      "outline-variant": "#464554",
+                      "primary-fixed-dim": "#c0c1ff",
+                      "on-surface": "#dae2fd",
+                      "tertiary-fixed-dim": "#ffb2b7",
+                      "on-tertiary-fixed": "#40000d",
+                      "on-primary-fixed-variant": "#2f2ebe",
+                      "on-tertiary": "#67001b",
+                      "surface-dim": "#0b1326",
+                      "inverse-primary": "#494bd6",
+                      "on-tertiary-container": "#5b0017",
+                      "tertiary": "#ffb2b7",
+                      "on-secondary-fixed-variant": "#005236",
+                      "on-primary": "#1000a9",
+                      "surface-variant": "#2d3449",
+                      "on-tertiary-fixed-variant": "#92002a",
+                      "background": "#0b1326",
+                      "on-error-container": "#ffdad6",
+                      "surface": "#0b1326",
+                      "secondary-fixed": "#6ffbbe",
+                      "on-error": "#690005",
+                      "tertiary-fixed": "#ffdadb",
+                      "surface-container-highest": "#2d3449",
+                      "primary-fixed": "#e1e0ff",
+                      "error": "#ffb4ab",
+                      "surface-container": "#171f33",
+                      "on-secondary": "#003824",
+                      "secondary-container": "#00a572",
+                      "surface-container-high": "#222a3d",
+                      "on-background": "#dae2fd",
+                      "inverse-surface": "#dae2fd",
+                      "secondary-fixed-dim": "#4edea3",
+                      "on-primary-container": "#0d0096",
+                      "on-secondary-container": "#00311f",
+                      "tertiary-container": "#ff516a",
+                      "surface-tint": "#c0c1ff",
+                      "primary": "#c0c1ff",
+                      "surface-container-low": "#131b2e",
+                      "outline": "#908fa0",
+                      "on-primary-fixed": "#07006c",
+                      "primary-container": "#8083ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "gutter": "12px",
+                      "section-gap": "24px",
+                      "container-margin": "16px"
+              },
+              "fontFamily": {
+                      "display-lg": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "data-mono": ["JetBrains Mono"],
+                      "display-lg-mobile": ["Inter"],
+                      "label-caps": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "data-mono": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "display-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+        }
+        /* Custom toggle switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #c0c1ff;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #c0c1ff;
+        }
+        .toggle-checkbox:checked + .toggle-label:before {
+            transform: translateX(100%);
+            border-color: #0b1326;
+            background-color: #0b1326;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-[90px] md:pb-0">
+<!-- TopAppBar -->
+<header class="sticky top-0 w-full z-40 flex justify-between items-center px-container-margin py-4 bg-background border-b border-outline-variant/20">
+<div class="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden border border-outline-variant/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">person</span>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg font-bold text-primary tracking-tight">Accounts</h1>
+</div>
+<div class="flex items-center cursor-pointer hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="account_balance_wallet">account_balance_wallet</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="px-container-margin md:px-8 py-section-gap max-w-7xl mx-auto flex flex-col gap-gutter">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-4">
+<div>
+<h2 class="font-headline-md text-headline-md-mobile md:text-headline-md text-on-background">Trading Portfolios</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Manage active connections and risk profiles.</p>
+</div>
+<button class="hidden md:flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-lg px-4 py-2 font-label-caps text-label-caps transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                NEW ACCOUNT
+            </button>
+</div>
+<!-- Account List Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-container-margin">
+<!-- Account Card 1 -->
+<div class="bg-surface-container border border-outline-variant/30 rounded-lg p-5 relative overflow-hidden group hover:border-primary/50 transition-colors">
+<!-- Status Pillar -->
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-secondary"></div>
+<div class="flex justify-between items-start mb-4 pl-2">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h3 class="font-headline-md text-headline-md-mobile text-on-background">FTMO 100K</h3>
+<span class="bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold">Prop Firm</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Broker: Eightcap</p>
+</div>
+<!-- Toggle -->
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-background border-2 border-outline-variant appearance-none cursor-pointer z-10 transition-transform duration-200 ease-in-out" id="toggle1" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-5 rounded-full bg-surface-bright cursor-pointer" for="toggle1"></label>
+</div>
+</div>
+<div class="pl-2 flex justify-between items-end mt-6">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">CURRENT BALANCE</p>
+<p class="font-data-mono text-data-mono text-lg text-on-surface">$104,250.00</p>
+</div>
+<div class="text-right">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">PROFIT</p>
+<p class="font-data-mono text-data-mono text-secondary flex items-center gap-1 justify-end">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+                            +$4,250.00
+                        </p>
+</div>
+</div>
+</div>
+<!-- Account Card 2 -->
+<div class="bg-surface-container border border-outline-variant/30 rounded-lg p-5 relative overflow-hidden group hover:border-primary/50 transition-colors">
+<!-- Status Pillar -->
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-secondary"></div>
+<div class="flex justify-between items-start mb-4 pl-2">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h3 class="font-headline-md text-headline-md-mobile text-on-background">Personal APEX</h3>
+<span class="bg-surface-bright text-on-surface-variant border border-outline-variant/50 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold">Personal</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Broker: Tradovate</p>
+</div>
+<!-- Toggle -->
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-background border-2 border-outline-variant appearance-none cursor-pointer z-10 transition-transform duration-200 ease-in-out" id="toggle2" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-5 rounded-full bg-surface-bright cursor-pointer" for="toggle2"></label>
+</div>
+</div>
+<div class="pl-2 flex justify-between items-end mt-6">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">CURRENT BALANCE</p>
+<p class="font-data-mono text-data-mono text-lg text-on-surface">$51,120.50</p>
+</div>
+<div class="text-right">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">PROFIT</p>
+<p class="font-data-mono text-data-mono text-secondary flex items-center gap-1 justify-end">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+                            +$1,120.50
+                        </p>
+</div>
+</div>
+</div>
+<!-- Account Card 3 (Inactive/Danger) -->
+<div class="bg-surface-container border border-outline-variant/30 rounded-lg p-5 relative overflow-hidden group opacity-75">
+<!-- Status Pillar -->
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-error"></div>
+<div class="flex justify-between items-start mb-4 pl-2">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h3 class="font-headline-md text-headline-md-mobile text-on-surface-variant">Topstep 50K</h3>
+<span class="bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold">Prop Firm</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Broker: NinjaTrader</p>
+</div>
+<!-- Toggle (Off) -->
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-background border-2 border-outline-variant appearance-none cursor-pointer z-10 transition-transform duration-200 ease-in-out" id="toggle3" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-5 rounded-full bg-surface-bright cursor-pointer" for="toggle3"></label>
+</div>
+</div>
+<div class="pl-2 flex justify-between items-end mt-6">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">CURRENT BALANCE</p>
+<p class="font-data-mono text-data-mono text-lg text-on-surface-variant">$48,900.00</p>
+</div>
+<div class="text-right">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">PROFIT</p>
+<p class="font-data-mono text-data-mono text-error flex items-center gap-1 justify-end">
+<span class="material-symbols-outlined text-[14px]">trending_down</span>
+                            -$1,100.00
+                        </p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button (Mobile Only) -->
+<button class="md:hidden fixed bottom-[90px] right-container-margin w-14 h-14 bg-primary text-on-primary rounded-full shadow-[0_4px_20px_rgba(192,193,255,0.4)] flex items-center justify-center z-40 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-t border-outline-variant/30 shadow-lg rounded-t-full">
+<!-- Home (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-caps text-label-caps mt-1">Home</span>
+</a>
+<!-- Journal (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="import_contacts">import_contacts</span>
+<span class="font-label-caps text-label-caps mt-1">Journal</span>
+</a>
+<!-- Analytics (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="font-label-caps text-label-caps mt-1">Analytics</span>
+</a>
+<!-- Edge AI (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="psychology">psychology</span>
+<span class="font-label-caps text-label-caps mt-1">Edge AI</span>
+</a>
+<!-- More / Account Management (Active Context) -->
+<a class="flex flex-col items-center justify-center bg-primary-container/20 text-primary rounded-full px-3 py-1 shadow-[0_0_15px_rgba(192,193,255,0.2)] active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+<span class="font-label-caps text-label-caps mt-1">More</span>
+</a>
+</nav>
+<script>
+        // Simple toggle logic for styling if needed
+        document.querySelectorAll('.toggle-checkbox').forEach(toggle => {
+            toggle.addEventListener('change', (e) => {
+                const card = e.target.closest('.bg-surface-container');
+                if(!e.target.checked) {
+                    card.classList.add('opacity-75');
+                } else {
+                    card.classList.remove('opacity-75');
+                }
+            });
+        });
+    </script>
+</body></html>

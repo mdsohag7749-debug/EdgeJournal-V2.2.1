@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EdgeJournal - Account Switcher</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container": "#171f33",
+                    "on-tertiary": "#67001b",
+                    "surface-tint": "#c0c1ff",
+                    "surface-container-low": "#131b2e",
+                    "surface-container-lowest": "#060e20",
+                    "inverse-surface": "#dae2fd",
+                    "on-secondary-container": "#00311f",
+                    "inverse-on-surface": "#283044",
+                    "on-surface": "#dae2fd",
+                    "primary-container": "#8083ff",
+                    "secondary": "#4edea3",
+                    "primary": "#c0c1ff",
+                    "on-surface-variant": "#c7c4d7",
+                    "on-secondary-fixed-variant": "#005236",
+                    "on-primary-fixed": "#07006c",
+                    "secondary-fixed": "#6ffbbe",
+                    "inverse-primary": "#494bd6",
+                    "error": "#ffb4ab",
+                    "on-tertiary-fixed": "#40000d",
+                    "on-tertiary-container": "#5b0017",
+                    "outline": "#908fa0",
+                    "background": "#0b1326",
+                    "primary-fixed": "#e1e0ff",
+                    "secondary-container": "#00a572",
+                    "on-background": "#dae2fd",
+                    "surface-variant": "#2d3449",
+                    "tertiary-container": "#ff516a",
+                    "on-primary-fixed-variant": "#2f2ebe",
+                    "surface-container-high": "#222a3d",
+                    "error-container": "#93000a",
+                    "on-primary": "#1000a9",
+                    "surface-container-highest": "#2d3449",
+                    "tertiary": "#ffb2b7",
+                    "surface-dim": "#0b1326",
+                    "tertiary-fixed": "#ffdadb",
+                    "on-secondary": "#003824",
+                    "tertiary-fixed-dim": "#ffb2b7",
+                    "secondary-fixed-dim": "#4edea3",
+                    "on-primary-container": "#0d0096",
+                    "outline-variant": "#464554",
+                    "surface": "#0b1326",
+                    "on-secondary-fixed": "#002113",
+                    "surface-bright": "#31394d",
+                    "on-error": "#690005",
+                    "on-tertiary-fixed-variant": "#92002a",
+                    "on-error-container": "#ffdad6",
+                    "primary-fixed-dim": "#c0c1ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "section-gap": "24px",
+                    "gutter": "12px",
+                    "unit": "4px",
+                    "container-margin": "16px"
+            },
+            "fontFamily": {
+                    "body-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "data-mono": ["JetBrains Mono"],
+                    "headline-md": ["Inter"],
+                    "display-lg-mobile": ["Inter"]
+            },
+            "fontSize": {
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "data-mono": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "display-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        /* Bottom Sheet Animation */
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .bottom-sheet-overlay {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+        .bottom-sheet-content {
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-lg antialiased min-h-screen relative flex items-center justify-center overflow-hidden">
+<!-- Mock Background App Content to provide context -->
+<div class="absolute inset-0 opacity-20 pointer-events-none flex flex-col p-container-margin gap-section-gap blur-sm">
+<div class="h-12 w-32 bg-surface-container rounded-lg"></div>
+<div class="flex gap-gutter">
+<div class="h-32 flex-1 bg-surface-container rounded-xl"></div>
+<div class="h-32 flex-1 bg-surface-container rounded-xl"></div>
+</div>
+<div class="h-64 w-full bg-surface-container rounded-xl"></div>
+</div>
+<!-- Bottom Sheet Overlay -->
+<div class="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 bottom-sheet-overlay flex flex-col justify-end items-center" id="bottomSheetOverlay">
+<!-- Bottom Sheet Content -->
+<div class="bottom-sheet-content w-full max-w-md bg-surface-container border-t border-outline-variant/30 rounded-t-3xl shadow-2xl flex flex-col relative z-50">
+<!-- Drag Handle -->
+<div class="w-full flex justify-center pt-4 pb-2">
+<div class="w-12 h-1.5 bg-outline-variant/50 rounded-full"></div>
+</div>
+<!-- Header -->
+<div class="px-container-margin pb-4 border-b border-outline-variant/20 flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md-mobile text-on-surface">Switch Account</h2>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<!-- Account List -->
+<div class="flex flex-col py-2 max-h-[60vh] overflow-y-auto">
+<!-- Account 1 (Active) -->
+<button class="group w-full flex items-center px-container-margin py-3 hover:bg-surface-container-high transition-colors relative">
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-primary shadow-[0_0_8px_rgba(192,193,255,0.4)]"></div>
+<div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center mr-4 border border-primary/30">
+<span class="material-symbols-outlined text-primary" data-icon="account_balance">account_balance</span>
+</div>
+<div class="flex-1 text-left flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-body-lg text-on-surface font-semibold">FTMO 100K</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-secondary/10 text-secondary border border-secondary/20">Live</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Prop Firm</span>
+</div>
+<div class="text-right flex flex-col items-end">
+<span class="font-data-mono text-data-mono text-on-surface">$102,450.00</span>
+<div class="flex items-center gap-1 text-secondary mt-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-caps text-label-caps">Active</span>
+</div>
+</div>
+</button>
+<!-- Account 2 -->
+<button class="group w-full flex items-center px-container-margin py-3 hover:bg-surface-container-high transition-colors border-t border-outline-variant/10">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center mr-4">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="person">person</span>
+</div>
+<div class="flex-1 text-left flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-body-lg text-on-surface">Personal</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-secondary/10 text-secondary border border-secondary/20">Live</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Interactive Brokers</span>
+</div>
+<div class="text-right flex flex-col items-end">
+<span class="font-data-mono text-data-mono text-on-surface">$25,000.00</span>
+</div>
+</button>
+<!-- Account 3 -->
+<button class="group w-full flex items-center px-container-margin py-3 hover:bg-surface-container-high transition-colors border-t border-outline-variant/10">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center mr-4">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="science">science</span>
+</div>
+<div class="flex-1 text-left flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-body-lg text-on-surface">Demo</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-outline-variant/30 text-on-surface-variant border border-outline-variant/30">Sim</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Simulation</span>
+</div>
+<div class="text-right flex flex-col items-end">
+<span class="font-data-mono text-data-mono text-on-surface-variant">$50,000.00</span>
+</div>
+</button>
+</div>
+<!-- Footer Action -->
+<div class="p-container-margin border-t border-outline-variant/20 pb-8 md:pb-6">
+<button class="w-full py-3 rounded-lg border border-outline-variant/50 hover:bg-surface-variant hover:border-outline-variant transition-all flex items-center justify-center gap-2 text-on-surface font-body-sm font-medium">
+<span class="material-symbols-outlined text-[18px]" data-icon="settings">settings</span>
+                    Manage Accounts
+                </button>
+</div>
+</div>
+</div>
+<script>
+        // Simple script to handle bottom sheet dismissal simulation
+        document.getElementById('bottomSheetOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                const content = this.querySelector('.bottom-sheet-content');
+                content.style.animation = 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) reverse forwards';
+                this.style.animation = 'fadeIn 0.2s ease-out reverse forwards';
+                setTimeout(() => {
+                    // In a real app, this would remove the DOM node or change state
+                    // For demo purposes, we'll just reset the animations after a short delay
+                    content.style.animation = '';
+                    this.style.animation = '';
+                }, 300);
+            }
+        });
+    </script>
+</body></html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EdgeJournal - Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "tertiary-fixed": "#ffdcc5",
+                "surface-tint": "#c0c1ff",
+                "info-ai": "#818cf8",
+                "on-secondary-fixed-variant": "#2f3aa3",
+                "on-surface-variant": "#c7c4d7",
+                "surface-container-highest": "#2d3449",
+                "secondary-fixed-dim": "#bdc2ff",
+                "surface-container-lowest": "#060d20",
+                "primary": "#c0c1ff",
+                "secondary-fixed": "#e0e0ff",
+                "on-error-container": "#ffdad6",
+                "outline-variant": "#464554",
+                "primary-container": "#8083ff",
+                "on-primary-fixed": "#07006c",
+                "primary-fixed": "#e1e0ff",
+                "outline": "#908fa0",
+                "on-primary-container": "#0d0096",
+                "tertiary-container": "#d97721",
+                "border-subtle": "#ffffff1a",
+                "surface-variant": "#2d3449",
+                "on-primary-fixed-variant": "#2f2ebe",
+                "on-background": "#dbe2fd",
+                "on-tertiary-fixed": "#301400",
+                "surface-dim": "#0b1326",
+                "on-secondary-container": "#a8afff",
+                "on-tertiary-fixed-variant": "#703700",
+                "error": "#ef4444",
+                "primary-fixed-dim": "#c0c1ff",
+                "error-container": "#93000a",
+                "secondary-container": "#2f3aa3",
+                "surface-container-high": "#222a3e",
+                "on-error": "#690005",
+                "secondary": "#bdc2ff",
+                "inverse-on-surface": "#283044",
+                "on-secondary": "#131e8c",
+                "inverse-primary": "#494bd6",
+                "surface-container-low": "#131b2e",
+                "tertiary": "#ffb783",
+                "on-secondary-fixed": "#000767",
+                "on-primary": "#1000a9",
+                "surface-bright": "#31394e",
+                "inverse-surface": "#dbe2fd",
+                "on-tertiary-container": "#452000",
+                "surface-container": "#171f33",
+                "on-tertiary": "#4f2500",
+                "background": "#0b1326",
+                "success": "#22c55e",
+                "warning": "#f59e0b",
+                "on-surface": "#dbe2fd",
+                "surface": "#131b2e",
+                "tertiary-fixed-dim": "#ffb783"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "base": "4px",
+                "md": "12px",
+                "2xl": "32px",
+                "xs": "4px",
+                "page-margin": "16px",
+                "xl": "24px",
+                "sm": "8px",
+                "lg": "16px"
+        },
+        "fontFamily": {
+                "body-md": [
+                        "Inter"
+                ],
+                "display-lg-mobile": [
+                        "Inter"
+                ],
+                "title-sm": [
+                        "Inter"
+                ],
+                "headline-md": [
+                        "Inter"
+                ],
+                "label-caps": [
+                        "Inter"
+                ],
+                "display-lg": [
+                        "Inter"
+                ]
+        },
+        "fontSize": {
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "display-lg-mobile": [
+                        "28px",
+                        {
+                                "lineHeight": "36px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "title-sm": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-md": [
+                        "20px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "label-caps": [
+                        "11px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "display-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Main Content Canvas -->
+<main class="flex-grow flex items-center justify-center px-page-margin md:p-xl relative overflow-hidden">
+<!-- Atmospheric Background Element -->
+<div class="absolute inset-0 z-0 pointer-events-none opacity-20 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary-container via-background to-background"></div>
+<div class="w-full max-w-md z-10">
+<!-- Brand Header -->
+<div class="mb-12 text-center md:text-left flex flex-col items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-high rounded-[8px] border border-outline-variant/30 flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-primary text-2xl" data-weight="fill" style="font-variation-settings: 'FILL' 1;">analytics</span>
+</div>
+<div class="text-center">
+<h1 class="font-display-lg text-display-lg hidden md:block text-on-background">EdgeJournal</h1>
+<h1 class="font-display-lg-mobile text-display-lg-mobile block md:hidden text-on-background">EdgeJournal</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Secure professional trading environment.</p>
+</div>
+</div>
+<!-- Login Form Card -->
+<div class="bg-surface-container rounded-[8px] border border-outline-variant/20 p-6 md:p-8 shadow-2xl backdrop-blur-sm relative">
+<form class="space-y-6">
+<!-- Email Input -->
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="email">Email Address</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">mail</span>
+<input class="w-full h-[48px] bg-surface-container-low border border-outline-variant/30 rounded-[8px] pl-10 pr-4 font-body-md text-body-md text-on-background focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all placeholder:text-outline/50" id="email" placeholder="trader@edgejournal.com" required="" type="email"/>
+</div>
+</div>
+<!-- Password Input -->
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="password">Password</label>
+<a class="font-label-caps text-label-caps text-primary hover:text-primary-container transition-colors" href="#">Forgot Password?</a>
+</div>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">lock</span>
+<input class="w-full h-[48px] bg-surface-container-low border border-outline-variant/30 rounded-[8px] pl-10 pr-10 font-body-md text-body-md text-on-background focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all placeholder:text-outline/50" id="password" placeholder="••••••••" required="" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-background transition-colors focus:outline-none" type="button">
+<span class="material-symbols-outlined">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Primary Action -->
+<div class="pt-4">
+<button class="w-full h-[48px] bg-primary text-on-primary font-title-sm text-title-sm py-3 rounded-[8px] hover:bg-primary-container focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background transition-all shadow-[0_0_15px_rgba(192,193,255,0.1)] hover:shadow-[0_0_20px_rgba(192,193,255,0.2)] flex items-center justify-center gap-2" type="submit">
+<span>Sign In</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</form>
+<!-- Divider -->
+<div class="flex items-center gap-4 my-6">
+<div class="h-px bg-outline-variant/30 flex-grow"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">OR CONTINUE WITH</span>
+<div class="h-px bg-outline-variant/30 flex-grow"></div>
+</div>
+<!-- Biometric / Alternative -->
+<button class="w-full h-[48px] bg-transparent border border-outline-variant/40 text-on-background font-title-sm text-title-sm py-3 rounded-[8px] hover:bg-surface-container-high focus:ring-2 focus:ring-outline focus:ring-offset-2 focus:ring-offset-background transition-all flex items-center justify-center gap-2" type="button">
+<span class="material-symbols-outlined">fingerprint</span>
+<span>Biometric Login</span>
+</button>
+</div>
+<!-- Footer Links -->
+<div class="mt-8 text-center">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                    Don't have an account? 
+                    <a class="text-primary hover:text-primary-container font-medium transition-colors ml-1" href="#">Sign Up</a>
+</p>
+</div>
+</div>
+</main>
+</body></html>

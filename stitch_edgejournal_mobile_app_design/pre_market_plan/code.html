@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EdgeJournal - Pre-Market Plan</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface-variant": "#c7c4d7",
+                        "inverse-on-surface": "#283044",
+                        "surface-bright": "#31394d",
+                        "surface-container-lowest": "#060e20",
+                        "secondary": "#4edea3",
+                        "on-secondary-fixed": "#002113",
+                        "error-container": "#93000a",
+                        "outline-variant": "#464554",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-surface": "#dae2fd",
+                        "tertiary-fixed-dim": "#ffb2b7",
+                        "on-tertiary-fixed": "#40000d",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-tertiary": "#67001b",
+                        "surface-dim": "#0b1326",
+                        "inverse-primary": "#494bd6",
+                        "on-tertiary-container": "#5b0017",
+                        "tertiary": "#ffb2b7",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-primary": "#1000a9",
+                        "surface-variant": "#2d3449",
+                        "on-tertiary-fixed-variant": "#92002a",
+                        "background": "#0b1326",
+                        "on-error-container": "#ffdad6",
+                        "surface": "#0b1326",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#ffdadb",
+                        "surface-container-highest": "#2d3449",
+                        "primary-fixed": "#e1e0ff",
+                        "error": "#ffb4ab",
+                        "surface-container": "#171f33",
+                        "on-secondary": "#003824",
+                        "secondary-container": "#00a572",
+                        "surface-container-high": "#222a3d",
+                        "on-background": "#dae2fd",
+                        "inverse-surface": "#dae2fd",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-primary-container": "#0d0096",
+                        "on-secondary-container": "#00311f",
+                        "tertiary-container": "#ff516a",
+                        "surface-tint": "#c0c1ff",
+                        "primary": "#c0c1ff",
+                        "surface-container-low": "#131b2e",
+                        "outline": "#908fa0",
+                        "on-primary-fixed": "#07006c",
+                        "primary-container": "#8083ff"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    spacing: {
+                        "unit": "4px",
+                        "gutter": "12px",
+                        "section-gap": "24px",
+                        "container-margin": "16px"
+                    },
+                    fontFamily: {
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "display-lg-mobile": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    fontSize: {
+                        "display-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "data-mono": ["13px", { lineHeight: "16px", fontWeight: "500" }],
+                        "display-lg-mobile": ["24px", { lineHeight: "32px", fontWeight: "700" }],
+                        "label-caps": ["11px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "headline-md": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+                        "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .ghost-border {
+            border: 1px solid theme('colors.outline-variant' / 30%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-lg min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="sticky top-0 w-full z-40 flex justify-between items-center px-container-margin py-4 bg-background dark:bg-background border-b border-outline-variant/20">
+<div class="flex items-center gap-3">
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-display-lg-mobile text-display-lg-mobile font-bold text-primary tracking-tight">Pre-Market</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="font-data-mono text-data-mono text-on-surface-variant">Oct 24, 2023</span>
+<div class="h-8 w-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant/30 flex items-center justify-center">
+<img class="object-cover w-full h-full" data-alt="A macro photograph of a highly detailed, professional headshot avatar against a dark background with subtle neon blue highlights, indicating a premium trading account profile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkEfMpZTSRn7FIsxGdLvGCAIqPswBNAjBJ3-oH0XGWN2ohjkBAR3hfHwlFMmY8NQ2G0lPy0UAAj81qpYVoQf1NVQgmQwSZ2QZTbJ_XSEOhfYyA8sdvWFD7WuVFccWmH6gZEhD6JXQKgXnBe3fAN4eLxwFeTT42qJM1HRzF2Hicv45uFHqHFCTFBstTBmFpMsVeQVL6gwZrKB57Wf_8_UUfaWyCJ9K_p6_ofiokfMCy-MCffGLaui0i"/>
+</div>
+</div>
+</header>
+<main class="p-container-margin space-y-section-gap">
+<!-- Account Info -->
+<section class="flex justify-between items-end">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1">Active Account</p>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(78,222,163,0.6)]"></span>
+<span class="font-headline-md text-headline-md text-on-surface">Live-PA-01</span>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1">Session</p>
+<span class="font-headline-md text-headline-md text-on-surface">New York</span>
+</div>
+</section>
+<!-- Market Bias -->
+<section class="bg-surface-container rounded-xl p-4 ghost-border">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="explore">explore</span>
+                Market Bias
+            </h2>
+<div class="grid grid-cols-3 gap-2">
+<button class="py-2 rounded-lg bg-surface-container-high border border-outline-variant/30 text-on-surface hover:bg-primary-container/10 transition-colors">
+<span class="font-body-sm text-body-sm">Long</span>
+</button>
+<button class="py-2 rounded-lg bg-primary-container/20 border border-primary text-primary shadow-[0_0_15px_rgba(192,193,255,0.1)] transition-colors">
+<span class="font-body-sm text-body-sm">Short</span>
+</button>
+<button class="py-2 rounded-lg bg-surface-container-high border border-outline-variant/30 text-on-surface hover:bg-primary-container/10 transition-colors">
+<span class="font-body-sm text-body-sm">Neutral</span>
+</button>
+</div>
+</section>
+<!-- Important Levels -->
+<section class="bg-surface-container rounded-xl p-4 ghost-border">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="stacked_line_chart">stacked_line_chart</span>
+                Key Levels
+            </h2>
+<div class="space-y-4">
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Resistance (R1)</label>
+<input class="w-full bg-surface-container-lowest border-b border-outline-variant/50 focus:border-primary text-on-surface font-data-mono text-data-mono px-0 py-2 focus:ring-0 transition-colors placeholder:text-outline-variant" placeholder="e.g. 4520.50" type="text" value="15,432.50"/>
+</div>
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Support (S1)</label>
+<input class="w-full bg-surface-container-lowest border-b border-outline-variant/50 focus:border-primary text-on-surface font-data-mono text-data-mono px-0 py-2 focus:ring-0 transition-colors placeholder:text-outline-variant" placeholder="e.g. 4480.00" type="text" value="15,380.00"/>
+</div>
+</div>
+</section>
+<!-- A+ Setup Checklist -->
+<section class="bg-surface-container rounded-xl p-4 ghost-border">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="checklist">checklist</span>
+                A+ Setup Criteria
+            </h2>
+<div class="space-y-3">
+<label class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer">
+<input checked="" class="w-5 h-5 rounded border-outline-variant bg-surface-container-lowest text-primary focus:ring-primary focus:ring-offset-background" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface">Price at key structural level</span>
+</label>
+<label class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer">
+<input checked="" class="w-5 h-5 rounded border-outline-variant bg-surface-container-lowest text-primary focus:ring-primary focus:ring-offset-background" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface">Higher timeframe alignment (1H/4H)</span>
+</label>
+<label class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer">
+<input class="w-5 h-5 rounded border-outline-variant bg-surface-container-lowest text-primary focus:ring-primary focus:ring-offset-background" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface">Clear liquidity target identified</span>
+</label>
+</div>
+</section>
+<!-- Risk Rules -->
+<section class="bg-surface-container rounded-xl p-4 ghost-border">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="gpp_maybe">gpp_maybe</span>
+                Risk Rules
+            </h2>
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/30">
+<span class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Max Risk/Trade</span>
+<span class="font-data-mono text-data-mono text-secondary">1.0%</span>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/30">
+<span class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Max Daily Loss</span>
+<span class="font-data-mono text-data-mono text-error">-$500</span>
+</div>
+</div>
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant block mb-2">Today's Focus</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-lg focus:border-primary text-on-surface font-body-sm text-body-sm p-3 focus:ring-0 transition-colors resize-none placeholder:text-outline-variant" placeholder="e.g., Wait for confirmation before entering..." rows="2"></textarea>
+</div>
+</section>
+</main>
+<!-- Save Button -->
+<div class="fixed bottom-0 left-0 w-full z-50 p-container-margin bg-background/90 backdrop-blur-md border-t border-outline-variant/20">
+<button class="w-full py-4 bg-primary text-on-primary font-headline-md text-headline-md rounded-xl shadow-[0_4px_20px_rgba(192,193,255,0.3)] hover:opacity-90 active:scale-[0.98] transition-all">
+            Save Pre-Market Plan
+        </button>
+</div>
+</body></html>
