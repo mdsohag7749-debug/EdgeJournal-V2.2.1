@@ -43,6 +43,7 @@ export function fromProfileRow(row) {
     avatarUrl: row.avatar_url || '',
     bio: row.bio || '',
     timezone: row.timezone || '',
+    role: row.role || 'user',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

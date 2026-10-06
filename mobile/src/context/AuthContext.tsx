@@ -12,6 +12,7 @@ interface AuthContextType {
   register: (name: string, email: string, pass: string) => Promise<any>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -76,6 +77,10 @@ export function AuthProvider({ children }: { children?: ReactNode }) {
     setProfile(null);
   };
 
+  const requestPasswordReset = async (email: string) => {
+    await authService.resetPasswordForEmail(email);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -88,6 +93,7 @@ export function AuthProvider({ children }: { children?: ReactNode }) {
         register,
         logout,
         refreshProfile,
+        requestPasswordReset,
       }}
     >
       {children}

@@ -1,6 +1,13 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { fetchProfile } from '../lib/profileApi';
+import { fetchCurrentSubscription } from '../lib/subscriptionApi';
+import {
+  DEFAULT_FREE_PLAN,
+  canUseFeature,
+  getPlanLimit,
+  isSubscriptionActive,
+} from '../lib/entitlements';
 
 // Real Supabase authentication. Session persistence, auto-login on
 // refresh, and the auth-state listener are all handled here in one
@@ -9,22 +16,21 @@ import { fetchProfile } from '../lib/profileApi';
 //
 // It also owns the single shared source of truth for the signed-in
 // user's profile row (fullName, username, email, avatarUrl, bio,
-// timezone). Every consumer — Dashboard, Sidebar, Header, Profile,
-// Settings — reads the exact same `profile` object from here, so any
-// update (e.g. uploading a new photo) propagates instantly to every
-// visible component without a refresh.
+// timezone) and Phase 7 subscription and entitlement state.
 
 const AuthContext = createContext(undefined);
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
-  // Starts true: we don't know yet whether a session exists until
-  // Supabase has checked its persisted storage. ProtectedRoute waits on
-  // this instead of redirecting to /login prematurely, which is what
-  // makes "auto login" on page refresh actually work.
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
+
+  // Phase 7: Subscription & Entitlement state
+  const [subscription, setSubscription] = useState(null);
+  const [currentPlan, setCurrentPlan] = useState(DEFAULT_FREE_PLAN);
+  const [subscriptionStatus, setSubscriptionStatus] = useState('none');
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -38,9 +44,8 @@ export function AuthProvider({ children }) {
     });
 
     // Auth state listener: keeps `session` in sync with sign-in,
-    // sign-out, token refresh, and password-recovery events, from this
-    // tab or any other.
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    // sign-out, token refresh, and password-recovery events.
+    const { data: subscriptionListener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       if (!isMounted) return;
       setSession(newSession);
       setIsLoading(false);
@@ -48,20 +53,50 @@ export function AuthProvider({ children }) {
 
     return () => {
       isMounted = false;
-      subscription.subscription.unsubscribe();
+      subscriptionListener.subscription.unsubscribe();
     };
   }, []);
 
-  // Load the signed-in user's profile whenever the auth user changes.
-  // Cleared on sign-out so no stale avatar leaks across users.
   const userId = session?.user?.id;
+
+  // Function to reload user subscription state
+  const loadSubscription = useCallback(async (uid) => {
+    if (!uid) {
+      setSubscription(null);
+      setCurrentPlan(DEFAULT_FREE_PLAN);
+      setSubscriptionStatus('none');
+      setSubscriptionLoading(false);
+      return;
+    }
+    setSubscriptionLoading(true);
+    try {
+      const res = await fetchCurrentSubscription(uid);
+      setSubscription(res.subscription);
+      setCurrentPlan(res.plan || DEFAULT_FREE_PLAN);
+      setSubscriptionStatus(res.status || 'none');
+    } catch (subErr) {
+      console.warn('Subscription resolution note:', subErr);
+      setSubscription(null);
+      setCurrentPlan(DEFAULT_FREE_PLAN);
+      setSubscriptionStatus('none');
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  }, []);
+
+  // Load the signed-in user's profile and subscription whenever the auth user changes.
   useEffect(() => {
     let isMounted = true;
     if (!userId) {
       setProfile(null);
       setProfileLoading(false);
+      setSubscription(null);
+      setCurrentPlan(DEFAULT_FREE_PLAN);
+      setSubscriptionStatus('none');
+      setSubscriptionLoading(false);
       return;
     }
+
     setProfileLoading(true);
     fetchProfile(userId)
       .then((p) => {
@@ -73,10 +108,43 @@ export function AuthProvider({ children }) {
       .finally(() => {
         if (isMounted) setProfileLoading(false);
       });
+
+    loadSubscription(userId);
+
     return () => {
       isMounted = false;
     };
-  }, [userId]);
+  }, [userId, loadSubscription]);
+
+  const refreshSubscription = useCallback(() => {
+    if (userId) return loadSubscription(userId);
+    return Promise.resolve();
+  }, [userId, loadSubscription]);
+
+  // Derived entitlements and limits helpers
+  const entitlements = useMemo(() => {
+    return Array.isArray(currentPlan?.features) ? currentPlan.features : DEFAULT_FREE_PLAN.features;
+  }, [currentPlan]);
+
+  const planLimits = useMemo(() => {
+    return typeof currentPlan?.limits === 'object' && currentPlan?.limits !== null
+      ? currentPlan.limits
+      : DEFAULT_FREE_PLAN.limits;
+  }, [currentPlan]);
+
+  const canUse = useCallback(
+    (featureName) => {
+      return canUseFeature(currentPlan, featureName);
+    },
+    [currentPlan]
+  );
+
+  const getLimit = useCallback(
+    (limitKey, fallbackValue = Infinity) => {
+      return getPlanLimit(currentPlan, limitKey, fallbackValue);
+    },
+    [currentPlan]
+  );
 
   async function login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -113,7 +181,20 @@ export function AuthProvider({ children }) {
     isLoading,
     profile,
     profileLoading,
+    isAdmin: profile?.role === 'admin',
     setProfile,
+    // Phase 7 Subscription additions
+    subscription,
+    currentPlan,
+    subscriptionStatus,
+    subscriptionLoading,
+    entitlements,
+    planLimits,
+    canUse,
+    getLimit,
+    refreshSubscription,
+    isSubscriptionActive: isSubscriptionActive(subscription),
+    // Auth actions
     login,
     register,
     logout,

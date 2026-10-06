@@ -2,15 +2,16 @@
 // Communicates with backend server endpoint (/api/ai/analyze, /api/ai/health)
 // Zero client-exposed secrets / API keys.
 
-import { AIRequestKind, AIRequestContext, AIResponse, AIHealthProbe, AIStatus } from '../types/ai';
+import { AIRequestKind, AIResponse, AIHealthProbe, AIStatus, CanonicalAIRequestContext } from '../types/ai';
 import { supabase } from './supabase';
+import { sanitizeAIResponse } from '../utils/aiSafety';
 
 const DEFAULT_API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://edgejournal.app';
 const ANALYZE_ENDPOINT = `${DEFAULT_API_BASE}/api/ai/analyze`;
 const HEALTH_ENDPOINT = `${DEFAULT_API_BASE}/api/ai/health`;
 
 export const edgeAiService = {
-  async analyze(kind: AIRequestKind, context: AIRequestContext, timeoutMs = 45000): Promise<AIResponse> {
+  async analyze(kind: AIRequestKind, context: CanonicalAIRequestContext, timeoutMs = 45000): Promise<AIResponse> {
     const session = (await supabase.auth.getSession()).data.session;
     const token = session?.access_token || '';
 
@@ -36,11 +37,28 @@ export const edgeAiService = {
       });
 
       const json = await response.json();
+      const rawAnalysis = json?.analysis || null;
+
+      let safeAnalysis = null;
+      if (rawAnalysis) {
+        try {
+          safeAnalysis = sanitizeAIResponse(rawAnalysis);
+        } catch {
+          // If safety sanitizer detects directive language in response, fail gracefully
+          return {
+            ok: false,
+            status: 'AI_INVALID_RESPONSE',
+            message: 'AI returned directive or guarantee language outside the allowed safety bounds.',
+            analysis: null,
+          };
+        }
+      }
+
       return {
         ok: json?.ok === true,
         status: json?.status || (response.ok ? 'ok' : 'AI_PROVIDER_ERROR'),
         message: json?.message || '',
-        analysis: json?.analysis || null,
+        analysis: safeAnalysis || rawAnalysis,
         plan: json?.plan,
       };
     } catch (err: any) {
@@ -87,3 +105,4 @@ export const edgeAiService = {
     return 'READY';
   },
 };
+

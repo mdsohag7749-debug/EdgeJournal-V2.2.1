@@ -16,6 +16,10 @@ export interface BackupPayload {
   challenges?: Challenge[];
   study?: StudyItem[];
   tags?: string[];
+  models?: string[];
+  riskCriteria?: string[];
+  checklistCriteria?: string[];
+  accountName?: string;
   settings?: Record<string, any>;
 }
 
@@ -31,6 +35,10 @@ export const backupService = {
     challenges?: Challenge[];
     study?: StudyItem[];
     tags?: string[];
+    models?: string[];
+    riskCriteria?: string[];
+    checklistCriteria?: string[];
+    accountName?: string;
   }): BackupPayload {
     // Sanitization: scrub out any internal auth tokens, sensitive keys or passwords
     const sanitizedAccounts = (data.accounts || []).map((a) => ({
@@ -62,6 +70,10 @@ export const backupService = {
       challenges: data.challenges || [],
       study: data.study || [],
       tags: data.tags || [],
+      models: data.models || [],
+      riskCriteria: data.riskCriteria || [],
+      checklistCriteria: data.checklistCriteria || [],
+      accountName: data.accountName,
     };
   },
 
@@ -92,6 +104,15 @@ export const backupService = {
     }
     if (data.study && !Array.isArray(data.study)) {
       return { valid: false, error: 'Invalid backup: "study" must be an array.' };
+    }
+    if (data.models && !Array.isArray(data.models)) {
+      return { valid: false, error: 'Invalid backup: "models" must be an array.' };
+    }
+    if (data.riskCriteria && !Array.isArray(data.riskCriteria)) {
+      return { valid: false, error: 'Invalid backup: "riskCriteria" must be an array.' };
+    }
+    if (data.checklistCriteria && !Array.isArray(data.checklistCriteria)) {
+      return { valid: false, error: 'Invalid backup: "checklistCriteria" must be an array.' };
     }
     return { valid: true };
   },

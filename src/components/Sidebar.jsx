@@ -14,6 +14,7 @@ import {
   User,
   Trophy,
   Brain,
+  CreditCard,
 } from 'lucide-react';
 
 const NAV = [
@@ -26,6 +27,7 @@ const NAV = [
   { id: 'study', label: 'Study', icon: GraduationCap },
   { id: 'goals', label: 'Goals', icon: Target },
   { id: 'challenges', label: 'Challenges', icon: Trophy },
+  { id: 'subscription', label: 'Subscription', icon: CreditCard },
   { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'profile', label: 'Profile', icon: User },
 ];

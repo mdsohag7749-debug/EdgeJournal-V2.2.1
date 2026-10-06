@@ -16,10 +16,22 @@ import {
   DrawdownChart,
   SetupPerformanceBarChart,
 } from '../../components/charts';
+import {
+  CollapsibleSection,
+  DeepPerformanceSection,
+  DirectionSection,
+  TimeframeSection,
+  PairSessionHeatmap,
+  InstitutionalSection,
+  RecommendationsSection,
+} from '../../components/analytics';
 import { useTheme } from '../../hooks/useTheme';
 import { useAccounts } from '../../hooks/useAccounts';
 import { useData } from '../../hooks/useData';
 import { computeTradeMetrics } from '../../utils/calculations';
+import { computeDetailedAnalytics } from '../../utils/analyticsEngine';
+import { computeInstitutionalInsights } from '../../utils/institutionalEngine';
+import { computeRecommendations } from '../../utils/recommendationsEngine';
 import { formatCurrency } from '../../utils/formatters';
 
 export function AnalyticsScreen() {
@@ -44,12 +56,20 @@ export function AnalyticsScreen() {
 
     const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
     const cutoffStr = cutoff.toISOString().split('T')[0];
-    return trades.filter((t) => t.entryDate >= cutoffStr);
+    return trades.filter((t) => (t.entryDate || (t as any).date || '') >= cutoffStr);
   }, [trades, timeframe]);
 
   const activeAccount = selectedAccount || defaultAccount;
   const startingBalance = activeAccount ? activeAccount.startingBalance : 10000;
-  const metrics = computeTradeMetrics(filteredTrades, startingBalance);
+
+  // Canonical calculations
+  const legacyMetrics = useMemo(
+    () => computeTradeMetrics(filteredTrades, startingBalance),
+    [filteredTrades, startingBalance]
+  );
+  const analytics = useMemo(() => computeDetailedAnalytics(filteredTrades), [filteredTrades]);
+  const institutionalData = useMemo(() => computeInstitutionalInsights(filteredTrades), [filteredTrades]);
+  const recommendationsData = useMemo(() => computeRecommendations(filteredTrades), [filteredTrades]);
 
   return (
     <ScreenContainer
@@ -65,7 +85,7 @@ export function AnalyticsScreen() {
       } as any}
     >
       <Header
-        title="Analytics & Charts"
+        title="Analytics & Intelligence"
         subtitle={allAccounts ? 'All Accounts Combined' : activeAccount?.name || 'Account'}
         rightAction={<AccountSelector />}
       />
@@ -89,58 +109,129 @@ export function AnalyticsScreen() {
       {filteredTrades.length === 0 ? (
         <EmptyState
           title="No Analytics Available"
-          description="Log trades in this date range to view your equity curve, win/loss breakdown, and drawdown curves."
+          description="Log trades in this date range to view your deep performance metrics, pair × session heatmap, and institutional intelligence."
         />
       ) : (
         <>
-          {/* Key Metrics Grid */}
+          {/* Key Metrics Overview Grid */}
           <View style={styles.metricsGrid}>
             <MetricCard
-              label="Win Rate"
-              value={`${metrics.winRate}%`}
-              change={`${metrics.winningTrades}W • ${metrics.losingTrades}L`}
-              changeType={metrics.winRate >= 50 ? 'positive' : 'negative'}
-              subtitle={`${metrics.totalTrades} Trades Evaluated`}
+              label="Net Realized P&L"
+              value={formatCurrency(analytics.netPnl)}
+              change={analytics.netPnl >= 0 ? 'Profitable' : 'Drawdown'}
+              changeType={analytics.netPnl >= 0 ? 'positive' : 'negative'}
             />
             <MetricCard
-              label="Profit Factor"
-              value={metrics.profitFactor > 0 ? metrics.profitFactor.toFixed(2) : '0.00'}
-              change={metrics.profitFactor >= 2 ? 'Optimal' : metrics.profitFactor >= 1 ? 'Profitable' : '< 1.0'}
-              changeType={metrics.profitFactor >= 1.5 ? 'positive' : 'negative'}
-              subtitle="Gross P/L Ratio"
+              label="Win Rate"
+              value={`${analytics.winRate}%`}
+              change={`${analytics.wins}W • ${analytics.losses}L`}
+              changeType={analytics.winRate >= 50 ? 'positive' : 'negative'}
+              subtitle={`${analytics.total} Trades`}
             />
           </View>
 
           <View style={styles.metricsGrid}>
             <MetricCard
-              label="Net Realized P&L"
-              value={formatCurrency(metrics.totalNetPnl)}
-              change={metrics.totalNetPnl >= 0 ? 'Profitable' : 'Drawdown'}
-              changeType={metrics.totalNetPnl >= 0 ? 'positive' : 'negative'}
+              label="Profit Factor"
+              value={analytics.profitFactor === Infinity ? '∞' : analytics.profitFactor > 0 ? analytics.profitFactor.toFixed(2) : '0.00'}
+              change={analytics.profitFactor >= 2 ? 'Optimal' : analytics.profitFactor >= 1 ? 'Profitable' : '< 1.0'}
+              changeType={analytics.profitFactor >= 1.5 ? 'positive' : 'negative'}
+              subtitle="Gross P/L Ratio"
+            />
+            <MetricCard
+              label="Expectancy"
+              value={analytics.decided > 0 ? `${analytics.expectancy >= 0 ? '+' : ''}${formatCurrency(analytics.expectancy)}` : '—'}
+              change={analytics.expectancy >= 0 ? 'Positive Edge' : 'Negative Edge'}
+              changeType={analytics.expectancy >= 0 ? 'positive' : 'negative'}
+              subtitle="Per-Trade Edge"
+            />
+          </View>
+
+          <View style={[styles.metricsGrid, { marginBottom: 16 }]}>
+            <MetricCard
+              label="Payoff Ratio"
+              value={analytics.avgRR > 0 ? `${analytics.avgRR.toFixed(2)} : 1` : '—'}
+              change="Avg Win / Loss"
+              changeType="neutral"
+              subtitle="R:R Multiplier"
             />
             <MetricCard
               label="Max Drawdown"
-              value={metrics.maxDrawdownPercent > 0 ? `-${metrics.maxDrawdownPercent}%` : '0.0%'}
-              change={`-${formatCurrency(metrics.maxDrawdown)}`}
-              changeType={metrics.maxDrawdownPercent > 10 ? 'negative' : 'neutral'}
+              value={legacyMetrics.maxDrawdownPercent > 0 ? `-${legacyMetrics.maxDrawdownPercent}%` : '0.0%'}
+              change={`-${formatCurrency(legacyMetrics.maxDrawdown)}`}
+              changeType={legacyMetrics.maxDrawdownPercent > 10 ? 'negative' : 'neutral'}
               subtitle="Peak-to-Trough"
             />
           </View>
 
-          {/* 1. Equity Curve Chart */}
-          <EquityCurveChart trades={filteredTrades} startingBalance={startingBalance} />
+          {/* 1. Deep Performance Analytics */}
+          <CollapsibleSection
+            title="Performance Intelligence"
+            subtitle="Streaks, payoff ratio, best/worst trade & duration"
+            defaultExpanded
+          >
+            <DeepPerformanceSection analytics={analytics} />
+          </CollapsibleSection>
 
-          {/* 2. Daily P&L Distribution Bar Chart */}
-          <DailyPnLBarChart trades={filteredTrades} />
+          {/* 2. Direction Performance (Long vs Short) */}
+          <CollapsibleSection
+            title="Direction Performance"
+            subtitle="Long vs Short trade breakdown & win distribution"
+            defaultExpanded
+          >
+            <DirectionSection byDirection={analytics.byDirection} />
+          </CollapsibleSection>
 
-          {/* 3. Outcome & Win/Loss Donut Chart */}
-          <WinLossDonutChart trades={filteredTrades} />
+          {/* 3. Timeframe Performance */}
+          <CollapsibleSection
+            title="Timeframe Performance"
+            subtitle="Win rate, net profit and R:R by chart timeframe"
+            badge={`${analytics.byTimeframe.filter((t) => t.trades > 0).length} TFs`}
+            defaultExpanded
+          >
+            <TimeframeSection byTimeframe={analytics.byTimeframe} />
+          </CollapsibleSection>
 
-          {/* 4. Underwater Drawdown Curve */}
-          <DrawdownChart trades={filteredTrades} startingBalance={startingBalance} />
+          {/* 4. Pair × Session Heatmap */}
+          <CollapsibleSection
+            title="Pair × Session Heatmap"
+            subtitle="Interactive matrix by trading pair & market session"
+            defaultExpanded
+          >
+            <PairSessionHeatmap trades={filteredTrades} />
+          </CollapsibleSection>
 
-          {/* 5. Strategy / Setup Performance Comparison */}
-          <SetupPerformanceBarChart trades={filteredTrades} />
+          {/* 5. Institutional Market Intelligence */}
+          <CollapsibleSection
+            title="Institutional Intelligence"
+            subtitle="Session context, top setup model & win rate trend"
+            defaultExpanded
+          >
+            <InstitutionalSection data={institutionalData} />
+          </CollapsibleSection>
+
+          {/* 6. Smart Action Recommendations */}
+          <CollapsibleSection
+            title="Action Recommendations"
+            subtitle="Evidence-backed improvements derived from journal data"
+            badge={recommendationsData.recommendations.length > 0 ? `${recommendationsData.recommendations.length} Actions` : undefined}
+            defaultExpanded
+          >
+            <RecommendationsSection data={recommendationsData} />
+          </CollapsibleSection>
+
+          {/* 7. Equity & Visual Charts */}
+          <CollapsibleSection
+            title="Visual Charts & Drawdown"
+            subtitle="Equity curve, daily P&L, outcome donut & drawdown curve"
+            defaultExpanded={false}
+          >
+            <EquityCurveChart trades={filteredTrades} startingBalance={startingBalance} />
+            <DailyPnLBarChart trades={filteredTrades} />
+            <WinLossDonutChart trades={filteredTrades} />
+            <DrawdownChart trades={filteredTrades} startingBalance={startingBalance} />
+            <SetupPerformanceBarChart trades={filteredTrades} />
+          </CollapsibleSection>
 
           {/* Process & Discipline Summary Box */}
           <View
@@ -153,10 +244,10 @@ export function AnalyticsScreen() {
             <Text
               style={[
                 styles.discScore,
-                { color: metrics.winRate >= 60 ? theme.colors.semantic.success : theme.colors.accent },
+                { color: analytics.winRate >= 60 ? theme.colors.semantic.success : theme.colors.accent },
               ]}
             >
-              {metrics.winRate >= 60 ? '94 / 100' : '88 / 100'}
+              {analytics.winRate >= 60 ? '94 / 100' : '88 / 100'}
             </Text>
             <Text style={[styles.discDesc, { color: theme.colors.textMuted }]}>
               Disciplined risk-reward execution with managed loss sizes and aligned setups.
@@ -176,7 +267,7 @@ const styles = StyleSheet.create({
   metricsGrid: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 4,
+    marginBottom: 8,
   },
   disciplineBox: {
     padding: 16,

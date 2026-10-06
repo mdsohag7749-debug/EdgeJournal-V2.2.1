@@ -24,7 +24,7 @@ export default defineConfig({
       // Requirement asks for manifest.json by name; vite-plugin-pwa
       // defaults to manifest.webmanifest, so this is pinned explicitly.
       manifestFilename: 'manifest.json',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.svg', 'favicon.png', 'logo.png', 'apple-touch-icon.png'],
       manifest: {
         id: '/',
         name: 'EdgeJournal',

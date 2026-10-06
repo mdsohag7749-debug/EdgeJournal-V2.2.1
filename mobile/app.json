@@ -37,8 +37,8 @@
     },
     "extra": {
       "apiBaseUrl": "https://edgejournal.app",
-      "supabaseUrl": "",
-      "supabaseAnonKey": "",
+      "supabaseUrl": "https://lluqnxyhndafvffhtvdr.supabase.co",
+      "supabaseAnonKey": "sb_publishable_dQR0nehvie9ymkuiuKxOww_VRYEiS_S",
       "eas": {
         "projectId": "971b7fb5-fea2-475c-a8a5-3249f6170ea2"
       }

@@ -7,6 +7,8 @@ import { ALL_ACCOUNTS_SENTINEL } from '../services/accountsService';
 import { backupService } from '../services/backupService';
 import { offlineStorage } from '../services/offline/offlineStorage';
 import { offlineQueue, QueuedMutation } from '../services/offline/offlineQueue';
+import { storageService, KEYS } from '../services/storageService';
+import { DEFAULT_MODELS, DEFAULT_RISK_CRITERIA, DEFAULT_CHECKLIST_CRITERIA } from '../utils/psychologyUtils';
 import { logger } from '../utils/logger';
 
 interface DataContextType {
@@ -47,6 +49,23 @@ interface DataContextType {
   addStudyNote: (note: Partial<StudyItem>) => Promise<StudyItem | null>;
   updateStudyNote: (id: string, patch: Partial<StudyItem>) => Promise<StudyItem | null>;
   deleteStudyNote: (id: string) => Promise<boolean>;
+  // System Settings (Models & Checklists)
+  models: string[];
+  setModels: (models: string[]) => Promise<void>;
+  riskCriteria: string[];
+  setRiskCriteria: (criteria: string[]) => Promise<void>;
+  checklistCriteria: string[];
+  setChecklistCriteria: (criteria: string[]) => Promise<void>;
+  addModel: (name: string) => Promise<boolean>;
+  updateModel: (oldName: string, newName: string) => Promise<boolean>;
+  deleteModel: (name: string) => Promise<boolean>;
+  addRiskCriterion: (text: string) => Promise<boolean>;
+  updateRiskCriterion: (oldText: string, newText: string) => Promise<boolean>;
+  deleteRiskCriterion: (text: string) => Promise<boolean>;
+  addChecklistCriterion: (text: string) => Promise<boolean>;
+  updateChecklistCriterion: (oldText: string, newText: string) => Promise<boolean>;
+  deleteChecklistCriterion: (text: string) => Promise<boolean>;
+  resetSystemSettings: () => Promise<void>;
   // Backup / Restore
   exportBackup: () => any;
   restoreBackup: (payload: any) => Promise<{ success: boolean; message: string }>;
@@ -70,9 +89,10 @@ function mapTradeFromDb(row: any): Trade {
     size: Number(row.position_size || row.contracts || row.size) || 0,
     netPnl: Number(row.net_pnl) || 0,
     grossPnl: row.gross_pnl !== undefined ? Number(row.gross_pnl) : undefined,
-    commission: row.commission !== undefined ? Number(row.commission) : undefined,
+    commission: row.commission !== null && row.commission !== undefined ? Number(row.commission) : undefined,
     pnlPercentage: row.risk_percent !== undefined ? Number(row.risk_percent) : undefined,
-    riskRewardRatio: Number(row.rr || row.risk_reward_ratio) || 0,
+    riskPercent: row.risk_percent !== null && row.risk_percent !== undefined ? Number(row.risk_percent) : undefined,
+    riskRewardRatio: row.rr !== undefined && row.rr !== null ? Number(row.rr) : (row.risk_reward_ratio !== undefined ? Number(row.risk_reward_ratio) : undefined),
     stopLoss: row.stop_loss !== null ? Number(row.stop_loss) : undefined,
     takeProfit: row.take_profit !== null ? Number(row.take_profit) : undefined,
     status: row.result === 'Open' || row.status === 'Open' ? 'Open' : 'Closed',
@@ -80,19 +100,31 @@ function mapTradeFromDb(row: any): Trade {
     session: row.session || '',
     timeframe: row.timeframe || '',
     notes: row.notes || '',
-    mistakes: typeof row.mistakes === 'object' && row.mistakes !== null ? Object.keys(row.mistakes).filter((k) => row.mistakes[k]) : Array.isArray(row.mistakes) ? row.mistakes : [],
+    mistakes: typeof row.mistakes === 'object' && row.mistakes !== null && !Array.isArray(row.mistakes)
+      ? Object.keys(row.mistakes).filter((k) => row.mistakes[k])
+      : Array.isArray(row.mistakes)
+      ? row.mistakes
+      : [],
     tags: Array.isArray(row.tags) ? row.tags : [],
-    emotionBefore: row.emotion || '',
+    emotionBefore: row.emotion || row.emotion_before || '',
     emotionDuring: '',
     emotionAfter: row.lessons_learned || '',
-    disciplineRating: Number(row.rating || row.discipline_rating) || 5,
+    disciplineRating: row.rating !== null && row.rating !== undefined ? Number(row.rating) : (row.discipline_rating ? Number(row.discipline_rating) : undefined),
+    rating: row.rating !== null && row.rating !== undefined ? Number(row.rating) : (row.discipline_rating ? Number(row.discipline_rating) : undefined),
     isFavorite: !!row.is_favorite,
-    review: row.review || {},
-    psychology: row.psychology || {},
+    review: typeof row.review === 'object' && row.review !== null ? row.review : {},
+    psychology: typeof row.psychology === 'object' && row.psychology !== null ? row.psychology : {},
+    riskChecklist: typeof row.risk_checklist === 'object' && row.risk_checklist !== null ? row.risk_checklist : {},
+    tradeChecklist: typeof row.trade_checklist === 'object' && row.trade_checklist !== null ? row.trade_checklist : {},
+    tradeGrade: row.trade_grade || '',
+    confluences: row.confluences || '',
+    tradeManagement: row.trade_management || '',
+    lessonsLearned: row.lessons_learned || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
+
 
 function mapPlanFromDb(row: any): PreMarketPlan {
   return {
@@ -165,6 +197,7 @@ function mapChallengeFromDb(row: any): Challenge {
   return {
     id: row.id,
     userId: row.user_id,
+    accountId: row.account_id || '',
     name: row.name || '',
     title: row.name || '',
     propFirm: row.prop_firm || '',
@@ -197,6 +230,23 @@ export function DataProvider({ children }: { children?: ReactNode }) {
   const [isOffline, setIsOffline] = useState<boolean>(false);
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [lastSynced, setLastSynced] = useState<string>('');
+
+  // System Settings (Models & Checklists)
+  const [models, setModelsState] = useState<string[]>(DEFAULT_MODELS);
+  const [riskCriteria, setRiskCriteriaState] = useState<string[]>(DEFAULT_RISK_CRITERIA);
+  const [checklistCriteria, setChecklistCriteriaState] = useState<string[]>(DEFAULT_CHECKLIST_CRITERIA);
+
+  useEffect(() => {
+    storageService.getJSON<string[]>(KEYS.models, DEFAULT_MODELS).then((res) => {
+      if (Array.isArray(res) && res.length > 0) setModelsState(res);
+    });
+    storageService.getJSON<string[]>(KEYS.riskCriteria, DEFAULT_RISK_CRITERIA).then((res) => {
+      if (Array.isArray(res) && res.length > 0) setRiskCriteriaState(res);
+    });
+    storageService.getJSON<string[]>(KEYS.checklistCriteria, DEFAULT_CHECKLIST_CRITERIA).then((res) => {
+      if (Array.isArray(res) && res.length > 0) setChecklistCriteriaState(res);
+    });
+  }, []);
 
   const scopeKey = allAccounts ? 'all' : selectedAccountId || 'default';
 
@@ -373,16 +423,27 @@ export function DataProvider({ children }: { children?: ReactNode }) {
         position_size: Number(input.size) || 0,
         contracts: Number(input.size) || 0,
         net_pnl: Number(input.netPnl) || 0,
+        commission: input.commission !== undefined && input.commission !== null ? Number(input.commission) : null,
+        risk_percent: input.riskPercent !== undefined && input.riskPercent !== null ? Number(input.riskPercent) : null,
         stop_loss: input.stopLoss !== undefined && input.stopLoss !== null ? Number(input.stopLoss) : null,
         take_profit: input.takeProfit !== undefined && input.takeProfit !== null ? Number(input.takeProfit) : null,
-        rr: Number(input.riskRewardRatio) || 0,
+        rr: input.riskRewardRatio !== undefined && input.riskRewardRatio !== null ? Number(input.riskRewardRatio) : 0,
         result: (Number(input.netPnl) || 0) >= 0 ? 'Win' : 'Loss',
         model: input.setup || '',
         session: input.session || '',
         timeframe: input.timeframe || '',
         notes: input.notes || '',
         tags: Array.isArray(input.tags) ? input.tags : [],
+        mistakes: input.mistakes || [],
         is_favorite: !!input.isFavorite,
+        risk_checklist: input.riskChecklist || {},
+        trade_checklist: input.tradeChecklist || {},
+        psychology: input.psychology || {},
+        trade_grade: input.tradeGrade || null,
+        rating: input.disciplineRating ?? input.rating ?? 6,
+        confluences: input.confluences || null,
+        trade_management: input.tradeManagement || null,
+        lessons_learned: input.lessonsLearned || null,
       };
 
       try {
@@ -438,7 +499,7 @@ export function DataProvider({ children }: { children?: ReactNode }) {
       if (patch.entryTime !== undefined) dbPatch.entry_time = patch.entryTime;
       if (patch.exitTime !== undefined) dbPatch.exit_time = patch.exitTime;
       if (patch.entryPrice !== undefined) dbPatch.entry_price = Number(patch.entryPrice);
-      if (patch.exitPrice !== undefined) dbPatch.exit_price = Number(patch.exitPrice);
+      if (patch.exitPrice !== undefined) dbPatch.exit_price = patch.exitPrice !== null ? Number(patch.exitPrice) : null;
       if (patch.size !== undefined) {
         dbPatch.position_size = Number(patch.size);
         dbPatch.contracts = Number(patch.size);
@@ -447,6 +508,8 @@ export function DataProvider({ children }: { children?: ReactNode }) {
         dbPatch.net_pnl = Number(patch.netPnl);
         dbPatch.result = Number(patch.netPnl) >= 0 ? 'Win' : 'Loss';
       }
+      if (patch.commission !== undefined) dbPatch.commission = patch.commission !== null ? Number(patch.commission) : null;
+      if (patch.riskPercent !== undefined) dbPatch.risk_percent = patch.riskPercent !== null ? Number(patch.riskPercent) : null;
       if (patch.stopLoss !== undefined) dbPatch.stop_loss = patch.stopLoss;
       if (patch.takeProfit !== undefined) dbPatch.take_profit = patch.takeProfit;
       if (patch.riskRewardRatio !== undefined) dbPatch.rr = Number(patch.riskRewardRatio);
@@ -455,8 +518,17 @@ export function DataProvider({ children }: { children?: ReactNode }) {
       if (patch.timeframe !== undefined) dbPatch.timeframe = patch.timeframe;
       if (patch.notes !== undefined) dbPatch.notes = patch.notes;
       if (patch.tags !== undefined) dbPatch.tags = patch.tags;
+      if (patch.mistakes !== undefined) dbPatch.mistakes = patch.mistakes;
       if (patch.isFavorite !== undefined) dbPatch.is_favorite = patch.isFavorite;
       if (patch.accountId !== undefined) dbPatch.account_id = patch.accountId;
+      if (patch.riskChecklist !== undefined) dbPatch.risk_checklist = patch.riskChecklist;
+      if (patch.tradeChecklist !== undefined) dbPatch.trade_checklist = patch.tradeChecklist;
+      if (patch.psychology !== undefined) dbPatch.psychology = patch.psychology;
+      if (patch.tradeGrade !== undefined) dbPatch.trade_grade = patch.tradeGrade;
+      if (patch.disciplineRating !== undefined || patch.rating !== undefined) dbPatch.rating = patch.disciplineRating ?? patch.rating;
+      if (patch.confluences !== undefined) dbPatch.confluences = patch.confluences;
+      if (patch.tradeManagement !== undefined) dbPatch.trade_management = patch.tradeManagement;
+      if (patch.lessonsLearned !== undefined) dbPatch.lessons_learned = patch.lessonsLearned;
 
       try {
         const { data, error } = await supabase
@@ -477,6 +549,7 @@ export function DataProvider({ children }: { children?: ReactNode }) {
     },
     [userId]
   );
+
 
   const deleteTrade = useCallback(
     async (id: string): Promise<boolean> => {
@@ -732,16 +805,18 @@ export function DataProvider({ children }: { children?: ReactNode }) {
   const addChallenge = useCallback(
     async (chall: Partial<Challenge>): Promise<Challenge | null> => {
       if (!userId) return null;
-      const payload = {
+      const targetAccId = chall.accountId || preferredAccountId || null;
+      const payload: Record<string, any> = {
         user_id: userId,
+        account_id: targetAccId,
         name: chall.name || chall.title || 'New Challenge',
         prop_firm: chall.propFirm || '',
         challenge_type: chall.challengeType || 'Custom',
-        starting_balance: chall.startingBalance || 100000,
-        profit_target: chall.profitTarget || 1000,
-        daily_drawdown: chall.dailyDrawdown || 500,
-        maximum_drawdown: chall.maximumDrawdown || 1000,
-        min_trading_days: chall.minTradingDays || 0,
+        starting_balance: Number(chall.startingBalance) || 100000,
+        profit_target: Number(chall.profitTarget) || 10000,
+        daily_drawdown: Number(chall.dailyDrawdown) || 5000,
+        maximum_drawdown: Number(chall.maximumDrawdown) || 10000,
+        min_trading_days: Number(chall.minTradingDays) || 0,
         start_date: chall.startDate || new Date().toISOString().split('T')[0],
         end_date: chall.endDate || null,
         status: chall.status || 'active',
@@ -757,7 +832,7 @@ export function DataProvider({ children }: { children?: ReactNode }) {
         return null;
       }
     },
-    [userId]
+    [userId, preferredAccountId]
   );
 
   const updateChallenge = useCallback(
@@ -765,8 +840,17 @@ export function DataProvider({ children }: { children?: ReactNode }) {
       if (!userId || !id) return null;
       const dbPatch: Record<string, any> = {};
       if (patch.name !== undefined) dbPatch.name = patch.name;
+      if (patch.propFirm !== undefined) dbPatch.prop_firm = patch.propFirm;
+      if (patch.challengeType !== undefined) dbPatch.challenge_type = patch.challengeType;
+      if (patch.startingBalance !== undefined) dbPatch.starting_balance = Number(patch.startingBalance);
+      if (patch.profitTarget !== undefined) dbPatch.profit_target = Number(patch.profitTarget);
+      if (patch.dailyDrawdown !== undefined) dbPatch.daily_drawdown = Number(patch.dailyDrawdown);
+      if (patch.maximumDrawdown !== undefined) dbPatch.maximum_drawdown = Number(patch.maximumDrawdown);
+      if (patch.minTradingDays !== undefined) dbPatch.min_trading_days = Number(patch.minTradingDays);
+      if (patch.startDate !== undefined) dbPatch.start_date = patch.startDate;
+      if (patch.endDate !== undefined) dbPatch.end_date = patch.endDate;
+      if (patch.accountId !== undefined) dbPatch.account_id = patch.accountId;
       if (patch.status !== undefined) dbPatch.status = patch.status;
-      if (patch.profitTarget !== undefined) dbPatch.profit_target = patch.profitTarget;
 
       try {
         const { data, error } = await supabase
@@ -874,6 +958,136 @@ export function DataProvider({ children }: { children?: ReactNode }) {
     [userId]
   );
 
+  // --- System Settings (Models & Checklists) Mutations & Helpers ---
+  const setModels = useCallback(async (newModels: string[]) => {
+    const valid = Array.isArray(newModels) ? newModels : DEFAULT_MODELS;
+    setModelsState(valid);
+    await storageService.setJSON(KEYS.models, valid);
+  }, []);
+
+  const setRiskCriteria = useCallback(async (newCriteria: string[]) => {
+    const valid = Array.isArray(newCriteria) ? newCriteria : DEFAULT_RISK_CRITERIA;
+    setRiskCriteriaState(valid);
+    await storageService.setJSON(KEYS.riskCriteria, valid);
+  }, []);
+
+  const setChecklistCriteria = useCallback(async (newCriteria: string[]) => {
+    const valid = Array.isArray(newCriteria) ? newCriteria : DEFAULT_CHECKLIST_CRITERIA;
+    setChecklistCriteriaState(valid);
+    await storageService.setJSON(KEYS.checklistCriteria, valid);
+  }, []);
+
+  const addModel = useCallback(
+    async (name: string): Promise<boolean> => {
+      const trimmed = String(name || '').trim();
+      if (!trimmed) return false;
+      if (models.some((m) => m.toLowerCase() === trimmed.toLowerCase())) return false;
+      const next = [...models, trimmed];
+      await setModels(next);
+      return true;
+    },
+    [models, setModels]
+  );
+
+  const updateModel = useCallback(
+    async (oldName: string, newName: string): Promise<boolean> => {
+      const trimmed = String(newName || '').trim();
+      if (!trimmed || !oldName) return false;
+      if (trimmed.toLowerCase() !== oldName.toLowerCase() && models.some((m) => m.toLowerCase() === trimmed.toLowerCase())) {
+        return false;
+      }
+      const next = models.map((m) => (m === oldName ? trimmed : m));
+      await setModels(next);
+      return true;
+    },
+    [models, setModels]
+  );
+
+  const deleteModel = useCallback(
+    async (name: string): Promise<boolean> => {
+      const next = models.filter((m) => m !== name);
+      await setModels(next);
+      return true;
+    },
+    [models, setModels]
+  );
+
+  const addRiskCriterion = useCallback(
+    async (text: string): Promise<boolean> => {
+      const trimmed = String(text || '').trim();
+      if (!trimmed) return false;
+      if (riskCriteria.some((c) => c.toLowerCase() === trimmed.toLowerCase())) return false;
+      const next = [...riskCriteria, trimmed];
+      await setRiskCriteria(next);
+      return true;
+    },
+    [riskCriteria, setRiskCriteria]
+  );
+
+  const updateRiskCriterion = useCallback(
+    async (oldText: string, newText: string): Promise<boolean> => {
+      const trimmed = String(newText || '').trim();
+      if (!trimmed || !oldText) return false;
+      if (trimmed.toLowerCase() !== oldText.toLowerCase() && riskCriteria.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
+        return false;
+      }
+      const next = riskCriteria.map((c) => (c === oldText ? trimmed : c));
+      await setRiskCriteria(next);
+      return true;
+    },
+    [riskCriteria, setRiskCriteria]
+  );
+
+  const deleteRiskCriterion = useCallback(
+    async (text: string): Promise<boolean> => {
+      const next = riskCriteria.filter((c) => c !== text);
+      await setRiskCriteria(next);
+      return true;
+    },
+    [riskCriteria, setRiskCriteria]
+  );
+
+  const addChecklistCriterion = useCallback(
+    async (text: string): Promise<boolean> => {
+      const trimmed = String(text || '').trim();
+      if (!trimmed) return false;
+      if (checklistCriteria.some((c) => c.toLowerCase() === trimmed.toLowerCase())) return false;
+      const next = [...checklistCriteria, trimmed];
+      await setChecklistCriteria(next);
+      return true;
+    },
+    [checklistCriteria, setChecklistCriteria]
+  );
+
+  const updateChecklistCriterion = useCallback(
+    async (oldText: string, newText: string): Promise<boolean> => {
+      const trimmed = String(newText || '').trim();
+      if (!trimmed || !oldText) return false;
+      if (trimmed.toLowerCase() !== oldText.toLowerCase() && checklistCriteria.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
+        return false;
+      }
+      const next = checklistCriteria.map((c) => (c === oldText ? trimmed : c));
+      await setChecklistCriteria(next);
+      return true;
+    },
+    [checklistCriteria, setChecklistCriteria]
+  );
+
+  const deleteChecklistCriterion = useCallback(
+    async (text: string): Promise<boolean> => {
+      const next = checklistCriteria.filter((c) => c !== text);
+      await setChecklistCriteria(next);
+      return true;
+    },
+    [checklistCriteria, setChecklistCriteria]
+  );
+
+  const resetSystemSettings = useCallback(async (): Promise<void> => {
+    await setModels(DEFAULT_MODELS);
+    await setRiskCriteria(DEFAULT_RISK_CRITERIA);
+    await setChecklistCriteria(DEFAULT_CHECKLIST_CRITERIA);
+  }, [setModels, setRiskCriteria, setChecklistCriteria]);
+
   // --- Backup & Restore ---
   const exportBackup = useCallback(() => {
     return backupService.buildBackupPayload({
@@ -884,8 +1098,11 @@ export function DataProvider({ children }: { children?: ReactNode }) {
       goals,
       challenges,
       study,
+      models,
+      riskCriteria,
+      checklistCriteria,
     });
-  }, [accounts, trades, plans, reflections, goals, challenges, study]);
+  }, [accounts, trades, plans, reflections, goals, challenges, study, models, riskCriteria, checklistCriteria]);
 
   const restoreBackup = useCallback(
     async (payload: any): Promise<{ success: boolean; message: string }> => {
@@ -916,13 +1133,22 @@ export function DataProvider({ children }: { children?: ReactNode }) {
             await addGoal(g);
           }
         }
+        if (Array.isArray(payload.models) && payload.models.length > 0) {
+          await setModels(payload.models);
+        }
+        if (Array.isArray(payload.riskCriteria) && payload.riskCriteria.length > 0) {
+          await setRiskCriteria(payload.riskCriteria);
+        }
+        if (Array.isArray(payload.checklistCriteria) && payload.checklistCriteria.length > 0) {
+          await setChecklistCriteria(payload.checklistCriteria);
+        }
         await fetchAllData();
         return { success: true, message: 'Backup restored successfully!' };
       } catch (err: any) {
         return { success: false, message: `Restore failed: ${err.message || err}` };
       }
     },
-    [userId, addTrade, addPlan, addReflection, addGoal, fetchAllData]
+    [userId, addTrade, addPlan, addReflection, addGoal, setModels, setRiskCriteria, setChecklistCriteria, fetchAllData]
   );
 
   return (
@@ -959,6 +1185,22 @@ export function DataProvider({ children }: { children?: ReactNode }) {
         addStudyNote,
         updateStudyNote,
         deleteStudyNote,
+        models,
+        setModels,
+        riskCriteria,
+        setRiskCriteria,
+        checklistCriteria,
+        setChecklistCriteria,
+        addModel,
+        updateModel,
+        deleteModel,
+        addRiskCriterion,
+        updateRiskCriterion,
+        deleteRiskCriterion,
+        addChecklistCriterion,
+        updateChecklistCriterion,
+        deleteChecklistCriterion,
+        resetSystemSettings,
         exportBackup,
         restoreBackup,
       }}

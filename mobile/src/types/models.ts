@@ -30,6 +30,25 @@ export interface Account {
   updatedAt?: string;
 }
 
+export const TRADE_GRADES = ['A+', 'A', 'B', 'C'] as const;
+export type TradeGrade = (typeof TRADE_GRADES)[number];
+
+export const MISTAKE_NAMES = [
+  'Late Entry',
+  'Early Exit',
+  'Moved Stop Loss',
+  'No Stop Loss',
+  'Over Risk',
+  'Counter Trend',
+  'News Chase',
+  'Over Trading',
+  'Missed Plan',
+  'Revenge Trade',
+  'FOMO Entry',
+  'Impatience',
+] as const;
+export type MistakeName = (typeof MISTAKE_NAMES)[number];
+
 export interface Trade {
   id: string;
   userId?: string;
@@ -47,6 +66,7 @@ export interface Trade {
   grossPnl?: number;
   commission?: number;
   pnlPercentage?: number;
+  riskPercent?: number;
   riskRewardRatio?: number;
   stopLoss?: number;
   takeProfit?: number;
@@ -61,13 +81,21 @@ export interface Trade {
   emotionDuring?: string;
   emotionAfter?: string;
   disciplineRating?: number;
+  rating?: number;
   screenshots?: string[];
   isFavorite?: boolean;
   review?: Record<string, any>;
-  psychology?: Record<string, any>;
+  riskChecklist?: Record<string, boolean>;
+  tradeChecklist?: Record<string, boolean>;
+  psychology?: Record<string, number>;
+  tradeGrade?: string;
+  confluences?: string;
+  tradeManagement?: string;
+  lessonsLearned?: string;
   createdAt?: string;
   updatedAt?: string;
 }
+
 
 export interface PreMarketPlan {
   id: string;
@@ -130,6 +158,7 @@ export interface Goal {
 export interface Challenge {
   id: string;
   userId?: string;
+  accountId?: string;
   name?: string;
   title?: string;
   propFirm?: string;
@@ -143,7 +172,7 @@ export interface Challenge {
   durationDays?: number;
   startDate?: string;
   endDate?: string;
-  status?: 'active' | 'completed' | 'abandoned';
+  status?: 'active' | 'completed' | 'archived' | 'failed' | 'pass' | 'warning' | string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -161,4 +190,23 @@ export interface StudyItem {
   tags?: string[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface TradeScreenshot {
+  id: string;
+  tradeId: string;
+  userId?: string;
+  storagePath: string;
+  fileName: string;
+  fileSize: number;
+  createdAt: string;
+  url: string | null;
+}
+
+export interface StagedScreenshot {
+  id: string;
+  uri: string;
+  fileName: string;
+  fileSize?: number;
+  mimeType?: string;
 }

@@ -1,17 +1,29 @@
 // Authentication & Profile Service
 
-import { supabase } from './supabase';
+import { supabase, isSupabaseConfigured } from './supabase';
 import { UserProfile } from '../types/models';
 import { logger } from '../utils/logger';
 
+function ensureConfigured() {
+  if (!isSupabaseConfigured) {
+    throw new Error(
+      'Supabase is not configured. Missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY in build environment.'
+    );
+  }
+}
+
 export const authService = {
   async getSession() {
+    if (!isSupabaseConfigured) return null;
     const { data, error } = await supabase.auth.getSession();
     if (error) throw error;
     return data.session;
   },
 
   onAuthStateChange(callback: (event: string, session: any) => void) {
+    if (!isSupabaseConfigured) {
+      return { data: { subscription: { unsubscribe: () => {} } } };
+    }
     return supabase.auth.onAuthStateChange(callback);
   },
 
@@ -28,12 +40,17 @@ export const authService = {
   },
 
   async signInWithPassword(email: string, password: string) {
+    ensureConfigured();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    if (error) {
+      logger.error('AUTH', error, { action: 'signInWithPassword' });
+      throw error;
+    }
     return data;
   },
 
   async signUp(email: string, password: string, fullName?: string) {
+    ensureConfigured();
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -43,16 +60,21 @@ export const authService = {
         },
       },
     });
-    if (error) throw error;
+    if (error) {
+      logger.error('AUTH', error, { action: 'signUp' });
+      throw error;
+    }
     return data;
   },
 
   async signOut() {
+    if (!isSupabaseConfigured) return;
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   },
 
   async resetPasswordForEmail(email: string) {
+    ensureConfigured();
     const { error } = await supabase.auth.resetPasswordForEmail(email);
     if (error) throw error;
   },

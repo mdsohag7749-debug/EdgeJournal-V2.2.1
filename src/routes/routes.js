@@ -20,6 +20,7 @@ const Psychology = lazy(() => import('../pages/Psychology'));
 const System = lazy(() => import('../pages/System'));
 const Profile = lazy(() => import('../pages/Profile'));
 const Settings = lazy(() => import('../pages/Settings'));
+const Subscription = lazy(() => import('../pages/Subscription'));
 
 export const routes = [
   {
@@ -94,6 +95,13 @@ export const routes = [
     Component: Settings,
     title: 'Settings',
     subtitle: 'Manage your accounts and app configuration',
+  },
+  {
+    id: 'subscription',
+    path: '/subscription',
+    Component: Subscription,
+    title: 'Subscription & Plans',
+    subtitle: 'View your active plan, manage entitlements, and inspect tier limits',
   },
   {
     id: 'profile',

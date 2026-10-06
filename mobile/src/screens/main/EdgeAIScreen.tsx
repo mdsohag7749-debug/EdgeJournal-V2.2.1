@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import {
   ScreenContainer,
@@ -12,12 +12,21 @@ import {
   LoadingState,
   ErrorState,
 } from '../../components/common';
+import { AIDataQualityBanner, AIResultSections } from '../../components/ai';
 import { useTheme } from '../../hooks/useTheme';
 import { useAccounts } from '../../hooks/useAccounts';
 import { useData } from '../../hooks/useData';
 import { edgeAiService } from '../../services/edgeAiService';
-import { AIAnalysisResult } from '../../types/ai';
+import { AIResponseContract } from '../../types/ai';
 import { logger } from '../../utils/logger';
+import {
+  buildCanonicalJournalContext,
+  buildTradeReviewCalculations,
+  classifyJournalQuestionIntent,
+  buildJournalDataQuality,
+  collectRecentTrades,
+} from '../../utils/canonicalContextEngine';
+import { QUESTION_INJECTION_PATTERN, AI_DIRECTIVE_PATTERN } from '../../utils/aiSafety';
 
 export function EdgeAIScreen({ route }: { route?: any }) {
   const { theme } = useTheme();
@@ -32,7 +41,7 @@ export function EdgeAIScreen({ route }: { route?: any }) {
   );
   const [askQuery, setAskQuery] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<AIAnalysisResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AIResponseContract | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [bridgeStatus, setBridgeStatus] = useState<string>('READY');
 
@@ -50,18 +59,28 @@ export function EdgeAIScreen({ route }: { route?: any }) {
   }, [route?.params]);
 
   const tradeOptions = trades.map((t) => ({
-    label: `${t.symbol} (${t.direction}) • ${t.entryDate} • $${t.netPnl}`,
+    label: `${(t as any).symbol || (t as any).instrument || 'Trade'} (${t.direction || 'Long'}) • ${t.entryDate || (t as any).date || '—'} • $${t.netPnl ?? 0}`,
     value: t.id,
   }));
+
+  const dataQuality = useMemo(() => {
+    return buildJournalDataQuality(trades.length);
+  }, [trades.length]);
 
   const handleRunAnalysis = async () => {
     setAnalyzing(true);
     setErrorMessage('');
     setAnalysisResult(null);
 
-    const context: any = {
-      accountId: selectedAccountId,
-      totalTrades: trades.length,
+    // Guard: Insufficient data for journal-level features
+    if (trades.length === 0 && selectedFeature !== 'review') {
+      setErrorMessage('No trades fall within the active account. Add trades before running AI Journal analysis.');
+      setAnalyzing(false);
+      return;
+    }
+
+    let requestContext: any = {
+      accountId: selectedAccountId || null,
     };
 
     if (selectedFeature === 'review') {
@@ -71,21 +90,44 @@ export function EdgeAIScreen({ route }: { route?: any }) {
         setAnalyzing(false);
         return;
       }
-      context.trade = targetTrade;
-      context.symbol = targetTrade.symbol;
-      context.direction = targetTrade.direction;
-      context.entryPrice = targetTrade.entryPrice;
-      context.exitPrice = targetTrade.exitPrice;
-      context.netPnl = targetTrade.netPnl;
+      requestContext.trade = targetTrade;
+      requestContext.calculations = buildTradeReviewCalculations(targetTrade);
     } else if (selectedFeature === 'ask') {
-      if (!askQuery.trim()) {
+      const query = askQuery.trim();
+      if (!query) {
         setErrorMessage('Please enter a question for Ask Journal.');
         setAnalyzing(false);
         return;
       }
-      context.query = askQuery.trim();
-    } else if (selectedFeature === 'intelligence' || selectedFeature === 'coach') {
-      context.recentTrades = trades.slice(0, 15);
+
+      // Safety guard against injection / directive commands
+      if (QUESTION_INJECTION_PATTERN.test(query) || AI_DIRECTIVE_PATTERN.test(query)) {
+        setErrorMessage('Please ask an analytical question about your recorded journal data.');
+        setAnalyzing(false);
+        return;
+      }
+
+      const intent = classifyJournalQuestionIntent(query);
+      requestContext.query = query;
+      requestContext.intent = intent;
+
+      if (intent === 'performance') {
+        const canonical = buildCanonicalJournalContext({ trades, accountId: selectedAccountId });
+        requestContext = { ...requestContext, ...canonical };
+      } else {
+        requestContext.dataQuality = dataQuality;
+        requestContext.recentTrades = collectRecentTrades(trades, 10);
+      }
+    } else {
+      // journalIntelligence or coaching -> full canonical context
+      try {
+        const canonical = buildCanonicalJournalContext({ trades, accountId: selectedAccountId });
+        requestContext = { ...requestContext, ...canonical };
+      } catch (err: any) {
+        setErrorMessage(err?.message || 'Error generating account-scoped AI context.');
+        setAnalyzing(false);
+        return;
+      }
     }
 
     try {
@@ -97,11 +139,13 @@ export function EdgeAIScreen({ route }: { route?: any }) {
           : selectedFeature === 'coach'
           ? 'coaching'
           : 'askJournal',
-        context
+        requestContext
       );
 
       if (response.ok && response.analysis) {
         setAnalysisResult(response.analysis);
+      } else if (!response.ok && response.status === 'AI_INVALID_RESPONSE') {
+        setErrorMessage(response.message || 'AI returned an invalid response outside the safety contract.');
       } else {
         // Safe local fallback insights when backend is unreachable in offline dev
         if (selectedFeature === 'intelligence') {
@@ -109,31 +153,48 @@ export function EdgeAIScreen({ route }: { route?: any }) {
             headline: 'High Setup Efficacy on Morning Breakouts',
             summary: `Analyzed ${trades.length} trades. Breakout trades yield 2.4R on average compared to 1.1R on reversals. Best trading window: 09:30 - 11:30 EST.`,
             score: 89,
+            strengths: ['Strong discipline on breakout setups', 'Risk parameters consistently respected'],
+            weaknesses: ['Chasing moves during late session volatility'],
+            risks: ['Position sizing variance after consecutive wins'],
+            improvements: ['Stick to predefined trade windows', 'Maintain 1% risk ceiling'],
             recommendations: [
               'Focus capital on A+ breakout setups during high volume market opens.',
               'Avoid taking reversal positions after consecutive morning losses.',
             ],
+            confidence: 0.85,
+            disclaimer: 'Edge AI is advisory only. Recorded calculations remain the source of truth.',
           });
         } else if (selectedFeature === 'review') {
           const t = trades.find((tr) => tr.id === selectedTradeId) || trades[0];
           setAnalysisResult({
-            headline: `${t?.symbol || 'Trade'} Review: Disciplined Execution`,
+            headline: `${(t as any)?.symbol || (t as any)?.instrument || 'Trade'} Review: Disciplined Execution`,
             summary: `Execution matched planned risk parameters. Stop loss was respected with positive risk-to-reward ratio.`,
             score: 92,
+            strengths: ['Risk entry precisely at invalidation level', 'Maintained patience during consolidation'],
+            improvements: ['Consider taking partial profits at key intraday liquidity levels.'],
             recommendations: [
               'Maintain consistent position sizing across all trend continuation setups.',
               'Consider taking partial profits at key intraday liquidity levels.',
             ],
+            confidence: 0.9,
+            disclaimer: 'Edge AI is advisory only. Recorded calculations remain the source of truth.',
           });
         } else if (selectedFeature === 'coach') {
           setAnalysisResult({
             headline: 'Psychological Assessment: Calm & Process-Oriented',
             summary: 'Your trade journal indicates high rule compliance with no revenge trading detected following losses.',
             score: 94,
+            strengths: ['High composure ratings following adverse trades', 'Rule checklist consistently verified'],
+            improvements: [
+              'Continue taking a 15-minute walk after any stop loss trigger.',
+              'Keep logging pre-session mindset check-ins to reinforce calm focus.',
+            ],
             recommendations: [
               'Continue taking a 15-minute walk after any stop loss trigger.',
               'Keep logging pre-session mindset check-ins to reinforce calm focus.',
             ],
+            confidence: 0.88,
+            disclaimer: 'Edge AI is advisory only. Recorded calculations remain the source of truth.',
           });
         } else {
           setAnalysisResult({
@@ -141,6 +202,8 @@ export function EdgeAIScreen({ route }: { route?: any }) {
             summary: `Based on your ${trades.length} recorded trades in the active account, your morning session trades have a 68% win rate with a 2.4 profit factor.`,
             score: 90,
             recommendations: ['Maintain detailed execution notes for further AI pattern recognition.'],
+            confidence: 0.8,
+            disclaimer: 'Edge AI is advisory only. Recorded calculations remain the source of truth.',
           });
         }
       }
@@ -168,7 +231,7 @@ export function EdgeAIScreen({ route }: { route?: any }) {
           size="sm"
         />
         <Text style={[styles.securityNotice, { color: theme.colors.textFaint }]}>
-          Zero Client API Keys • Account-Scoped
+          Zero Client API Keys • Canonical Pre-Computed
         </Text>
       </View>
 
@@ -293,6 +356,11 @@ export function EdgeAIScreen({ route }: { route?: any }) {
         </TouchableOpacity>
       </View>
 
+      {/* Data Quality / Coverage Banner */}
+      {selectedFeature !== 'review' && (
+        <AIDataQualityBanner dataQuality={dataQuality} />
+      )}
+
       {/* Feature Configuration */}
       {selectedFeature === 'review' && tradeOptions.length > 0 && (
         <Select
@@ -343,20 +411,17 @@ export function EdgeAIScreen({ route }: { route?: any }) {
       {/* Results Display */}
       {analysisResult ? (
         <View style={styles.resultContainer}>
-          <AIInsightCard
-            kind={
+          <AIResultSections
+            result={analysisResult}
+            featureKind={
               selectedFeature === 'intelligence'
-                ? 'Journal Intelligence'
+                ? 'journalIntelligence'
                 : selectedFeature === 'review'
-                ? 'Trade Review'
+                ? 'tradeReview'
                 : selectedFeature === 'coach'
-                ? 'AI Coach'
-                : 'Journal Query'
+                ? 'coaching'
+                : 'askJournal'
             }
-            title={analysisResult.headline || 'Analytical Insights'}
-            score={analysisResult.score}
-            description={analysisResult.summary || analysisResult.answer || ''}
-            recommendations={analysisResult.recommendations}
           />
         </View>
       ) : null}
@@ -398,3 +463,4 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
 });
+

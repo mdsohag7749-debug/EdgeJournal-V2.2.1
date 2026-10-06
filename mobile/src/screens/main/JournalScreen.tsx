@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, RefreshControl, TouchableOpacity, ScrollView } from 'react-native';
 import {
   ScreenContainer,
   Header,
@@ -11,10 +11,20 @@ import {
   Input,
   EmptyState,
 } from '../../components/common';
+import { JournalFilterSheet } from '../../components/journal/JournalFilterSheet';
+import { SavedViewsBottomSheet } from '../../components/journal/SavedViewsBottomSheet';
 import { useTheme } from '../../hooks/useTheme';
 import { useAccounts } from '../../hooks/useAccounts';
 import { useData } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/formatters';
+import {
+  JournalFilterState,
+  BLANK_JOURNAL_FILTERS,
+  tradeMatchesFilters,
+  getActiveFilterChips,
+  countActiveFilters,
+  getDatePresetRange,
+} from '../../utils/journalFilters';
 
 export function JournalScreen({ navigation }: { navigation: any }) {
   const { theme } = useTheme();
@@ -22,10 +32,27 @@ export function JournalScreen({ navigation }: { navigation: any }) {
   const { trades, refreshing, refetch } = useData();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
-  const [selectedSetup, setSelectedSetup] = useState<string | null>(null);
-  const [selectedDirection, setSelectedDirection] = useState<string | null>(null);
+  const [filters, setFilters] = useState<JournalFilterState>(BLANK_JOURNAL_FILTERS);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [savedViewsOpen, setSavedViewsOpen] = useState(false);
   const [sortAscending, setSortAscending] = useState(false);
+
+  // Synchronize Tab selection with filters.result
+  const activeTab = useMemo(() => {
+    if (filters.result === 'Win') return 'wins';
+    if (filters.result === 'Loss') return 'losses';
+    if (filters.result === 'Open') return 'open';
+    return 'all';
+  }, [filters.result]);
+
+  const handleTabChange = (key: string) => {
+    let nextResult: JournalFilterState['result'] = 'All';
+    if (key === 'wins') nextResult = 'Win';
+    else if (key === 'losses') nextResult = 'Loss';
+    else if (key === 'open') nextResult = 'Open';
+
+    setFilters((prev) => ({ ...prev, result: nextResult }));
+  };
 
   // Tab counts
   const winCount = useMemo(() => trades.filter((t) => t.netPnl > 0).length, [trades]);
@@ -39,48 +66,79 @@ export function JournalScreen({ navigation }: { navigation: any }) {
     { key: 'open', label: 'Open', count: openCount },
   ];
 
-  // Setups present in user trades
-  const uniqueSetups = useMemo(() => {
-    const s = new Set<string>();
-    for (const t of trades) {
-      if (t.setup) s.add(t.setup);
-    }
-    return Array.from(s);
-  }, [trades]);
+  // Date preset fast-switch
+  const handleSelectQuickDate = (preset: JournalFilterState['datePreset']) => {
+    const range = getDatePresetRange(preset);
+    setFilters((prev) => ({
+      ...prev,
+      datePreset: preset,
+      dateFrom: range.dateFrom,
+      dateTo: range.dateTo,
+    }));
+  };
 
-  // Filtered trades
+  // Remove a single active filter chip
+  const handleRemoveChip = (chipId: string, key: keyof JournalFilterState | 'query', val?: string) => {
+    if (key === 'query') {
+      setSearchQuery('');
+      return;
+    }
+
+    if (key === 'datePreset' || key === 'dateFrom') {
+      setFilters((prev) => ({ ...prev, datePreset: 'All Time', dateFrom: '', dateTo: '' }));
+      return;
+    }
+
+    if (key === 'direction') {
+      setFilters((prev) => ({ ...prev, direction: 'All' }));
+      return;
+    }
+
+    if (key === 'result') {
+      setFilters((prev) => ({ ...prev, result: 'All' }));
+      return;
+    }
+
+    if (val && Array.isArray(filters[key])) {
+      setFilters((prev) => ({
+        ...prev,
+        [key]: (prev[key] as string[]).filter((x) => x.toLowerCase() !== val.toLowerCase()),
+      }));
+    }
+  };
+
+  const handleClearAllFilters = () => {
+    setSearchQuery('');
+    setFilters(BLANK_JOURNAL_FILTERS);
+  };
+
+  // Load a saved view
+  const handleLoadView = (viewFilters: JournalFilterState) => {
+    setSearchQuery('');
+    setFilters(viewFilters);
+  };
+
+  // Active filter count and summary chips
+  const activeCount = countActiveFilters(filters, searchQuery);
+  const activeChips = useMemo(() => getActiveFilterChips(filters, searchQuery), [filters, searchQuery]);
+
+  // Deterministic filtered and sorted trade list
   const filteredTrades = useMemo(() => {
     return trades
-      .filter((t) => {
-        // Tab filter
-        if (activeTab === 'wins' && t.netPnl <= 0) return false;
-        if (activeTab === 'losses' && t.netPnl >= 0) return false;
-        if (activeTab === 'open' && t.status !== 'Open') return false;
-
-        // Direction filter
-        if (selectedDirection && t.direction !== selectedDirection) return false;
-
-        // Setup filter
-        if (selectedSetup && t.setup !== selectedSetup) return false;
-
-        // Search query
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
-          const matchSymbol = t.symbol.toLowerCase().includes(q);
-          const matchSetup = t.setup?.toLowerCase().includes(q);
-          const matchNotes = t.notes?.toLowerCase().includes(q);
-          const matchTags = t.tags?.some((tag) => tag.toLowerCase().includes(q));
-          if (!matchSymbol && !matchSetup && !matchNotes && !matchTags) return false;
-        }
-
-        return true;
-      })
+      .filter((t) => tradeMatchesFilters(t, filters, searchQuery))
       .sort((a, b) => {
         const da = `${a.entryDate} ${a.entryTime || ''}`;
         const db = `${b.entryDate} ${b.entryTime || ''}`;
-        return sortAscending ? da.localeCompare(db) : db.localeCompare(da);
+        const cmp = da.localeCompare(db);
+        if (cmp !== 0) return sortAscending ? cmp : -cmp;
+        return a.id.localeCompare(b.id);
       });
-  }, [trades, activeTab, selectedDirection, selectedSetup, searchQuery, sortAscending]);
+  }, [trades, filters, searchQuery, sortAscending]);
+
+  const netPnlTotal = useMemo(
+    () => filteredTrades.reduce((acc, t) => acc + (t.netPnl || 0), 0),
+    [filteredTrades]
+  );
 
   return (
     <ScreenContainer
@@ -101,7 +159,7 @@ export function JournalScreen({ navigation }: { navigation: any }) {
         rightAction={<AccountSelector />}
       />
 
-      {/* Top Action Bar */}
+      {/* Top Search & Actions Bar */}
       <View style={styles.topBar}>
         <Input
           placeholder="Search ticker, setup, tags, notes..."
@@ -109,8 +167,31 @@ export function JournalScreen({ navigation }: { navigation: any }) {
           onChangeText={setSearchQuery}
           containerStyle={styles.searchBox}
         />
+        <TouchableOpacity
+          activeOpacity={0.75}
+          onPress={() => setSavedViewsOpen(true)}
+          style={[styles.viewsBtn, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={[styles.filterBtnText, { color: theme.colors.text }]}>📌</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={0.75}
+          onPress={() => setFilterSheetOpen(true)}
+          style={[
+            styles.filterBtn,
+            {
+              backgroundColor: activeCount > 0 ? theme.colors.accentDim : theme.colors.card,
+              borderColor: activeCount > 0 ? theme.colors.accent : theme.colors.border,
+            },
+          ]}
+        >
+          <Text style={[styles.filterBtnText, { color: activeCount > 0 ? theme.colors.accent : theme.colors.text }]}>
+            ⚙ Filters {activeCount > 0 ? `(${activeCount})` : ''}
+          </Text>
+        </TouchableOpacity>
         <Button
-          title="+ Log Trade"
+          title="+ Log"
           onPress={() => navigation.navigate('AddTrade')}
           variant="primary"
           size="sm"
@@ -118,71 +199,77 @@ export function JournalScreen({ navigation }: { navigation: any }) {
         />
       </View>
 
-      {/* Win / Loss / Open Status Tabs */}
-      <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* Quick Date Presets Row */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.quickDateRow}
+      >
+        {(['All Time', 'Today', 'This Week', 'This Month', 'YTD'] as const).map((preset) => (
+          <Chip
+            key={preset}
+            label={preset}
+            selected={filters.datePreset === preset}
+            onPress={() => handleSelectQuickDate(preset)}
+          />
+        ))}
+      </ScrollView>
 
-      {/* Filter Chips */}
-      <View style={styles.filterSection}>
-        <View style={styles.chipRow}>
-          <Chip
-            label={sortAscending ? 'Oldest First ⇅' : 'Newest First ⇅'}
-            selected={false}
-            onPress={() => setSortAscending((prev) => !prev)}
-          />
-          <Chip
-            label="All Directions"
-            selected={selectedDirection === null}
-            onPress={() => setSelectedDirection(null)}
-          />
-          <Chip
-            label="Longs Only"
-            selected={selectedDirection === 'Long'}
-            onPress={() => setSelectedDirection(selectedDirection === 'Long' ? null : 'Long')}
-          />
-          <Chip
-            label="Shorts Only"
-            selected={selectedDirection === 'Short'}
-            onPress={() => setSelectedDirection(selectedDirection === 'Short' ? null : 'Short')}
-          />
-        </View>
+      {/* Result Tabs (All / Wins / Losses / Open) */}
+      <Tabs tabs={tabs} activeTab={activeTab} onTabChange={handleTabChange} />
 
-        {uniqueSetups.length > 0 && (
-          <View style={styles.chipRow}>
-            <Chip
-              label="All Setups"
-              selected={selectedSetup === null}
-              onPress={() => setSelectedSetup(null)}
-            />
-            {uniqueSetups.map((s) => (
-              <Chip
-                key={s}
-                label={s}
-                selected={selectedSetup === s}
-                onPress={() => setSelectedSetup(selectedSetup === s ? null : s)}
-              />
+      {/* Active Filter Chips Summary (if any filters are active) */}
+      {activeChips.length > 0 && (
+        <View style={styles.activeSummaryContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.activeChipsScroll}
+          >
+            {activeChips.map((chip) => (
+              <TouchableOpacity
+                key={chip.id}
+                activeOpacity={0.7}
+                onPress={() => handleRemoveChip(chip.id, chip.key, chip.value)}
+                style={[
+                  styles.activeChip,
+                  { backgroundColor: theme.colors.card, borderColor: theme.colors.accent },
+                ]}
+              >
+                <Text style={[styles.activeChipLabel, { color: theme.colors.text }]}>{chip.label}</Text>
+                <Text style={[styles.activeChipClose, { color: theme.colors.accent }]}>✕</Text>
+              </TouchableOpacity>
             ))}
-          </View>
-        )}
-      </View>
+            <TouchableOpacity onPress={handleClearAllFilters} style={styles.clearAllTouch}>
+              <Text style={[styles.clearAllText, { color: theme.colors.semantic.danger }]}>Clear All</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      )}
 
-      {/* Trade Count & Summary Bar */}
+      {/* Trade Count & Net PnL Bar */}
       <View style={styles.countBar}>
-        <Text style={[styles.countText, { color: theme.colors.textMuted }]}>
-          Showing {filteredTrades.length} of {trades.length} trades
-        </Text>
+        <View style={styles.countLeft}>
+          <Text style={[styles.countText, { color: theme.colors.textMuted }]}>
+            Showing <Text style={{ fontWeight: '700', color: theme.colors.text }}>{filteredTrades.length}</Text> of{' '}
+            {trades.length} trades
+          </Text>
+          <TouchableOpacity onPress={() => setSortAscending((prev) => !prev)}>
+            <Text style={[styles.sortToggleText, { color: theme.colors.accent }]}>
+              {sortAscending ? '↑ Oldest' : '↓ Newest'}
+            </Text>
+          </TouchableOpacity>
+        </View>
         {filteredTrades.length > 0 && (
           <Text style={[styles.netTotal, { color: theme.colors.text }]}>
             Net:{' '}
             <Text
               style={{
-                color:
-                  filteredTrades.reduce((acc, t) => acc + (t.netPnl || 0), 0) >= 0
-                    ? theme.colors.semantic.success
-                    : theme.colors.semantic.danger,
+                color: netPnlTotal >= 0 ? theme.colors.semantic.success : theme.colors.semantic.danger,
                 fontWeight: '700',
               }}
             >
-              {formatCurrency(filteredTrades.reduce((acc, t) => acc + (t.netPnl || 0), 0))}
+              {formatCurrency(netPnlTotal)}
             </Text>
           </Text>
         )}
@@ -195,17 +282,14 @@ export function JournalScreen({ navigation }: { navigation: any }) {
           description={
             trades.length === 0
               ? 'Start logging trades to build your journal history.'
-              : 'Try clearing filters or search query to view trades.'
+              : 'No trades match the selected date range, session, or filters.'
           }
-          actionTitle={trades.length === 0 ? 'Log Trade' : 'Clear Filters'}
+          actionTitle={trades.length === 0 ? 'Log Trade' : 'Reset Filters'}
           onAction={() => {
             if (trades.length === 0) {
               navigation.navigate('AddTrade');
             } else {
-              setSearchQuery('');
-              setActiveTab('all');
-              setSelectedSetup(null);
-              setSelectedDirection(null);
+              handleClearAllFilters();
             }
           }}
         />
@@ -218,6 +302,25 @@ export function JournalScreen({ navigation }: { navigation: any }) {
           />
         ))
       )}
+
+      {/* BottomSheet Filter Panel */}
+      <JournalFilterSheet
+        visible={filterSheetOpen}
+        onClose={() => setFilterSheetOpen(false)}
+        filters={filters}
+        onApply={(newFilters) => setFilters(newFilters)}
+        trades={trades}
+      />
+
+      {/* Saved Views Panel */}
+      <SavedViewsBottomSheet
+        visible={savedViewsOpen}
+        onClose={() => setSavedViewsOpen(false)}
+        currentFilters={filters}
+        currentQuery={searchQuery}
+        accountId={selectedAccount?.id || ''}
+        onLoadView={handleLoadView}
+      />
     </ScreenContainer>
   );
 }
@@ -227,32 +330,94 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginVertical: 10,
+    marginVertical: 8,
   },
   searchBox: {
     flex: 1,
     marginBottom: 0,
   },
+  viewsBtn: {
+    height: 44,
+    width: 44,
+    borderWidth: 1,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterBtn: {
+    height: 44,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
   addBtn: {
     height: 44,
+    paddingHorizontal: 14,
   },
-  filterSection: {
-    marginBottom: 10,
-  },
-  chipRow: {
+  quickDateRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 4,
+    gap: 6,
+    paddingVertical: 6,
+  },
+  activeSummaryContainer: {
+    marginVertical: 6,
+  },
+  activeChipsScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  activeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  activeChipLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  activeChipClose: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  clearAllTouch: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  clearAllText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   countBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginTop: 6,
+    marginBottom: 10,
     paddingHorizontal: 2,
+  },
+  countLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   countText: {
     fontSize: 12,
+  },
+  sortToggleText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   netTotal: {
     fontSize: 12,

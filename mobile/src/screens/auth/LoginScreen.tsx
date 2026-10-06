@@ -58,6 +58,13 @@ export function LoginScreen({ navigation }: { navigation: any }) {
           onChangeText={setPassword}
         />
 
+        <TouchableOpacity
+          onPress={() => navigation.navigate('ForgotPassword', { email })}
+          style={{ alignSelf: 'flex-end', marginBottom: 16 }}
+        >
+          <Text style={{ color: theme.colors.accent, fontSize: 13, fontWeight: '600' }}>Forgot password?</Text>
+        </TouchableOpacity>
+
         <Button
           title="Sign In"
           onPress={handleLogin}

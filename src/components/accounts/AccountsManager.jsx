@@ -6,6 +6,8 @@ import AccountCard from './AccountCard';
 import AccountFormModal from './AccountFormModal';
 import ConfirmDialog from '../ConfirmDialog';
 import { formatBalance } from './accounts';
+import { useAuth } from '../../context/AuthContext';
+import { checkAccountLimit } from '../../lib/entitlements';
 
 const SORT_OPTIONS = [
   { value: 'name-asc', label: 'Name (A–Z)' },
@@ -81,7 +83,22 @@ export default function AccountsManager() {
   const archivedCount = accounts.filter((a) => a.status === 'archived').length;
   const activeCount = accounts.length - archivedCount;
 
+  let currentPlan = null;
+  try {
+    const auth = useAuth();
+    currentPlan = auth?.currentPlan;
+  } catch {
+    // Graceful fallback for test environments without AuthProvider
+  }
+
   async function handleCreate(input) {
+    if (currentPlan) {
+      const limitCheck = checkAccountLimit(accounts.length, currentPlan);
+      if (!limitCheck.allowed) {
+        showToast('error', limitCheck.message);
+        return;
+      }
+    }
     setBusy(true);
     const saved = await addAccount(input);
     setBusy(false);
@@ -105,6 +122,13 @@ export default function AccountsManager() {
   }
 
   async function handleDuplicate(account) {
+    if (currentPlan) {
+      const limitCheck = checkAccountLimit(accounts.length, currentPlan);
+      if (!limitCheck.allowed) {
+        showToast('error', limitCheck.message);
+        return;
+      }
+    }
     const copy = {
       ...account,
       name: `${account.name} (Copy)`,
