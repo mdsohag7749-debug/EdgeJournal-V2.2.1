@@ -84,6 +84,10 @@ function AppShellContent() {
   const activeRoute = routes.find((r) => r.path === location.pathname) || defaultRoute;
 
   function handleNavigate(id) {
+    if (id === 'admin') {
+      navigate('/admin');
+      return;
+    }
     const target = routes.find((r) => r.id === id);
     if (target) navigate(target.path);
   }

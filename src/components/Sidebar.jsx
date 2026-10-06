@@ -15,7 +15,10 @@ import {
   Trophy,
   Brain,
   CreditCard,
+  ShieldCheck,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -33,6 +36,13 @@ const NAV = [
 ];
 
 export default function Sidebar({ active, onNavigate, collapsed, onToggleCollapsed }) {
+  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
+
+  const navItems = [
+    ...NAV,
+    ...(isAdmin ? [{ id: 'admin', label: 'Admin Panel', icon: ShieldCheck, isAdminBadge: true }] : []),
+  ];
   return (
     <motion.div
       animate={{ width: collapsed ? 72 : 190 }}
@@ -89,13 +99,19 @@ export default function Sidebar({ active, onNavigate, collapsed, onToggleCollaps
       </div>
 
       <nav aria-label="Main navigation" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, padding: '10px 10px' }}>
-        {NAV.map((item) => {
+        {navItems.map((item) => {
           const isActive = active === item.id;
           const Icon = item.icon;
           return (
             <motion.button
               key={item.id}
-              onClick={() => onNavigate(item.id)}
+              onClick={() => {
+                if (item.id === 'admin') {
+                  navigate('/admin');
+                } else {
+                  onNavigate(item.id);
+                }
+              }}
               title={collapsed ? item.label : undefined}
               aria-current={isActive ? 'page' : undefined}
               whileHover={{ x: isActive ? 0 : 2 }}
