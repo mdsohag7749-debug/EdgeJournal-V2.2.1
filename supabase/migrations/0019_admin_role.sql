@@ -90,6 +90,11 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
+  -- Database superusers (SQL Editor) and service_role can always assign/modify roles
+  IF current_user IN ('postgres', 'supabase_admin') OR auth.role() = 'service_role' THEN
+    RETURN NEW;
+  END IF;
+
   IF TG_OP = 'INSERT' THEN
     IF NEW.role IS NOT NULL AND NEW.role != 'user'::public.user_role THEN
       IF NOT public.is_admin() THEN
