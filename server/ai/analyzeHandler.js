@@ -92,15 +92,49 @@ export async function handleAnalyze({ method, data, authorization, ip, source, s
   }
 
   // 3: account scope — structural + optional user binding.
+  let scopeInfo;
   try {
-    await resolveAccountScope({
+    scopeInfo = await resolveAccountScope({
       kind: parsed.kind,
       context: parsed.context,
       authorization,
       cfg,
       supabaseFactory,
     });
-  } catch {
+  } catch (scopeErr) {
+    if (scopeErr?.code === AI_ERROR_CODES.AI_NOT_ENTITLED) {
+      return {
+        status: 403,
+        json: {
+          ok: false,
+          status: AI_ERROR_CODES.AI_NOT_ENTITLED,
+          message: scopeErr.message || 'Your active plan does not include Edge AI Command Center. Upgrade to Pro or an eligible plan to access Edge AI.',
+          analysis: null,
+        },
+      };
+    }
+    if (scopeErr?.code === AI_ERROR_CODES.AI_RATE_LIMITED) {
+      return {
+        status: 429,
+        json: {
+          ok: false,
+          status: AI_ERROR_CODES.AI_RATE_LIMITED,
+          message: scopeErr.message || 'Daily AI request limit reached. Please try again tomorrow.',
+          analysis: null,
+        },
+      };
+    }
+    if (scopeErr?.code === AI_ERROR_CODES.AI_UNAVAILABLE) {
+      return {
+        status: 503,
+        json: {
+          ok: false,
+          status: AI_ERROR_CODES.AI_UNAVAILABLE,
+          message: scopeErr.message || 'Edge AI is temporarily unavailable.',
+          analysis: null,
+        },
+      };
+    }
     return {
       status: 403,
       json: {
@@ -125,6 +159,20 @@ export async function handleAnalyze({ method, data, authorization, ip, source, s
     ok: outcome.ok,
     status: outcome.status,
   });
+
+  if (scopeInfo?.userId && scopeInfo?.supabase) {
+    try {
+      await scopeInfo.supabase.from('ai_usage_logs').insert({
+        user_id: scopeInfo.userId,
+        request_type: parsed.kind,
+        status: outcome.ok ? 'success' : 'failed',
+        tokens_used: 0,
+        model: cfg.model,
+      });
+    } catch (_) {
+      // Non-fatal telemetry logging
+    }
+  }
 
   // 9: normalized safe JSON.
   return {

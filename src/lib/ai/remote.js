@@ -57,10 +57,27 @@ export function createRemoteAdapter({
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), analyzeTimeoutMs);
       try {
+        let authHeader = '';
+        try {
+          const { supabase } = await import('../supabase.js');
+          const session = (await supabase?.auth?.getSession?.())?.data?.session;
+          if (session?.access_token) {
+            authHeader = `Bearer ${session.access_token}`;
+          }
+        } catch (_) {}
+
+        const headers = {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        };
+        if (authHeader) {
+          headers['Authorization'] = authHeader;
+        }
+
         try {
           response = await fetch(ANALYZE_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            headers,
             body: JSON.stringify(payload),
             signal: controller.signal,
             credentials: 'same-origin',

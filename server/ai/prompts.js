@@ -26,11 +26,24 @@ export const AI_MASTER_SYSTEM_INSTRUCTION =
   'Do not recompute or alter canonical metrics.\n' +
   'Never claim certainty about future market outcomes.';
 
+export const QUICK_INSIGHTS_INSTRUCTION =
+  'Analyze the supplied deterministic metrics across performance, win/loss behavior, risk consistency, instruments, and sessions.\n' +
+  'Provide a crisp, evidence-backed interpretation.\n' +
+  'Highlight top strengths and primary risk leakage areas without speculation.';
+
+export const EDGE_AI_COMMAND_INSTRUCTION =
+  'You are EdgeJournal\'s Command Center assistant. Answer the user\'s specific question directly using the provided canonical journal data.\n' +
+  'Structure your output: Summary, Evidence from Your Data, What This May Mean, Potential Improvement Areas, and Important Caveats.\n' +
+  'If there is insufficient data for a firm conclusion, state that clearly.\n' +
+  'Never offer guaranteed returns or autonomous trade directives.';
+
 const FEATURE_INSTRUCTIONS = {
   tradeReview: TRADE_REVIEW_INSTRUCTION,
   journalIntelligence: JOURNAL_INTELLIGENCE_INSTRUCTION,
   coaching: COACHING_INSTRUCTION,
   askJournal: ASK_JOURNAL_INSTRUCTION,
+  quickInsights: QUICK_INSIGHTS_INSTRUCTION,
+  edgeAICommand: EDGE_AI_COMMAND_INSTRUCTION,
 };
 
 export function systemPromptFor(kind) {

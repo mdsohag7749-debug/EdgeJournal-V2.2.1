@@ -639,6 +639,8 @@ export function safeAskJournalErrorMessage(code) {
       return 'Ask Journal is only available after selecting a single account. Your journal data was not changed.';
     case AI_ERROR_CODES.AI_NOT_CONFIGURED:
       return 'EdgeJournal AI is not configured yet. No journal data was sent to any provider.';
+    case AI_ERROR_CODES.AI_NOT_ENTITLED:
+      return 'Your active plan does not include Edge AI Command Center. Upgrade to Pro or an eligible plan to access Edge AI.';
     case AI_ERROR_CODES.AI_RATE_LIMITED:
     case AI_ERROR_CODES.AI_TIMEOUT:
     case AI_ERROR_CODES.AI_UNAVAILABLE:

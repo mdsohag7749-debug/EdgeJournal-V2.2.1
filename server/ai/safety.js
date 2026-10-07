@@ -20,8 +20,10 @@ export function sanitizeForKind(kind, rawAnalysis) {
     case 'coaching':
       return assertCoachingResponseContract(sanitizeCoachingResponse(rawAnalysis));
     case 'askJournal':
+    case 'edgeAICommand':
       return assertAskJournalResponse(sanitizeAskJournalResponse(rawAnalysis));
     case 'tradeReview':
+    case 'quickInsights':
     default:
       return assertResponseContract(sanitizeResponse(rawAnalysis));
   }

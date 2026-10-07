@@ -162,13 +162,13 @@ describe('Admin Panel — Phase 2 Verification Suite', () => {
       expect(screen.getByText('Audit Logs')).toBeInTheDocument();
       expect(screen.getByText('Settings')).toBeInTheDocument();
 
-      // Verify Phase badges — Phase 7 items (Subscriptions) are now functional (no badge)
-      // Only 2 'Future' items remain (Edge AI, Settings)
+      // Verify Phase badges — Phase 8 item (Settings) is now functional (no badge)
+      // Only 1 'Future' item remains (Edge AI)
       expect(screen.queryAllByText('Phase 4')).toHaveLength(0);
-      expect(screen.getAllByText('Future')).toHaveLength(2);
+      expect(screen.getAllByText('Future')).toHaveLength(1);
     });
 
-    it('marks Overview, Users, Accounts, Trades, Analytics, Reports, Subscriptions, and Audit Logs as functional and future items as disabled', () => {
+    it('marks Overview, Users, Accounts, Trades, Analytics, Reports, Subscriptions, Audit Logs, and Settings as functional and future items as disabled', () => {
       render(
         <MemoryRouter>
           <AdminSidebar active="overview" />
@@ -199,6 +199,12 @@ describe('Admin Panel — Phase 2 Verification Suite', () => {
 
       const auditBtn = screen.getByRole('button', { name: /audit logs/i });
       expect(auditBtn).not.toBeDisabled();
+
+      const settingsBtn = screen.getByRole('button', { name: /settings/i });
+      expect(settingsBtn).not.toBeDisabled();
+
+      const edgeAiBtn = screen.getByRole('button', { name: /edge ai/i });
+      expect(edgeAiBtn).toBeDisabled();
     });
 
     it('renders the EdgeJournal ADMIN brand badge and Trader App link', () => {

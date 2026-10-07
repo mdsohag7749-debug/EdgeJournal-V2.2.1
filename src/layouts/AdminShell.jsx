@@ -11,6 +11,8 @@ import AdminAnalytics from '../pages/admin/AdminAnalytics';
 import AdminReports from '../pages/admin/AdminReports';
 import AdminAuditLogs from '../pages/admin/AdminAuditLogs';
 import AdminSubscriptions from '../pages/admin/AdminSubscriptions';
+import AdminSettings from '../pages/admin/AdminSettings';
+import AdminEdgeAI from '../pages/admin/AdminEdgeAI';
 
 const HEADER_META = {
   overview: {
@@ -45,6 +47,18 @@ const HEADER_META = {
     title: 'Audit Logs',
     subtitle: 'Append-only chronological audit trail of platform administrative actions and security events',
   },
+  settings: {
+    title: 'System Settings',
+    subtitle: 'Platform parameters, operational controls, timezone, currency, and security hardening',
+  },
+  ai: {
+    title: 'Edge AI Telemetry & Settings',
+    subtitle: 'Operational throughput, model configuration, rate limits, and aggregate AI request logs',
+  },
+  'edge-ai': {
+    title: 'Edge AI Telemetry & Settings',
+    subtitle: 'Operational throughput, model configuration, rate limits, and aggregate AI request logs',
+  },
 };
 
 export default function AdminShell() {
@@ -77,6 +91,8 @@ export default function AdminShell() {
   else if (currentPath.includes('/admin/reports')) activeSection = 'reports';
   else if (currentPath.includes('/admin/subscriptions')) activeSection = 'subscriptions';
   else if (currentPath.includes('/admin/audit-logs')) activeSection = 'audit-logs';
+  else if (currentPath.includes('/admin/settings')) activeSection = 'settings';
+  else if (currentPath.includes('/admin/ai') || currentPath.includes('/admin/edge-ai')) activeSection = 'ai';
 
   const headerMeta = HEADER_META[activeSection] || HEADER_META.overview;
 
@@ -133,6 +149,9 @@ export default function AdminShell() {
                 <Route path="reports" element={<AdminReports />} />
                 <Route path="subscriptions" element={<AdminSubscriptions />} />
                 <Route path="audit-logs" element={<AdminAuditLogs />} />
+                <Route path="settings" element={<AdminSettings />} />
+                <Route path="ai" element={<AdminEdgeAI />} />
+                <Route path="edge-ai" element={<AdminEdgeAI />} />
                 <Route path="/admin" element={<AdminOverview />} />
                 <Route path="/admin/overview" element={<AdminOverview />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
@@ -142,6 +161,9 @@ export default function AdminShell() {
                 <Route path="/admin/reports" element={<AdminReports />} />
                 <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
                 <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
+                <Route path="/admin/settings" element={<AdminSettings />} />
+                <Route path="/admin/ai" element={<AdminEdgeAI />} />
+                <Route path="/admin/edge-ai" element={<AdminEdgeAI />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>
             </motion.div>

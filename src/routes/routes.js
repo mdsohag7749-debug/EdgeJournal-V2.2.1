@@ -21,6 +21,7 @@ const System = lazy(() => import('../pages/System'));
 const Profile = lazy(() => import('../pages/Profile'));
 const Settings = lazy(() => import('../pages/Settings'));
 const Subscription = lazy(() => import('../pages/Subscription'));
+const EdgeAI = lazy(() => import('../pages/EdgeAI'));
 
 export const routes = [
   {
@@ -75,6 +76,13 @@ export const routes = [
     Component: Analytics,
     title: 'Advanced Analytics',
     subtitle: 'Deep-dive performance breakdowns across every trade',
+  },
+  {
+    id: 'edge-ai',
+    path: '/edge-ai',
+    Component: EdgeAI,
+    title: 'Edge AI Command Center',
+    subtitle: 'AI-assisted trading intelligence and journal analytics',
   },
   {
     id: 'psychology',

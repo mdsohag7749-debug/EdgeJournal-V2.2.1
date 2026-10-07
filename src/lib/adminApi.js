@@ -1813,5 +1813,188 @@ export async function fetchAdminSubscriptionMetrics() {
   }
 }
 
+// ===========================================================================
+// Phase 8: System Settings Administration
+// ===========================================================================
+
+export { fetchPublicSystemSettings, fetchPublicSetting } from './systemSettingsApi';
+
+export function fromSystemSettingRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    key: row.key,
+    value: row.value,
+    description: row.description || '',
+    isPublic: Boolean(row.is_public),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+/**
+ * Fetches all platform system settings.
+ * Gated by database RLS ("Admins can view all system settings").
+ */
+export async function fetchSystemSettings() {
+  try {
+    const { data, error } = await supabase
+      .from('system_settings')
+      .select('id, key, value, description, is_public, created_at, updated_at')
+      .order('key', { ascending: true });
+
+    if (error) throw error;
+    return (data || []).map(fromSystemSettingRow);
+  } catch (err) {
+    throw new Error(err?.message ? `Failed to load system settings: ${err.message}` : 'Failed to load system settings.');
+  }
+}
+
+/**
+ * Updates a single system setting by key and records an administrative audit log.
+ * Gated by database RLS ("Admins can update system settings").
+ */
+export async function updateSystemSetting(key, newValue, description) {
+  if (!key) throw new Error('Setting key is required.');
+  if (newValue === undefined) throw new Error('Setting value is required.');
+
+  try {
+    // 1. Fetch current setting value for audit diff
+    let oldValue = null;
+    const { data: existingData } = await supabase
+      .from('system_settings')
+      .select('value, description')
+      .eq('key', key)
+      .maybeSingle();
+
+    if (existingData) {
+      oldValue = existingData.value;
+    }
+
+    // 2. Perform the update
+    const updatePayload = {
+      value: newValue,
+      updated_at: new Date().toISOString(),
+    };
+    if (description !== undefined) {
+      updatePayload.description = description;
+    }
+
+    const { data, error } = await supabase
+      .from('system_settings')
+      .update(updatePayload)
+      .eq('key', key)
+      .select('id, key, value, description, is_public, created_at, updated_at')
+      .single();
+
+    if (error) throw error;
+
+    // 3. Record audit trail
+    try {
+      await logAdminAction({
+        action: 'system_setting.update',
+        resourceType: 'system_setting',
+        resourceId: key,
+        metadata: {
+          key,
+          oldValue,
+          newValue,
+        },
+      });
+    } catch (auditErr) {
+      console.warn('Audit logging note for settings update:', auditErr?.message);
+    }
+
+    return fromSystemSettingRow(data);
+  } catch (err) {
+    throw new Error(err?.message ? `Failed to update system setting "${key}": ${err.message}` : `Failed to update setting "${key}".`);
+  }
+}
+
+/**
+ * Updates multiple system settings sequentially and logs changes.
+ */
+export async function updateSystemSettings(settingsArray = []) {
+  if (!Array.isArray(settingsArray) || settingsArray.length === 0) {
+    return [];
+  }
+
+  const results = [];
+  for (const item of settingsArray) {
+    if (!item?.key) continue;
+    const updated = await updateSystemSetting(item.key, item.value, item.description);
+    results.push(updated);
+  }
+  return results;
+}
+
+/**
+ * Fetches recent AI usage logs for administrative operational telemetry.
+ * Strictly avoids exposing user private journal notes, reflection texts, or prompts.
+ */
+export async function fetchAdminAIUsageLogs({ limit = 50, offset = 0 } = {}) {
+  try {
+    const { data, error, count } = await supabase
+      .from('ai_usage_logs')
+      .select('id, user_id, request_type, status, tokens_used, model, created_at', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) throw error;
+    return { logs: data || [], totalCount: count || 0 };
+  } catch (err) {
+    console.warn('Admin AI usage logs fetch note:', err?.message);
+    return { logs: [], totalCount: 0 };
+  }
+}
+
+/**
+ * Fetches aggregate AI telemetry metrics for admin monitoring.
+ */
+export async function fetchAdminAIMetrics() {
+  try {
+    const { data: logs, error } = await supabase
+      .from('ai_usage_logs')
+      .select('id, request_type, status, model, created_at')
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (error) throw error;
+
+    const list = logs || [];
+    const totalRequests = list.length;
+    const successCount = list.filter((l) => l.status === 'success').length;
+    const failCount = totalRequests - successCount;
+    const successRate = totalRequests > 0 ? Math.round((successCount / totalRequests) * 100) : 100;
+
+    const requestsByType = {};
+    for (const l of list) {
+      const type = l.request_type || 'unknown';
+      requestsByType[type] = (requestsByType[type] || 0) + 1;
+    }
+
+    return {
+      totalRequests,
+      successCount,
+      failCount,
+      successRate,
+      requestsByType,
+      recentLogs: list.slice(0, 10),
+    };
+  } catch (err) {
+    console.warn('Admin AI metrics fetch note:', err?.message);
+    return {
+      totalRequests: 0,
+      successCount: 0,
+      failCount: 0,
+      successRate: 100,
+      requestsByType: {},
+      recentLogs: [],
+    };
+  }
+}
+
+
+
 
 

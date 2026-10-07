@@ -22,6 +22,7 @@ const ACTION_OPTIONS = [
   { value: 'export_trades_csv', label: 'export_trades_csv' },
   { value: 'update_user_role', label: 'update_user_role' },
   { value: 'view_report', label: 'view_report' },
+  { value: 'system_setting.update', label: 'system_setting.update' },
 ];
 
 const RESOURCE_OPTIONS = [
@@ -30,6 +31,7 @@ const RESOURCE_OPTIONS = [
   { value: 'users', label: 'users' },
   { value: 'reports', label: 'reports' },
   { value: 'profiles', label: 'profiles' },
+  { value: 'system_setting', label: 'system_setting' },
 ];
 
 const DATE_RANGE_OPTIONS = [

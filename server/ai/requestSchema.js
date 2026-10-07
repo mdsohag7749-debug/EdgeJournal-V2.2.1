@@ -10,7 +10,14 @@ import { AI_ERROR_CODES } from '../../src/lib/ai/types.js';
 
 // The only kinds the server will ever dispatch. Mirrors the existing
 // AI_REQUEST_KIND_* constants in src/lib/ai.
-export const AI_REQUEST_KINDS = ['tradeReview', 'journalIntelligence', 'coaching', 'askJournal'];
+export const AI_REQUEST_KINDS = [
+  'tradeReview',
+  'journalIntelligence',
+  'coaching',
+  'askJournal',
+  'quickInsights',
+  'edgeAICommand',
+];
 
 // Cap the serialized context so an enormous payload cannot storm the provider.
 export const MAX_CONTEXT_BYTES = 512 * 1024;

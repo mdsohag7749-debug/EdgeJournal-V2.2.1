@@ -187,3 +187,8 @@ export {
   AI_NOT_ENOUGH_DATA,
   DATA_COVERAGE,
 } from './askJournal.js';
+
+// Phase 9: Edge AI Command Center additions
+export { computeQuickAnalytics } from './aiAnalytics.js';
+export { QUICK_QUESTION_PROMPTS, validateAIUserQuery } from './aiPrompts.js';
+export { askEdgeAI } from './aiClient.js';

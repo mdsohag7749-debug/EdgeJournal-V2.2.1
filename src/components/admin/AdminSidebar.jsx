@@ -28,7 +28,7 @@ export const ADMIN_NAV_ITEMS = [
   { id: 'reports', label: 'Reports', icon: FileText, path: '/admin/reports', phase: null, functional: true },
   { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard, path: '/admin/subscriptions', phase: null, functional: true },
   { id: 'audit-logs', label: 'Audit Logs', icon: ScrollText, path: '/admin/audit-logs', phase: null, functional: true },
-  { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings', phase: 'Future', functional: false },
+  { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings', phase: null, functional: true },
 ];
 
 export default function AdminSidebar({

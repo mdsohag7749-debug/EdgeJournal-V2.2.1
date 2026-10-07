@@ -21,6 +21,7 @@
 11. [Phase 5: Advanced Trade Analytics & Performance Intelligence](#11-phase-5--advanced-trade-analytics--performance-intelligence)
 12. [Phase 6: Platform Reports, Data Export & Audit Architecture](#12-phase-6--platform-reports-data-export--audit-architecture)
 13. [Phase 7: Subscriptions, Plans & Entitlements](#13-phase-7--subscriptions-plans--entitlements)
+14. [Phase 8: System Settings + Final Security & Production Hardening](#14-phase-8-system-settings--final-security--production-hardening)
 
 ---
 
@@ -1337,6 +1338,282 @@ All subscription administration actions are logged to `public.admin_audit_logs` 
 - **Payment Processing:** Payment gateways (Stripe, PayPal, bKash) are deferred to a dedicated payment phase.
 - **Self-Service Checkout:** Because payments are not enabled, users cannot self-checkout; tiers are assigned by administrators.
 - **Edge AI Integration:** `edge_ai` exists as an entitlement identifier only and is deferred to Phase 8+ command center implementation.
+
+---
+
+## 14. Phase 8: System Settings + Final Security & Production Hardening
+
+### 14.1 Overview & Scope
+
+Phase 8 elevates EdgeJournal into a production-hardened platform by introducing:
+1. A database-backed **System Settings architecture** (`public.system_settings`) allowing platform administrators to dynamically configure operational parameters without application deployments.
+2. An **Admin Settings UI** at `/admin/settings`, embedded seamlessly into `AdminShell` and `AdminSidebar`.
+3. Strict **Row Level Security (RLS)** segregation between public settings (e.g. app name, support email, registration toggle) and admin-only settings (e.g. session timeouts).
+4. Safe platform controls, including an **operational maintenance mode** with safety confirmation dialog and admin bypass, plus a **registration toggle** with client-side pause enforcement.
+5. End-to-end integration with the Phase 6 **audit logging architecture** (`system_setting.update`).
+6. A comprehensive, read-only **Security Audit** across Authentication, Authorization, Database Tables & RLS Policies, SECURITY DEFINER functions, Storage Buckets, Client-Side XSS/injection protection, Environment & Secret management, and HTTP Security Headers.
+
+---
+
+### 14.2 Comprehensive Architecture & Security Audit Matrix
+
+#### A. Authentication
+- **Provider:** Supabase Auth (GoTrue).
+- **Session Lifecycle:** Managed via `supabase.auth.getSession()` and `supabase.auth.onAuthStateChange` in `AuthContext.jsx`.
+- **Session Persistence:** Configured with `persistSession: true`, `autoRefreshToken: true`, `detectSessionInUrl: true`. Tokens stored in browser `localStorage` by the official `@supabase/supabase-js` client SDK.
+- **Route Protection:** 
+  - `ProtectedRoute`: Checks `isAuthenticated`. Displays `LoadingScreen` while `isLoading` is true to prevent flashes of unauthenticated content.
+  - `AdminRoute`: Verifies `!isLoading && !profileLoading`. Redirects unauthenticated users to `/login` (with return state) and redirects authenticated non-admin users (`role !== 'admin'`) away from `/admin` directly to `/`.
+  - `GuestRoute`: Bypasses `/login`, `/register`, and `/forgot-password` directly to `/dashboard` for logged-in users.
+- **Sign Out:** Invokes `supabase.auth.signOut()`, flushing active session tokens and resetting local state.
+- **Password Recovery:** Handled via `supabase.auth.resetPasswordForEmail()`.
+
+#### B. Authorization
+- **Role Model:** Postgres ENUM `public.user_role ('user', 'admin')` stored on `public.profiles.role` with non-null default `'user'`.
+- **Database Helper:** `public.is_admin()` defined with `SECURITY DEFINER` and `SET search_path = ''` ensuring tamper-proof, non-recursive role verification.
+- **Trigger Guard:** `public.protect_profile_role()` trigger executes `BEFORE INSERT OR UPDATE ON public.profiles` preventing client-side role elevation unless invoked by an administrator or database superuser.
+- **Frontend Sync:** Profile role loaded into `AuthContext` via `fetchProfile()`, exposing `isAdmin = profile?.role === 'admin'`.
+
+#### C. Database Row Level Security (RLS) Matrix
+EdgeJournal strictly adheres to least-privilege RLS. Standard users only ever access their own data (`auth.uid() = user_id`), while administrators possess scoped oversight.
+
+| Table | RLS Enabled | Normal User SELECT | Normal User INSERT | Normal User UPDATE | Normal User DELETE | Admin SELECT | Admin INSERT | Admin UPDATE | Admin DELETE | Owner Restriction | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| `profiles` | YES | Own row (`auth.uid() = id`) | Own row | Own row (role changes blocked) | None | All rows | None | All rows (role changes permitted) | None | `auth.uid() = id` | Protected by `protect_profile_role` |
+| `trades` | YES | Own rows (`user_id = auth.uid()`) | Own rows | Own rows | Own rows | All rows | None | None | None | `auth.uid() = user_id` | Phase 4 read-only admin oversight model |
+| `accounts` | YES | Own rows (`user_id = auth.uid()`) | Own rows | Own rows | Own rows | All rows | None | None | None | `auth.uid() = user_id` | Phase 4 read-only admin oversight model |
+| `goals` | YES | Own rows | Own rows | Own rows | Own rows | None | None | None | None | `auth.uid() = user_id` | Owner-isolated |
+| `premarket_plans` | YES | Own rows | Own rows | Own rows | Own rows | None | None | None | None | `auth.uid() = user_id` | Owner-isolated |
+| `reflections` | YES | Own rows | Own rows | Own rows | Own rows | None | None | None | None | `auth.uid() = user_id` | Owner-isolated |
+| `study_notes` | YES | Own rows | Own rows | Own rows | Own rows | None | None | None | None | `auth.uid() = user_id` | Owner-isolated |
+| `challenges` | YES | Own rows | Own rows | Own rows | Own rows | None | None | None | None | `auth.uid() = user_id` | Owner-isolated |
+| `trade_screenshots` | YES | Own rows | Own rows | None | Own rows | None | None | None | None | `auth.uid() = user_id` | Max 10 per trade enforced by trigger |
+| `admin_audit_logs` | YES | None | None | None | None | All rows | Own admin id (`actor_user_id = auth.uid()`) | None | None | None (admin audit only) | Append-only; no UPDATE/DELETE policies |
+| `plans` | YES | Active plans (`is_active = true`) | None | None | None | All rows | All rows | All rows | None | Platform-level tiers | Self-upgrade blocked at DB level |
+| `subscriptions` | YES | Own row (`user_id = auth.uid()`) | None | None | None | All rows | All rows | All rows | None | `auth.uid() = user_id` | Upgrades require admin assignment |
+| `system_settings` | YES | Public rows only (`is_public = true`) | None | None | None | All rows | All rows | All rows | All rows | Platform configuration | Admin-only settings hidden from non-admins |
+
+#### D. SECURITY DEFINER Functions Audit
+Every `SECURITY DEFINER` function in EdgeJournal specifies an explicit search path to prevent search path injection attacks:
+- `public.is_admin()`: `SET search_path = ''`, queries `public.profiles`.
+- `public.protect_profile_role()`: `SET search_path = ''`, validates `public.is_admin()`.
+- `public.log_admin_action()`: `SET search_path = ''`, validates caller `public.is_admin()`, binds `actor_user_id = auth.uid()`.
+- `public.admin_assign_subscription()`: `SET search_path = ''`, validates `public.is_admin()`, validates target plan.
+- `public.handle_new_user()`: `SET search_path = public`, idempotent auto-creation of profiles and default accounts on `auth.users` insert.
+- `public.ensure_default_account()`: `SET search_path = public`, auto-generates or verifies default trading account.
+- `public.set_default_account()`: `SET search_path = public`, verifies ownership before switching default account.
+- `public.recalculate_account_stats()`: `SET search_path = public`, single source of truth for balance/drawdown calculations.
+- `public.trades_recalc_account_stats()`: `SET search_path = public`, triggers stats recalculation on trade mutations.
+
+#### E. Storage Security Audit
+1. `avatars` Bucket:
+   - Configuration: `public = true`, file size limit 5 MB, allowed MIME types: `image/jpeg`, `image/jpg`, `image/png`, `image/webp`.
+   - Read Access: Public SELECT on `storage.objects` where `bucket_id = 'avatars'`.
+   - Mutation Access: INSERT/UPDATE/DELETE gated to authenticated users matching `(storage.foldername(name))[1] = auth.uid()::text`.
+2. `trade-screenshots` Bucket:
+   - Configuration: `public = false` (Strictly Private), file size limit 10 MB, allowed MIME types: `image/jpeg`, `image/jpg`, `image/png`, `image/webp`.
+   - Read Access: Authenticated SELECT restricted to folder segment matching `auth.uid()::text`. Consumed via short-lived signed URLs generated client-side.
+   - Mutation Access: INSERT/UPDATE/DELETE strictly restricted to folder segment matching `auth.uid()::text`. Users cannot access or guess private screenshot URLs of other traders.
+
+#### F. Input Validation & XSS Audit
+- React JSX automatically escapes dynamic values in DOM nodes (`{userText}`), mitigating classic reflected and stored DOM XSS.
+- Codebase contains zero instances of `dangerouslySetInnerHTML`, `innerHTML`, `eval()`, or `new Function()`.
+- Anchor tags (`<a>`) use hardcoded internal paths or trusted skip links.
+- Form fields validate input types and sanitization before network dispatch.
+
+#### G. Secrets & Environment Audit
+- `.env` and `.env.local` are strictly excluded in `.gitignore`.
+- Vite client builds expose only variables prefixed with `VITE_` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_AI_ENABLED`, `VITE_AI_PROVIDER`).
+- Supabase anonymous key is a public, publishable key intended for browser usage and constrained by RLS.
+- Sensitive credentials (e.g. server-side `GEMINI_API_KEY`, optional `SUPABASE_SERVICE_ROLE_KEY`) are parsed strictly inside serverless functions (`server/ai/config.js`) and never packaged into client bundles.
+
+#### H. Security Headers & Frontend Hardening
+Configured in `vercel.json`:
+- `X-Frame-Options: DENY`: Prevents clickjacking and unauthorized iframe framing.
+- `X-XSS-Protection: 1; mode=block`: Activates browser legacy reflective XSS filters.
+- `X-Content-Type-Options: nosniff`: Prevents MIME-type sniffing.
+- `Referrer-Policy: strict-origin-when-cross-origin`: Minimizes referrer leakage on outbound links.
+- `Permissions-Policy: geolocation=(), microphone=(), camera=()`: Restricts sensitive browser APIs.
+
+---
+
+### 14.3 System Settings Architecture & Data Model
+
+#### 14.3.1 Table Definition: `public.system_settings`
+**File:** `supabase/migrations/0023_system_settings.sql`
+
+```sql
+CREATE TABLE IF NOT EXISTS public.system_settings (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  key text UNIQUE NOT NULL,
+  value jsonb NOT NULL,
+  description text,
+  is_public boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+```
+
+#### 14.3.2 Row Level Security Policies
+- **Public Read:** `is_public = true` readable by `TO public` (unauthenticated and authenticated users).
+- **Admin Read:** `public.is_admin()` can SELECT all settings rows (both public and private).
+- **Admin Write:** `public.is_admin()` can INSERT, UPDATE, and DELETE.
+- **Normal Users:** Zero mutation permissions.
+
+#### 14.3.3 Initial Seeded Platform Settings
+| Key | Type | Default Value | Public | Purpose |
+|---|---|---|---|---|
+| `public_app_name` | String | `"EdgeJournal"` | Yes | Global branding title displayed across headers and metadata |
+| `public_support_email` | String | `"support@edgejournal.com"` | Yes | Official customer and technical support address |
+| `default_timezone` | String | `"America/New_York"` | Yes | Platform reference timezone for trading sessions |
+| `default_currency` | String | `"USD"` | Yes | Default base currency for trade and account computations |
+| `registration_enabled` | Boolean | `true` | Yes | Global toggle permitting or pausing new user registrations |
+| `maintenance_mode` | Boolean | `false` | Yes | Platform maintenance mode toggle with administrative bypass |
+| `session_idle_timeout_minutes` | Number | `60` | No | Private administrative inactivity timeout threshold |
+
+---
+
+### 14.4 System Settings Management UI
+
+Mounted at `/admin/settings` via `AdminShell` and `AdminRoute`.
+- **General Platform Settings:** Application display name, official support email, default timezone dropdown, default currency selector.
+- **Platform Operational Controls:**
+  - *User Registration:* Interactive toggle with status badge (`ACTIVE` vs `PAUSED`). When paused, `Register.jsx` disables account creation and presents an advisory message.
+  - *Maintenance Mode:* Interactive toggle with status badge (`NORMAL OPERATION` vs `MAINTENANCE ACTIVE`). Toggling to active triggers a safety confirmation modal detailing that administrative access remains uninterrupted while traders are informed of maintenance.
+- **Administrative Controls:** Session idle timeout parameter with clear "NOT EXPOSED TO TRADERS" security badge.
+- **Interactive Form State:** Real-time dirty change tracking, field validation (email syntax, non-empty names, valid timeout ranges), single-click Reset, and asynchronous Save with audit logging.
+
+---
+
+### 14.5 Administrative Audit Logging
+
+System settings adjustments integrate directly into the Phase 6 audit system (`public.admin_audit_logs`):
+- Action: `system_setting.update`
+- Resource Type: `system_setting`
+- Resource ID: Setting key (e.g. `maintenance_mode`, `public_app_name`)
+- Metadata: `{ key, oldValue, newValue }`
+- UI Filters: `AdminAuditLogs.jsx` updated with `system_setting.update` in Action filters and `system_setting` in Resource filters.
+
+---
+
+### 14.6 Migration & Rollback Reference
+
+- **Migration File:** `supabase/migrations/0023_system_settings.sql`
+- **Rollback File:** `supabase/rollback/0023_system_settings_rollback.sql`
+- **Execution Status:** Migration script reviewed for idempotency. Rollback script statically reviewed and preserved intact.
+
+---
+
+### 14.7 Test Verification Suite
+
+- **Previous Baseline:** 747 passed tests across 38 test files.
+- **New Tests Added:** 12 tests in `src/components/__tests__/adminSettings.test.jsx`:
+  - UI rendering and database setting loading with RLS badges.
+  - Setting mutation and dirty tracking.
+  - Form validation for blank names and invalid email formats.
+  - Maintenance mode confirmation modal cancellation and approval workflows.
+  - Route security denying unauthenticated and non-admin access while permitting admins.
+  - Registration toggle integration on the user registration page.
+- **Regression Verification:** Complete test suite re-run with 100% passing tests.
+- **Final Result:** **759 passed / 0 failed across 39 test files.**
+- **Production Build (`npm run build`):** **PASS (exit code 0).**
+
+---
+
+### 14.8 Files Created and Modified
+
+| File | Status | Description |
+|---|---|---|
+| `supabase/migrations/0023_system_settings.sql` | Created | Table, RLS policies, indexes, trigger, and seed values for system settings |
+| `supabase/rollback/0023_system_settings_rollback.sql` | Created | Idempotent rollback script for migration 0023 |
+| `src/lib/systemSettingsApi.js` | Created | Public/client-side settings accessor with safe defaults and fallbacks |
+| `src/components/admin/AdminSettings.jsx` | Created | Admin settings UI with general, platform, and admin-only controls |
+| `src/pages/admin/AdminSettings.jsx` | Created | Page route wrapper for `/admin/settings` |
+| `src/components/__tests__/adminSettings.test.jsx` | Created | 12-test suite verifying system settings UI, validation, safety modal, and routes |
+| `src/lib/adminApi.js` | Modified | Added system settings management functions and audit log integration |
+| `src/components/admin/AdminSidebar.jsx` | Modified | Enabled Settings as a functional navigation item (badge removed) |
+| `src/layouts/AdminShell.jsx` | Modified | Mounted `/admin/settings` route with header metadata |
+| `src/components/admin/AdminAuditLogs.jsx` | Modified | Added system setting options to audit filter dropdowns |
+| `src/pages/auth/Register.jsx` | Modified | Guarded registration submission against `registration_enabled` setting |
+| `src/layouts/AppShell.jsx` | Modified | Added maintenance mode awareness banner with administrator bypass |
+| `vercel.json` | Modified | Hardened security headers with `X-Frame-Options` and `X-XSS-Protection` |
+| `src/components/__tests__/adminPanel.test.jsx` | Modified | Updated navigation assertions reflecting 9 functional admin surfaces |
+| `docs/ADMIN_PANEL_ARCHITECTURE.md` | Modified | Added Section 14 documenting Phase 8 architecture and security audit |
+
+---
+
+### 14.9 Known Limitations & Operational Considerations
+
+- **Strict CSP:** Content-Security-Policy headers are deferred pending centralized noncing for dynamic chart styles and PWA workers to prevent runtime breakage.
+- **Self-Checkout:** Payment gateways remain unconfigured per product boundary constraints; tier upgrades remain administrative.
+
+---
+
+## 15. Phase 9 — Edge AI Command Center & AI Insights
+
+### 15.1 Architecture Overview
+Phase 9 establishes a secure, analytical, non-autonomous Edge AI Command Center (`/edge-ai`) and administrative AI telemetry area (`/admin/ai`).
+The system is built on a strict serverless bridge where provider secrets (`GEMINI_API_KEY`) remain strictly server-side and are never delivered to the client bundle.
+
+```
+Frontend (User at /edge-ai or Admin at /admin/ai)
+  ↓
+Authenticated API Bridge (/api/ai/analyze, /api/ai/health)
+  ↓
+Bearer Token Authentication & Account Isolation (auth.uid() = user_id)
+  ↓
+Subscription Entitlement Verification (canUseFeature(sub, 'edge_ai'))
+  ↓
+System Settings & Daily Limit Enforcement (system_settings, ai_usage_logs)
+  ↓
+Deterministic Data Grounding Engine (computeQuickAnalytics, canonicalContext)
+  ↓
+Server-Side Master System Instructions (AI_MASTER_SYSTEM_INSTRUCTION)
+  ↓
+LLM Provider Adapter (Gemini Server Adapter)
+  ↓
+Strict Response Sanitization & Contract Assertion (assertAskJournalResponse)
+  ↓
+Append-Only Telemetry Logging (public.ai_usage_logs)
+  ↓
+Safe Normalized JSON Response to Frontend
+```
+
+### 15.2 Security & Isolation Model
+1. **Zero Client Secret Exposure:** `GEMINI_API_KEY` and `SUPABASE_SERVICE_ROLE_KEY` reside exclusively in server-side environment variables. Production builds (`dist/`) were statically scanned and verified free of any leaked API keys or secrets.
+2. **Account & User Isolation:** The server derives user identity directly from Supabase session tokens (`getUser(token)`). Cross-account access attempts (`{ user_id: "other" }` or accessing another user's `accountId`) are rejected with `403 AI_ACCOUNT_SCOPE_ERROR`.
+3. **Prompt Injection Resistance:** User questions and journal inputs are treated as untrusted strings. RegEx engines (`ASK_QUESTION_INJECTION_PATTERN`) reject system override commands, persona changes, and credential access requests prior to provider contact.
+4. **No Autonomous Trading:** Edge AI is strictly an analytical journal assistant. It possesses no broker execution hooks, cannot place or modify orders, cannot alter balances or journal records, and rejects financial guarantee requests.
+
+### 15.3 Subscription & Entitlement Integration
+- AI access is governed strictly by the Phase 7 entitlement key `edge_ai`.
+- `DEFAULT_FREE_PLAN` does not include `edge_ai`. Free users encounter an informative upgrade banner directing to `/subscription`.
+- Pro tier includes `edge_ai` (seeded in migration `0022_subscriptions_and_plans.sql`).
+- Serverless endpoints enforce `canUseFeature(sub, 'edge_ai')`, rejecting unentitled calls with `403 AI_NOT_ENTITLED`. Expired or cancelled subscriptions are revoked.
+
+### 15.4 Grounded Deterministic Analytics
+Before any LLM invocation, deterministic metrics are calculated locally via `computeQuickAnalytics()`:
+- Resolved win rate %, Net P&L, Profit Factor, Average Realized R
+- Symbol edge rankings (best & worst performing instruments)
+- Session intelligence (best & worst trading sessions)
+- Risk discipline (average risk %, standard deviation, adherence rate %)
+- Equity drawdown & consecutive loss behavior
+- Recent momentum (last 10 trades vs prior 10)
+
+### 15.5 Rate Limiting, Settings & Telemetry
+- **Burst Protection:** Per-IP sliding window rate limiter prevents request storms.
+- **Daily Usage Limits:** Server queries `public.ai_usage_logs` and enforces daily limits configured in `public.system_settings` (`ai_daily_limit_pro = 50`).
+- **Platform Maintenance Mode:** Administrators can pause AI operations via `ai_maintenance_mode = true`.
+- **Admin Visibility:** Administrators inspect aggregate usage logs, success rates, model versions, and update controls at `/admin/ai` without ever viewing private user journal texts.
+
+### 15.6 Verification Summary
+- **Tests Baseline:** 759 passed across 39 files
+- **Phase 9 Tests Added:** 22 tests across 1 new test file (`src/components/__tests__/edgeAIPhase9.test.jsx`)
+- **Final Test Suite:** **781 passed / 0 failed across 40 test files**
+- **Production Build:** **PASS (exit code 0, 12s build duration)**
+- **Migration & Rollback:** `0024_ai_usage_and_settings.sql` & `0024_ai_usage_and_settings_rollback.sql`
+
+
 
 
 

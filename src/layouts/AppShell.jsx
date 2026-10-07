@@ -3,6 +3,8 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-
 import { AnimatePresence, motion } from 'framer-motion';
 import { DataProvider, useData } from '../context/DataContext';
 import { AccountProvider } from '../context/AccountContext';
+import { useAuth } from '../context/AuthContext';
+import { fetchPublicSetting } from '../lib/systemSettingsApi';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import LoadingScreen from '../components/LoadingScreen';
@@ -44,10 +46,24 @@ export default function AppShell() {
 // shell behind the first Supabase fetch for each so pages never render
 // a misleading empty state before real data arrives.
 function AppShellContent() {
+  const { isAdmin } = useAuth();
   const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 760);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { trades, goals, plans, reflections, study, challenges } = useData();
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchPublicSetting('maintenance_mode', false)
+      .then((val) => {
+        if (isMounted) setMaintenanceMode(Boolean(val));
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Auto-collapse the sidebar on phones/tablets even after the app has
   // mounted (rotation / window resize), so the nav never consumes the
@@ -102,6 +118,29 @@ function AppShellContent() {
         Skip to content
       </a>
       <OfflineBanner />
+      {maintenanceMode && (
+        <div
+          style={{
+            background: isAdmin ? 'rgba(234, 179, 8, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+            borderBottom: isAdmin ? '1px solid rgba(234, 179, 8, 0.35)' : '1px solid rgba(239, 68, 68, 0.35)',
+            color: isAdmin ? 'var(--yellow)' : 'var(--loss)',
+            padding: '8px 16px',
+            fontSize: 12.5,
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            textAlign: 'center',
+          }}
+        >
+          <span>
+            {isAdmin
+              ? '⚠️ Platform Maintenance Mode is currently ACTIVE. Administrator bypass is active.'
+              : '⚠️ Platform Maintenance Active: EdgeJournal is currently undergoing scheduled platform maintenance. Certain features may be delayed.'}
+          </span>
+        </div>
+      )}
       <div style={{ display: 'flex', minHeight: '100vh' }}>
         <Sidebar
           active={activeRoute.id}

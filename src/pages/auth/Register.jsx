@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, User, ArrowRight, CheckCircle2 } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
@@ -7,6 +7,7 @@ import PasswordField from '../../components/auth/PasswordField';
 import AuthButton from '../../components/auth/AuthButton';
 import SocialButtons from '../../components/auth/SocialButtons';
 import { useAuth } from '../../context/AuthContext';
+import { fetchPublicSetting } from '../../lib/systemSettingsApi';
 
 // Register wired to real Supabase auth (supabase.auth.signUp via
 // AuthContext). Depending on the Supabase project's email-confirmation
@@ -27,6 +28,19 @@ export default function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [registered, setRegistered] = useState(false);
+  const [registrationEnabled, setRegistrationEnabled] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchPublicSetting('registration_enabled', true)
+      .then((enabled) => {
+        if (isMounted) setRegistrationEnabled(Boolean(enabled));
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   function set(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -35,6 +49,11 @@ export default function Register() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+
+    if (!registrationEnabled) {
+      setError('Registration is currently paused by platform administrators. Existing users may sign in.');
+      return;
+    }
 
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match.');
@@ -163,7 +182,23 @@ export default function Register() {
 
         {error && <span className="auth-error-text">{error}</span>}
 
-        <AuthButton loading={loading}>
+        {!registrationEnabled && (
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: 8,
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              color: 'var(--loss)',
+              fontSize: 13,
+              textAlign: 'center',
+            }}
+          >
+            New account registration is currently paused by administrators.
+          </div>
+        )}
+
+        <AuthButton loading={loading} disabled={!registrationEnabled}>
           Create Account <ArrowRight size={16} />
         </AuthButton>
 

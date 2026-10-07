@@ -16,6 +16,7 @@ import {
   Brain,
   CreditCard,
   ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +25,7 @@ const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'premarket', label: 'Pre-Market Plan', icon: Sunrise },
   { id: 'journal', label: 'Trading Journal', icon: BookOpen },
+  { id: 'edge-ai', label: 'Edge AI', icon: Sparkles },
   { id: 'analytics', label: 'Analytics', icon: Activity },
   { id: 'psychology', label: 'Psychology', icon: Brain },
   { id: 'reflections', label: 'Reflections', icon: MessageSquareText },
