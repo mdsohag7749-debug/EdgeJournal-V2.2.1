@@ -28,8 +28,8 @@ import {
   updateAdminPlan,
   fetchAdminSubscriptions,
   assignAdminSubscription,
-  updateAdminSubscription,
   fetchAdminSubscriptionMetrics,
+  fetchUsers,
 } from '../../lib/adminApi';
 import {
   KNOWN_FEATURES,
@@ -99,11 +99,18 @@ export default function AdminSubscriptions() {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [targetSub, setTargetSub] = useState(null);
   const [assignForm, setAssignForm] = useState({
+    userId: '',        // used when creating a new subscription (no existing sub)
     planId: '',
     status: 'active',
     expiresAt: '',
   });
   const [assigning, setAssigning] = useState(false);
+
+  // User list for the "Assign to new user" dropdown
+  const [allUsers, setAllUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState(null);
+  const [userSearch, setUserSearch] = useState('');
 
   // Debounce search
   useEffect(() => {
@@ -175,6 +182,22 @@ export default function AdminSubscriptions() {
     },
     [page, pageSize, statusFilter, planFilter, debouncedSearch]
   );
+
+  // Fetch user list for new-subscription assignment
+  const loadAllUsers = useCallback(async (search = '') => {
+    setUsersLoading(true);
+    setUsersError(null);
+    try {
+      const result = await fetchUsers({ page: 1, pageSize: 50, search, role: 'all' });
+      setAllUsers(result.users || []);
+    } catch (err) {
+      setAllUsers([]);
+      setUsersError(err?.message || 'Failed to load users for subscription assignment.');
+      console.warn('Could not load users for assignment selector:', err?.message);
+    } finally {
+      setUsersLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadMetrics();
@@ -277,10 +300,12 @@ export default function AdminSubscriptions() {
     }
   };
 
-  // Open Assign Subscription Modal
+  // Open Assign Subscription Modal for an EXISTING subscription (Change Plan)
   const handleOpenAssignModal = (sub) => {
     setTargetSub(sub);
+    setUserSearch('');
     setAssignForm({
+      userId: sub.userId || '',
       planId: sub.planId || (plans[0]?.id || ''),
       status: sub.status || 'active',
       expiresAt: sub.expiresAt ? sub.expiresAt.slice(0, 10) : '',
@@ -288,10 +313,31 @@ export default function AdminSubscriptions() {
     setIsAssignModalOpen(true);
   };
 
-  // Save Subscription Assignment
+  // Open Assign Subscription Modal for a NEW assignment (no existing sub)
+  const handleOpenNewAssignModal = () => {
+    setTargetSub(null);
+    setUserSearch('');
+    setUsersError(null);
+    setAssignForm({
+      userId: '',
+      planId: plans[0]?.id || '',
+      status: 'active',
+      expiresAt: '',
+    });
+    setIsAssignModalOpen(true);
+    loadAllUsers();
+  };
+
+  // Save Subscription Assignment (covers both new-assign and change-plan flows)
   const handleSaveSubscription = async (e) => {
     e.preventDefault();
-    if (!targetSub || !assignForm.planId) {
+
+    // New assignment: require a user to be selected
+    if (!targetSub && !assignForm.userId) {
+      showToast('error', 'Please select a user to assign the subscription to.');
+      return;
+    }
+    if (!assignForm.planId) {
       showToast('error', 'Please select a plan.');
       return;
     }
@@ -302,22 +348,19 @@ export default function AdminSubscriptions() {
         ? new Date(assignForm.expiresAt).toISOString()
         : null;
 
-      if (targetSub.id) {
-        await updateAdminSubscription(targetSub.id, {
-          planId: assignForm.planId,
-          status: assignForm.status,
-          expiresAt: expiresAtPayload,
-        });
-      } else {
-        await assignAdminSubscription({
-          userId: targetSub.userId,
-          planId: assignForm.planId,
-          status: assignForm.status,
-          expiresAt: expiresAtPayload,
-        });
-      }
+      const userId = targetSub?.userId || assignForm.userId;
+      await assignAdminSubscription({
+        userId,
+        planId: assignForm.planId,
+        status: assignForm.status,
+        expiresAt: expiresAtPayload,
+      });
+      const selectedUser = targetSub?.user || allUsers.find((u) => u.id === userId);
+      showToast(
+        'success',
+        `Subscription ${targetSub ? 'updated for' : 'assigned to'} ${selectedUser?.email || userId}.`
+      );
 
-      showToast('success', `Subscription for ${targetSub.user?.email || 'user'} updated.`);
       setIsAssignModalOpen(false);
       loadSubscriptions();
       loadMetrics();
@@ -668,6 +711,17 @@ export default function AdminSubscriptions() {
                 View and manage user tier assignments, validity dates, and subscription statuses.
               </p>
             </div>
+            <button
+              onClick={handleOpenNewAssignModal}
+              className="btn btn-primary"
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+              id="assign-subscription-btn"
+              data-testid="assign-subscription-btn"
+              disabled={plansLoading || plans.length === 0}
+            >
+              <CreditCard size={16} />
+              <span>Assign Subscription</span>
+            </button>
           </div>
 
           {/* Filters Bar */}
@@ -735,6 +789,41 @@ export default function AdminSubscriptions() {
               </select>
             </div>
           </div>
+
+          {/* Plan load failure warning in subscriptions tab */}
+          {plansError && (
+            <div
+              className="card"
+              style={{
+                padding: '14px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                color: 'var(--amber)',
+                border: '1px solid var(--amber)',
+                background: 'rgba(245,158,11,0.07)',
+                fontSize: 13,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <AlertCircle size={15} style={{ flexShrink: 0 }} />
+                <span>
+                  <strong>Plans could not be loaded:</strong> {plansError} — The Assign Subscription modal
+                  requires platform plans. Please retry or check your admin permissions.
+                </span>
+              </div>
+              <button
+                onClick={loadPlans}
+                className="btn btn-ghost btn-sm"
+                style={{ color: 'var(--amber)', whiteSpace: 'nowrap' }}
+                id="retry-load-plans-btn"
+              >
+                <RefreshCw size={13} />
+                <span style={{ marginLeft: 4 }}>Retry</span>
+              </button>
+            </div>
+          )}
 
           {subsError && (
             <div
@@ -1166,7 +1255,7 @@ export default function AdminSubscriptions() {
 
       {/* MODAL: ASSIGN / CHANGE USER SUBSCRIPTION */}
       <AnimatePresence>
-        {isAssignModalOpen && targetSub && (
+        {isAssignModalOpen && (
           <div
             style={{
               position: 'fixed',
@@ -1193,7 +1282,7 @@ export default function AdminSubscriptions() {
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                 <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>
-                  Assign User Subscription
+                  {targetSub ? 'Change User Subscription' : 'Assign Subscription'}
                 </h3>
                 <button
                   onClick={() => setIsAssignModalOpen(false)}
@@ -1204,23 +1293,119 @@ export default function AdminSubscriptions() {
                 </button>
               </div>
 
-              <div
-                style={{
-                  padding: 12,
-                  background: 'var(--bg)',
-                  borderRadius: 6,
-                  border: '1px solid var(--border)',
-                  marginBottom: 16,
-                  fontSize: 13,
-                }}
-              >
-                <div style={{ fontWeight: 600 }}>{targetSub.user?.fullName || 'Trader'}</div>
-                <div style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-                  {targetSub.user?.email || targetSub.userId}
+              {/* Existing subscription: show user info card */}
+              {targetSub && (
+                <div
+                  style={{
+                    padding: 12,
+                    background: 'var(--bg)',
+                    borderRadius: 6,
+                    border: '1px solid var(--border)',
+                    marginBottom: 16,
+                    fontSize: 13,
+                  }}
+                >
+                  <div style={{ fontWeight: 600 }}>{targetSub.user?.fullName || 'Trader'}</div>
+                  <div style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                    {targetSub.user?.email || targetSub.userId}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* New assignment: user search + select */}
+              {!targetSub && (
+                <div style={{ marginBottom: 16 }}>
+                  <label
+                    htmlFor="assign-user-search"
+                    style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6 }}
+                  >
+                    Select User *
+                  </label>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+                    <div style={{ position: 'relative', flex: 1 }}>
+                      <Search
+                        size={14}
+                        style={{
+                          position: 'absolute',
+                          left: 10,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          color: 'var(--text-muted)',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                      <input
+                        type="text"
+                        id="assign-user-search"
+                        className="input"
+                        placeholder="Search by email or name…"
+                        value={userSearch}
+                        onChange={(e) => {
+                          setUserSearch(e.target.value);
+                          loadAllUsers(e.target.value);
+                        }}
+                        style={{ paddingLeft: 32, fontSize: 13 }}
+                        autoComplete="off"
+                      />
+                    </div>
+                  </div>
+                  <select
+                    id="assign-user-select"
+                    className="select"
+                    value={assignForm.userId}
+                    onChange={(e) => setAssignForm({ ...assignForm, userId: e.target.value })}
+                    required
+                    size={Math.min(5, allUsers.length + 1)}
+                    style={{ width: '100%', fontSize: 13, minHeight: 80 }}
+                    aria-label="Select user for subscription assignment"
+                  >
+                    <option value="">— choose a user —</option>
+                    {usersLoading ? (
+                      <option disabled>Loading users…</option>
+                    ) : (
+                      allUsers.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.email}{u.fullName && u.fullName !== 'Anonymous User' ? ` (${u.fullName})` : ''}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  {allUsers.length === 0 && !usersLoading && (
+                    <span style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4, display: 'block' }}>
+                      No users found. Try a different search term.
+                    </span>
+                  )}
+                  {usersError && (
+                    <span role="alert" style={{ fontSize: 11, color: 'var(--red)', marginTop: 4, display: 'block' }}>
+                      {usersError}
+                    </span>
+                  )}
+                </div>
+              )}
 
               <form onSubmit={handleSaveSubscription} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {/* No-plans notice inside modal: shown if plans failed to load */}
+                {plans.length === 0 && !plansLoading && (
+                  <div
+                    style={{
+                      padding: '12px 14px',
+                      background: 'rgba(245,158,11,0.07)',
+                      border: '1px solid var(--amber)',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      color: 'var(--amber)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <AlertCircle size={14} style={{ flexShrink: 0 }} />
+                    <span>
+                      No platform plans could be loaded. Go to the <strong>Platform Plans</strong> tab to
+                      verify plans exist, or retry loading.
+                    </span>
+                  </div>
+                )}
                 <div>
                   <label htmlFor="assign-plan-select" style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
                     Assigned Plan Tier *
@@ -1231,12 +1416,17 @@ export default function AdminSubscriptions() {
                     onChange={(e) => setAssignForm({ ...assignForm, planId: e.target.value })}
                     required
                     id="assign-plan-select"
+                    disabled={plans.length === 0}
                   >
-                    {plans.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} ({formatPlanPrice(p.price, p.currency, p.billingInterval)})
-                      </option>
-                    ))}
+                    {plans.length === 0 ? (
+                      <option value="">— no plans available —</option>
+                    ) : (
+                      plans.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} ({formatPlanPrice(p.price, p.currency, p.billingInterval)})
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 

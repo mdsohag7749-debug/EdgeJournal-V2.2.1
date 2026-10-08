@@ -1211,7 +1211,9 @@ Administrators manage plans and user subscriptions from `/admin/subscriptions` (
 - **Subscriber Directory Tab:**
   - Paginated subscriber directory with search by name/email/plan.
   - Filter by status (`active`, `trialing`, `expired`, `cancelled`) and target plan.
+  - **Assign Subscription** action is available even when there are no existing subscriptions. Administrators can search/select a profile and assign a plan, status, and expiration date.
   - Change / Assign Plan Modal: Assigns or updates a subscriber's plan tier, status, and expiration date.
+  - Assignment calls `admin_assign_subscription` only; the database records its audit event in the same transaction, so an audit failure also prevents an unlogged assignment.
 
 ---
 
@@ -1259,6 +1261,8 @@ Administrative subscription assignment is facilitated by the `public.admin_assig
 - Defined with `SECURITY DEFINER` and `SET search_path = ''`.
 - Explicitly verifies `public.is_admin()`. Rejects non-admin execution with an access denied exception.
 - Upserts subscription with unique user constraint.
+- Calls `public.log_admin_action` within the same transaction. The subscription change rolls back if its audit event cannot be recorded.
+- Publishes `public.subscriptions` through Supabase Realtime. `AuthContext` listens only for the signed-in user's row and reloads that user's plan/entitlements when it changes.
 
 ---
 
@@ -1294,17 +1298,19 @@ All subscription administration actions are logged to `public.admin_audit_logs` 
 - **Rollback File:** `supabase/rollback/0022_subscriptions_and_plans_rollback.sql`
 - **Rollback Scope:** Drops function `admin_assign_subscription`, drops RLS policies on `subscriptions` and `plans`, drops indexes, and drops tables in dependency order (`subscriptions` then `plans`).
 - **Execution Status:** Static analysis review performed. The rollback script was NOT executed against active environments to avoid data loss.
+- **Assignment Reliability Migration:** `supabase/migrations/0025_subscription_assignment_audit_realtime.sql` makes assignment auditing atomic and enables the Realtime subscription change feed. Its rollback is `supabase/rollback/0025_subscription_assignment_audit_realtime_rollback.sql`.
 
 ---
 
 ### 13.14 Test Verification Suite
 
-- **Previous Baseline:** 703 passed tests across 36 test files.
+- **Original Phase 7 Baseline:** 703 passed tests across 36 test files.
 - **New Tests Added:** 44 tests across 2 new test files:
   - `src/components/__tests__/entitlements.test.jsx`: 27 tests covering active status checks, plan fallbacks, feature checks, limit retrieval, and price formatting.
   - `src/components/__tests__/adminSubscriptions.test.jsx`: 17 tests covering access control, plan management, subscriber directory, pagination, user subscription page, and API parameter validation.
-- **Final Total:** **747 passed / 0 failed across 38 test files.**
-- **Production Build (`npm run build`):** **PASS (exit code 0).**
+- **Original Phase 7 Total:** **747 passed / 0 failed across 38 test files.**
+- **Current Assignment-Fix Verification:** **786 passed / 0 failed across 41 test files**; coverage includes the new assignment flow, RPC-only assignment, and live entitlement refresh.
+- **Production Build (`npm run build`):** **PASS (exit code 0)** for the local workspace build. These checks do not verify a production deployment or apply the new migration to a live database.
 
 ---
 
@@ -1314,6 +1320,8 @@ All subscription administration actions are logged to `public.admin_audit_logs` 
 |---|---|---|
 | `supabase/migrations/0022_subscriptions_and_plans.sql` | Created | Plans and subscriptions tables, RLS, indexes, seed tiers, and assignment function |
 | `supabase/rollback/0022_subscriptions_and_plans_rollback.sql` | Created | Idempotent rollback script for migration 0022 |
+| `supabase/migrations/0025_subscription_assignment_audit_realtime.sql` | Created | Atomic assignment auditing and subscription entitlement change feed |
+| `supabase/rollback/0025_subscription_assignment_audit_realtime_rollback.sql` | Created | Restores the prior assignment function while preserving Realtime publication membership |
 | `src/lib/entitlements.js` | Created | Centralized entitlement evaluation and limit verification engine |
 | `src/lib/subscriptionApi.js` | Created | Client-side user subscription API client with Free plan fallback |
 | `src/components/admin/AdminSubscriptions.jsx` | Created | Admin subscription management dashboard with plans and subscriber tabs |
@@ -1612,9 +1620,6 @@ Before any LLM invocation, deterministic metrics are calculated locally via `com
 - **Final Test Suite:** **781 passed / 0 failed across 40 test files**
 - **Production Build:** **PASS (exit code 0, 12s build duration)**
 - **Migration & Rollback:** `0024_ai_usage_and_settings.sql` & `0024_ai_usage_and_settings_rollback.sql`
-
-
-
 
 
 

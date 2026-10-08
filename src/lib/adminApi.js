@@ -1650,8 +1650,7 @@ export async function fetchAdminSubscriptions({
 
 /**
  * Assigns or updates a subscription for a given user. Admin-only.
- * Uses admin_assign_subscription RPC function with fallback to direct upsert.
- * Audited via logAdminAction.
+ * The database RPC enforces admin access and records the audit event atomically.
  */
 export async function assignAdminSubscription({ userId, planId, status = 'active', expiresAt = null }) {
   if (!userId || !planId) {
@@ -1659,55 +1658,15 @@ export async function assignAdminSubscription({ userId, planId, status = 'active
   }
 
   try {
-    let subId = null;
-
-    // 1. Try secure RPC
-    const { data: rpcData, error: rpcError } = await supabase.rpc('admin_assign_subscription', {
+    const { data: subId, error } = await supabase.rpc('admin_assign_subscription', {
       p_user_id: userId,
       p_plan_id: planId,
       p_status: status,
       p_expires_at: expiresAt,
     });
 
-    if (!rpcError && rpcData) {
-      subId = rpcData;
-    } else {
-      // 2. Direct upsert fallback
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .upsert(
-          {
-            user_id: userId,
-            plan_id: planId,
-            status,
-            expires_at: expiresAt,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id' }
-        )
-        .select('id')
-        .single();
-
-      if (error) throw error;
-      subId = data?.id;
-    }
-
-    // Audit log
-    try {
-      await logAdminAction({
-        action: 'assign_subscription',
-        resourceType: 'subscriptions',
-        resourceId: subId || userId,
-        metadata: {
-          targetUserId: userId,
-          planId,
-          status,
-          expiresAt,
-        },
-      });
-    } catch (auditErr) {
-      console.warn('Audit log notice:', auditErr?.message);
-    }
+    if (error) throw error;
+    if (!subId) throw new Error('Subscription assignment did not return a subscription ID.');
 
     return { id: subId, success: true };
   } catch (err) {
@@ -1993,7 +1952,6 @@ export async function fetchAdminAIMetrics() {
     };
   }
 }
-
 
 
 

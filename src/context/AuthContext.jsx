@@ -121,6 +121,34 @@ export function AuthProvider({ children }) {
     return Promise.resolve();
   }, [userId, loadSubscription]);
 
+  useEffect(() => {
+    if (!userId) return undefined;
+
+    const channel = supabase
+      .channel(`subscription-entitlement-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'subscriptions',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          loadSubscription(userId);
+        }
+      )
+      .subscribe((status, error) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('Subscription entitlement updates could not be received:', error || status);
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, loadSubscription]);
+
   // Derived entitlements and limits helpers
   const entitlements = useMemo(() => {
     return Array.isArray(currentPlan?.features) ? currentPlan.features : DEFAULT_FREE_PLAN.features;

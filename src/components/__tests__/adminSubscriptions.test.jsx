@@ -8,6 +8,7 @@ import AdminRoute from '../../routes/AdminRoute';
 import * as authContext from '../../context/AuthContext';
 import * as adminApi from '../../lib/adminApi';
 import * as subscriptionApi from '../../lib/subscriptionApi';
+import { supabase } from '../../lib/supabase';
 
 vi.mock('../../context/AuthContext', async () => {
   const actual = await vi.importActual('../../context/AuthContext');
@@ -25,6 +26,7 @@ vi.mock('../../lib/adminApi', async () => {
     assignAdminSubscription: vi.fn(),
     updateAdminSubscription: vi.fn(),
     fetchAdminSubscriptionMetrics: vi.fn(),
+    fetchUsers: vi.fn(),
     logAdminAction: vi.fn(),
   };
 });
@@ -108,6 +110,11 @@ const mockMetrics = {
   usersByPlan: { Free: 42, Pro: 15 },
 };
 
+const mockUsers = [
+  { id: 'user-201', email: 'alpha@example.com', fullName: 'Alpha Trader', role: 'user' },
+  { id: 'user-202', email: 'beta@example.com', fullName: 'Beta Trader', role: 'user' },
+];
+
 describe('Phase 7: Subscriptions, Plans & Entitlements Test Suite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -121,6 +128,13 @@ describe('Phase 7: Subscriptions, Plans & Entitlements Test Suite', () => {
       totalPages: 1,
     });
     vi.mocked(adminApi.fetchAdminSubscriptionMetrics).mockResolvedValue(mockMetrics);
+    vi.mocked(adminApi.fetchUsers).mockResolvedValue({
+      users: mockUsers,
+      total: 2,
+      page: 1,
+      pageSize: 50,
+      totalPages: 1,
+    });
     vi.mocked(subscriptionApi.fetchActivePlans).mockResolvedValue(mockPlans);
   });
 
@@ -376,11 +390,7 @@ describe('Phase 7: Subscriptions, Plans & Entitlements Test Suite', () => {
     });
 
     it('9. opens assign / change plan modal and updates subscription', async () => {
-      vi.mocked(adminApi.updateAdminSubscription).mockResolvedValue({
-        ...mockSubscriptions[0],
-        planId: 'plan-1',
-        status: 'active',
-      });
+      vi.mocked(adminApi.assignAdminSubscription).mockResolvedValue({ id: 'sub-1', success: true });
 
       render(
         <MemoryRouter>
@@ -396,21 +406,23 @@ describe('Phase 7: Subscriptions, Plans & Entitlements Test Suite', () => {
 
       fireEvent.click(screen.getByTestId('change-plan-sub-1'));
 
-      expect(screen.getByText('Assign User Subscription')).toBeInTheDocument();
+      // When editing an existing subscription, modal title is 'Change User Subscription'
+      expect(screen.getByText('Change User Subscription')).toBeInTheDocument();
       expect(screen.getAllByText('Jane Trader').length).toBeGreaterThanOrEqual(1);
 
       fireEvent.change(screen.getByLabelText(/Assigned Plan Tier/i), { target: { value: 'plan-1' } });
       fireEvent.click(screen.getByText('Apply Plan Change'));
 
       await waitFor(() => {
-        expect(adminApi.updateAdminSubscription).toHaveBeenCalledWith(
-          'sub-1',
+        expect(adminApi.assignAdminSubscription).toHaveBeenCalledWith(
           expect.objectContaining({
+            userId: 'user-101',
             planId: 'plan-1',
             status: 'active',
           })
         );
       });
+      expect(adminApi.updateAdminSubscription).not.toHaveBeenCalled();
     });
 
     it('10. filters subscriptions by status', async () => {
@@ -550,6 +562,145 @@ describe('Phase 7: Subscriptions, Plans & Entitlements Test Suite', () => {
       await expect(actualAdminApi.updateAdminPlan(null, {})).rejects.toThrow(
         /Plan ID is required/i
       );
+    });
+
+    it('uses the secure assignment RPC without a direct table fallback', async () => {
+      const actualAdminApi = await vi.importActual('../../lib/adminApi');
+      const rpcSpy = vi.spyOn(supabase, 'rpc').mockResolvedValue({
+        data: 'sub-new-1',
+        error: null,
+      });
+      const fromSpy = vi.spyOn(supabase, 'from');
+
+      try {
+        await expect(
+          actualAdminApi.assignAdminSubscription({
+            userId: 'user-201',
+            planId: 'plan-2',
+            status: 'active',
+            expiresAt: null,
+          })
+        ).resolves.toEqual({ id: 'sub-new-1', success: true });
+
+        expect(rpcSpy).toHaveBeenCalledWith('admin_assign_subscription', {
+          p_user_id: 'user-201',
+          p_plan_id: 'plan-2',
+          p_status: 'active',
+          p_expires_at: null,
+        });
+        expect(fromSpy).not.toHaveBeenCalled();
+      } finally {
+        rpcSpy.mockRestore();
+        fromSpy.mockRestore();
+      }
+    });
+
+    it('does not fall back to direct writes when the assignment RPC fails', async () => {
+      const actualAdminApi = await vi.importActual('../../lib/adminApi');
+      const rpcSpy = vi.spyOn(supabase, 'rpc').mockResolvedValue({
+        data: null,
+        error: new Error('RPC unavailable'),
+      });
+      const fromSpy = vi.spyOn(supabase, 'from');
+
+      try {
+        await expect(
+          actualAdminApi.assignAdminSubscription({
+            userId: 'user-201',
+            planId: 'plan-2',
+          })
+        ).rejects.toThrow(/RPC unavailable/);
+        expect(fromSpy).not.toHaveBeenCalled();
+      } finally {
+        rpcSpy.mockRestore();
+        fromSpy.mockRestore();
+      }
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Category 6: Assign Subscription — New User Flow
+  // ---------------------------------------------------------------------------
+  describe('Assign Subscription — New User Flow', () => {
+    beforeEach(() => {
+      vi.mocked(authContext.useAuth).mockReturnValue({
+        isAuthenticated: true,
+        isLoading: false,
+        profileLoading: false,
+        isAdmin: true,
+        user: { id: 'admin-1' },
+        profile: { role: 'admin' },
+      });
+    });
+
+    it('18. shows Assign Subscription button in User Subscriptions tab', async () => {
+      render(
+        <MemoryRouter>
+          <AdminSubscriptions />
+        </MemoryRouter>
+      );
+
+      // Switch to subscriptions tab
+      await waitFor(() => {
+        expect(screen.getByText(/User Subscriptions/i)).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText(/User Subscriptions/i));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('assign-subscription-btn')).toBeInTheDocument();
+        expect(screen.getByTestId('assign-subscription-btn')).not.toBeDisabled();
+      });
+    });
+
+    it('19. Assign Subscription button opens modal with user selector and calls assignAdminSubscription', async () => {
+      vi.mocked(adminApi.assignAdminSubscription).mockResolvedValue({ id: 'sub-new-1', success: true });
+
+      render(
+        <MemoryRouter>
+          <AdminSubscriptions />
+        </MemoryRouter>
+      );
+
+      // Switch to subscriptions tab
+      await waitFor(() => {
+        expect(screen.getByText(/User Subscriptions/i)).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText(/User Subscriptions/i));
+
+      // Click Assign Subscription
+      await waitFor(() => {
+        expect(screen.getByTestId('assign-subscription-btn')).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId('assign-subscription-btn'));
+
+      // Modal opens with title
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Assign Subscription' })).toBeInTheDocument();
+        expect(screen.getByLabelText(/Select user for subscription assignment/i)).toBeInTheDocument();
+      });
+
+      // Select a user
+      fireEvent.change(screen.getByLabelText(/Select user for subscription assignment/i), {
+        target: { value: 'user-201' },
+      });
+
+      // Select a plan
+      fireEvent.change(screen.getByLabelText(/Assigned Plan Tier/i), {
+        target: { value: 'plan-2' },
+      });
+
+      // Submit
+      fireEvent.click(screen.getByText('Apply Plan Change'));
+
+      await waitFor(() => {
+        expect(adminApi.assignAdminSubscription).toHaveBeenCalledWith(
+          expect.objectContaining({
+            userId: 'user-201',
+            planId: 'plan-2',
+            status: 'active',
+          })
+        );
+      });
     });
   });
 });
