@@ -357,7 +357,7 @@ describe('Phase 9 — Server Authorization & Entitlements (accountScope & analyz
         cfg: baseConfig,
         supabaseFactory: () => ({ createClient: () => mockSupabase }),
       })
-    ).rejects.toThrow(/does not include Edge AI Command Center/);
+    ).rejects.toThrow(/does not include Edge AI/);
   });
 
   it('rejects expired subscriptions even if plan originally was Pro', async () => {
@@ -408,7 +408,7 @@ describe('Phase 9 — Server Authorization & Entitlements (accountScope & analyz
         cfg: baseConfig,
         supabaseFactory: () => ({ createClient: () => mockSupabase }),
       })
-    ).rejects.toThrow(/does not include Edge AI Command Center/);
+    ).rejects.toThrow(/does not include Edge AI/);
   });
 
   it('blocks requests when platform AI maintenance mode is active', async () => {

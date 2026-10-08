@@ -173,6 +173,8 @@ export function safeErrorMessage(code) {
   switch (code) {
     case AI_ERROR_CODES.AI_NOT_CONFIGURED:
       return 'AI review is not configured yet. Your trade data was not changed.';
+    case AI_ERROR_CODES.AI_NOT_ENTITLED:
+      return 'Your active plan does not include Edge AI. Upgrade to Pro or another eligible plan to access AI analysis. Your trade data was not changed.';
     case AI_ERROR_CODES.AI_RATE_LIMITED:
     case AI_ERROR_CODES.AI_TIMEOUT:
     case AI_ERROR_CODES.AI_UNAVAILABLE:

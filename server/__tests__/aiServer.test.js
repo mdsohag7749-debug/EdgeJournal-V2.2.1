@@ -73,6 +73,55 @@ function baseEnv(overrides = {}) {
   };
 }
 
+function boundSupabaseFactory({ features = ['edge_ai'], accountId = 'acc-1', userId = 'test-user' } = {}) {
+  return () => ({
+    createClient: () => ({
+      auth: { getUser: async () => ({ data: { user: { id: userId } }, error: null }) },
+      from: (table) => {
+        if (table === 'accounts') {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  maybeSingle: async () => ({ data: accountId ? { id: accountId } : null, error: null }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'subscriptions') {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: features ? { status: 'active', plans: { features } } : null,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'system_settings') {
+          return { select: () => ({ in: async () => ({ data: [] }) }) };
+        }
+        return { insert: async () => ({ error: null }) };
+      },
+    }),
+  });
+}
+
+function authorizedAIOptions(features = ['edge_ai'], sourceOverrides = {}) {
+  return {
+    authorization: 'Bearer test-user-token',
+    source: baseEnv({
+      SUPABASE_URL: 'https://x.supabase.co',
+      SUPABASE_SERVICE_ROLE_KEY: 'svc-secret',
+      ...sourceOverrides,
+    }),
+    supabaseFactory: boundSupabaseFactory({ features }),
+  };
+}
+
 function journalContext(overrides = {}) {
   return {
     account: { id: 'acc-1', name: 'Main' },
@@ -285,6 +334,54 @@ describe('E — Account isolation at the server', () => {
     expect(out.json.status).toBe(AI_ERROR_CODES.AI_ACCOUNT_SCOPE_ERROR);
   });
 
+  it('rejects unauthenticated direct AI requests before provider contact', async () => {
+    const fetcher = fakeFetcher(() => jsonResponse(200, geminiResponse(okAnalysisContent())));
+    const out = await handleAnalyze({
+      method: 'POST',
+      data: JSON.stringify({ kind: JOURNAL_KIND, context: journalContext() }),
+      source: baseEnv({ SUPABASE_URL: 'https://x.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'svc-secret' }),
+      ip: 'e-unauthenticated',
+      fetcher,
+      supabaseFactory: boundSupabaseFactory(),
+    });
+
+    expect(out.status).toBe(403);
+    expect(out.json.status).toBe(AI_ERROR_CODES.AI_ACCOUNT_SCOPE_ERROR);
+    expect(fetcher.calls).toHaveLength(0);
+  });
+
+  it('rejects Free Analytics Edge AI requests even when called directly', async () => {
+    const fetcher = fakeFetcher(() => jsonResponse(200, geminiResponse(okAnalysisContent())));
+    const out = await handleAnalyze({
+      method: 'POST',
+      data: JSON.stringify({ kind: JOURNAL_KIND, context: journalContext() }),
+      ...authorizedAIOptions(['journal', 'analytics']),
+      ip: 'e-free-entitlement',
+      fetcher,
+    });
+
+    expect(out.status).toBe(403);
+    expect(out.json.status).toBe(AI_ERROR_CODES.AI_NOT_ENTITLED);
+    expect(out.json.message).toMatch(/upgrade to Pro/i);
+    expect(fetcher.calls).toHaveLength(0);
+  });
+
+  it('rejects when account/entitlement authorization cannot be configured', async () => {
+    const fetcher = fakeFetcher(() => jsonResponse(200, geminiResponse(okAnalysisContent())));
+    const out = await handleAnalyze({
+      method: 'POST',
+      data: JSON.stringify({ kind: JOURNAL_KIND, context: journalContext() }),
+      authorization: 'Bearer test-user-token',
+      source: baseEnv(),
+      ip: 'e-no-binding-config',
+      fetcher,
+    });
+
+    expect(out.status).toBe(503);
+    expect(out.json.status).toBe(AI_ERROR_CODES.AI_UNAVAILABLE);
+    expect(fetcher.calls).toHaveLength(0);
+  });
+
   it('binding: account not owned by the authenticated user → SCOPE_ERROR', async () => {
     const supabaseFactory = () => ({
       createClient: () => ({
@@ -312,17 +409,34 @@ describe('E — Account isolation at the server', () => {
     expect(out.json.message).not.toMatch(/acc-999|u-owner|svc-secret|user-token/);
   });
 
-  it('binding: owned account passes and analysis succeeds', async () => {
+  it('Pro entitlement: owned account passes and analysis succeeds', async () => {
     const supabaseFactory = () => ({
       createClient: () => ({
         auth: { getUser: async () => ({ data: { user: { id: 'u-owner' } }, error: null }) },
-        from: () => ({
-          select: () => ({
-            eq: () => ({
-              eq: () => ({ maybeSingle: async () => ({ data: { id: 'acc-1' }, error: null }) }),
-            }),
-          }),
-        }),
+        from: (table) => {
+          if (table === 'accounts') {
+            return {
+              select: () => ({
+                eq: () => ({
+                  eq: () => ({ maybeSingle: async () => ({ data: { id: 'acc-1' }, error: null }) }),
+                }),
+              }),
+            };
+          }
+          if (table === 'subscriptions') {
+            return {
+              select: () => ({
+                eq: () => ({
+                  maybeSingle: async () => ({
+                    data: { status: 'active', plans: { features: ['edge_ai'] } },
+                    error: null,
+                  }),
+                }),
+              }),
+            };
+          }
+          return { select: () => ({ in: async () => ({ data: [] }) }) };
+        },
       }),
     });
     const fetcher = fakeFetcher(() => jsonResponse(200, geminiResponse(okAnalysisContent())));
@@ -340,9 +454,14 @@ describe('E — Account isolation at the server', () => {
     expect(out.json.analysis.summary).toContain('Canonical metrics reviewed');
   });
 
-  it('resolveAccountScope: structural fallback returns the single account id', async () => {
-    const scope = await resolveAccountScope({ kind: JOURNAL_KIND, context: journalContext(), cfg: { supabaseUrl: '', supabaseServiceRoleKey: '' } });
-    expect(scope.accountId).toBe('acc-1');
+  it('resolveAccountScope: rejects structural-only requests without a session', async () => {
+    await expect(
+      resolveAccountScope({
+        kind: JOURNAL_KIND,
+        context: journalContext(),
+        cfg: { supabaseUrl: '', supabaseServiceRoleKey: '' },
+      })
+    ).rejects.toMatchObject({ code: AI_ERROR_CODES.AI_ACCOUNT_SCOPE_ERROR });
   });
 });
 
@@ -449,7 +568,7 @@ describe('I — Rate limit / abuse guard', () => {
     const out = await handleAnalyze({
       method: 'POST',
       data: JSON.stringify({ kind: JOURNAL_KIND, context: journalContext() }),
-      source: baseEnv({ GEMINI_ENDPOINT: 'https://fake' }),
+      ...authorizedAIOptions(['edge_ai'], { GEMINI_ENDPOINT: 'https://fake' }),
       ip: 'rate-ip-b',
       fetcher,
     });
@@ -466,7 +585,7 @@ describe('J — End-to-end analyze response safety', () => {
     const out = await handleAnalyze({
       method: 'POST',
       data: JSON.stringify({ kind: JOURNAL_KIND, context: journalContext() }),
-      source: baseEnv({ GEMINI_ENDPOINT: 'https://fake' }),
+      ...authorizedAIOptions(['edge_ai'], { GEMINI_ENDPOINT: 'https://fake' }),
       ip: 'j1',
       fetcher,
     });
@@ -490,7 +609,7 @@ describe('J — End-to-end analyze response safety', () => {
     const out = await handleAnalyze({
       method: 'POST',
       data: JSON.stringify({ kind: JOURNAL_KIND, context: journalContext() }),
-      source: baseEnv({ GEMINI_ENDPOINT: 'https://fake' }),
+      ...authorizedAIOptions(['edge_ai'], { GEMINI_ENDPOINT: 'https://fake' }),
       ip: 'j2',
       fetcher,
     });
@@ -511,7 +630,7 @@ describe('J — End-to-end analyze response safety', () => {
     const out = await handleAnalyze({
       method: 'POST',
       data: JSON.stringify({ kind: JOURNAL_KIND, context: canonicalContext }),
-      source: baseEnv({ GEMINI_ENDPOINT: 'https://fake' }),
+      ...authorizedAIOptions(['edge_ai'], { GEMINI_ENDPOINT: 'https://fake' }),
       ip: 'j3',
       fetcher,
     });

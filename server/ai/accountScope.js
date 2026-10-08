@@ -4,15 +4,12 @@
 //   1. STRUCTURAL — the validated request carries exactly one account id inside
 //      its frozen context; a request without one (or with extra fields) is
 //      rejected as AI_ACCOUNT_SCOPE_ERROR. Raw trade rows never cross the wire.
-//   2. BINDING (optional) — when the deployment provides a Supabase service
-//      role key AND the browser attached its Supabase access token, the server
-//      verifies the requested account actually belongs to that authenticated
-//      user before calling any provider.
+//   2. BINDING — the server requires a Supabase service role key AND the
+//      browser's Supabase access token, then verifies account ownership and
+//      the Phase 7 Edge AI entitlement before calling any provider.
 //
-// When the binding credentials/token aren't present the structural guard still
-// applies (the client-side features already never mix accounts); the optional
-// check is what stops an authenticated user of Account A from analyzing
-// Account B.
+// Structural validation alone is not authorization. Missing credentials,
+// sessions, or authorization data fail closed.
 
 import { AIError } from '../../src/lib/ai/errors.js';
 import { AI_ERROR_CODES } from '../../src/lib/ai/types.js';
@@ -35,71 +32,94 @@ function scopeError(detail) {
   );
 }
 
+function unavailableError(detail) {
+  return new AIError(
+    AI_ERROR_CODES.AI_UNAVAILABLE,
+    'Edge AI authorization is temporarily unavailable. Please try again later.',
+    { detail }
+  );
+}
+
+function notEntitledError() {
+  return new AIError(
+    AI_ERROR_CODES.AI_NOT_ENTITLED,
+    'Your active plan does not include Edge AI. Upgrade to Pro or an eligible plan to access Edge AI.',
+    { detail: 'not-entitled' }
+  );
+}
+
 // Resolves + verifies the account scope for a validated request.
-// Returns `{ accountId, userId? }` or throws AI_ACCOUNT_SCOPE_ERROR.
+// Returns `{ accountId, userId, supabase }` or throws an authorization error.
 export async function resolveAccountScope({ kind, context, authorization, cfg, supabaseFactory } = {}) {
   const accountId = extractAccountId(kind, context);
   if (!accountId) throw scopeError('missing-account-id');
 
-  const canBind =
-    cfg &&
-    cfg.supabaseUrl &&
-    cfg.supabaseServiceRoleKey &&
-    typeof authorization === 'string' &&
-    /^Bearer\s+/i.test(authorization);
-
-  if (!canBind) {
-    // No binding path provisioned — structural single-account enforcement only.
-    return { accountId };
+  const tokenMatch = typeof authorization === 'string' && authorization.match(/^Bearer\s+(.+)$/i);
+  if (!tokenMatch || !tokenMatch[1].trim()) throw scopeError('missing-authorization');
+  if (!cfg?.supabaseUrl || !cfg?.supabaseServiceRoleKey) {
+    throw unavailableError('authorization-not-configured');
   }
 
-  const token = authorization.replace(/^Bearer\s+/i, '').trim();
+  const token = tokenMatch[1].trim();
   let sdk;
   try {
     sdk = supabaseFactory ? supabaseFactory() : await import('@supabase/supabase-js');
   } catch {
-    // SDK unavailable at runtime ⇒ fall back to structural enforcement.
-    return { accountId };
+    throw unavailableError('supabase-client-unavailable');
   }
 
   const { createClient } = sdk;
-  const supabase = createClient(cfg.supabaseUrl, cfg.supabaseServiceRoleKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  let supabase;
+  try {
+    supabase = createClient(cfg.supabaseUrl, cfg.supabaseServiceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  } catch {
+    throw unavailableError('supabase-client-initialization-failed');
+  }
 
-  const { data: userData, error: userError } = await supabase.auth.getUser(token);
+  let userData;
+  let userError;
+  try {
+    ({ data: userData, error: userError } = await supabase.auth.getUser(token));
+  } catch {
+    throw unavailableError('user-validation-failed');
+  }
   if (userError || !userData?.user) throw scopeError('unauthorized-user');
 
-  const { data: row } = await supabase
-    .from('accounts')
-    .select('id')
-    .eq('id', accountId)
-    .eq('user_id', userData.user.id)
-    .maybeSingle();
+  let row;
+  let accountError;
+  try {
+    ({ data: row, error: accountError } = await supabase
+      .from('accounts')
+      .select('id')
+      .eq('id', accountId)
+      .eq('user_id', userData.user.id)
+      .maybeSingle());
+  } catch {
+    throw unavailableError('account-ownership-check-failed');
+  }
 
+  if (accountError) throw unavailableError('account-ownership-check-failed');
   if (!row) throw scopeError('account-not-owned');
 
-  // Verify subscription entitlement if subscriptions table exists
+  // Resolve entitlement from the same subscription/plan source as Phase 7.
+  let sub;
   try {
-    const { data: sub } = await supabase
+    const { data, error } = await supabase
       .from('subscriptions')
       .select('*, plans(*)')
       .eq('user_id', userData.user.id)
       .maybeSingle();
-
-    const { canUseFeature } = await import('../../src/lib/entitlements.js');
-    if (!canUseFeature(sub, 'edge_ai')) {
-      throw new AIError(
-        AI_ERROR_CODES.AI_NOT_ENTITLED,
-        'Your active plan does not include Edge AI Command Center. Upgrade to Pro or an eligible plan to access Edge AI.',
-        { detail: 'not-entitled' }
-      );
-    }
+    if (error) throw unavailableError('subscription-check-failed');
+    sub = data;
   } catch (subErr) {
-    if (subErr?.code === AI_ERROR_CODES.AI_NOT_ENTITLED) {
-      throw subErr;
-    }
+    if (subErr?.code === AI_ERROR_CODES.AI_UNAVAILABLE) throw subErr;
+    throw unavailableError('subscription-check-failed');
   }
+
+  const { canUseFeature } = await import('../../src/lib/entitlements.js');
+  if (!canUseFeature(sub, 'edge_ai')) throw notEntitledError();
 
   // Verify platform system settings and daily rate limit if tables exist
   try {

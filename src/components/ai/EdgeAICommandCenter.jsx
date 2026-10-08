@@ -37,6 +37,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useAccounts } from '../../context/AccountContext';
+import { useAuth } from '../../context/AuthContext';
 import { resolveAIConfig } from '../../lib/ai/provider';
 import { fetchRemoteHealth, interpretHealthProbe } from '../../lib/ai/remote';
 import { AI_NOT_ENOUGH_DATA } from '../../lib/ai/journalIntelligence';
@@ -115,6 +116,7 @@ export default function EdgeAICommandCenter({
   onNavigate,
 }) {
   const { allAccounts, selectedAccount } = useAccounts();
+  const { canUse } = useAuth();
   const [active, setActive] = useState('journal');
   const [featureState, setFeatureState] = useState({
     journal: { phase: 'idle' },
@@ -124,6 +126,7 @@ export default function EdgeAICommandCenter({
 
   const accountId = accountIdOverride || (allAccounts ? null : selectedAccount?.id || null);
   const gated = !accountId;
+  const isEntitled = Boolean(canUse?.('edge_ai'));
 
   // Status indicator only: READY / NOT_CONFIGURED / UNAVAILABLE, with no
   // technical detail. Default (VITE flags unset, or NOT the remote bridge) is
@@ -174,6 +177,7 @@ export default function EdgeAICommandCenter({
   const activeFeature = FEATURES.find((f) => f.id === active);
 
   function chipFor(id) {
+    if (!isEntitled) return { label: 'Pro required', tone: 'warn' };
     if (id === 'trade') {
       return selectedTrade
         ? { label: 'Trade selected', tone: 'ok' }
@@ -199,6 +203,8 @@ export default function EdgeAICommandCenter({
   }
 
   function renderDetail() {
+    if (!isEntitled) return <EntitlementGateDetail />;
+
     switch (active) {
       case 'trade':
         return (
@@ -313,11 +319,31 @@ export default function EdgeAICommandCenter({
           </div>
         )}
 
+        {!isEntitled && (
+          <div
+            role="status"
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 8,
+              marginTop: 14,
+              padding: '9px 12px',
+              borderRadius: 10,
+              background: 'rgba(245,158,11,0.10)',
+              fontSize: 12.5,
+              color: 'var(--text-muted)',
+            }}
+          >
+            <ShieldAlert size={14} style={{ color: '#f59e0b', marginTop: 2, flexShrink: 0 }} aria-hidden />
+            <span>Edge AI analysis requires Pro or another eligible plan. Upgrade to use AI-powered analysis.</span>
+          </div>
+        )}
+
         <div className="ejc-grid" role="group" aria-label="Edge AI features" style={{ marginTop: 16 }}>
           {FEATURES.map((f) => {
             const Icon = f.icon;
             const isActive = active === f.id;
-            const disabled = f.requiresAccount && gated;
+            const disabled = !isEntitled || (f.requiresAccount && gated);
             const chip = chipFor(f.id);
             return (
               <div
@@ -390,6 +416,17 @@ function GateDetail({ label }) {
       <ShieldAlert size={15} style={{ color: '#f59e0b', marginTop: 2, flexShrink: 0 }} aria-hidden />
       <p style={{ margin: 0, lineHeight: 1.5 }}>
         {label} requires a single account. Select one account to analyze its data — AI never mixes accounts.
+      </p>
+    </div>
+  );
+}
+
+function EntitlementGateDetail() {
+  return (
+    <div role="status" className="ejc-fade" style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12.5, color: 'var(--text-muted)' }}>
+      <ShieldAlert size={15} style={{ color: '#f59e0b', marginTop: 2, flexShrink: 0 }} aria-hidden />
+      <p style={{ margin: 0, lineHeight: 1.5 }}>
+        Edge AI analysis requires Pro or another eligible plan. Upgrade your plan to run AI-powered analysis.
       </p>
     </div>
   );

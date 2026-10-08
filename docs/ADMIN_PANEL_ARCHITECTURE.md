@@ -1433,7 +1433,7 @@ Every `SECURITY DEFINER` function in EdgeJournal specifies an explicit search pa
 - `.env` and `.env.local` are strictly excluded in `.gitignore`.
 - Vite client builds expose only variables prefixed with `VITE_` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_AI_ENABLED`, `VITE_AI_PROVIDER`).
 - Supabase anonymous key is a public, publishable key intended for browser usage and constrained by RLS.
-- Sensitive credentials (e.g. server-side `GEMINI_API_KEY`, optional `SUPABASE_SERVICE_ROLE_KEY`) are parsed strictly inside serverless functions (`server/ai/config.js`) and never packaged into client bundles.
+- Sensitive credentials (e.g. server-side `GEMINI_API_KEY` and required `SUPABASE_SERVICE_ROLE_KEY` for AI authorization) are parsed strictly inside serverless functions (`server/ai/config.js`) and never packaged into client bundles.
 
 #### H. Security Headers & Frontend Hardening
 Configured in `vercel.json`:
@@ -1596,8 +1596,9 @@ Safe Normalized JSON Response to Frontend
 ### 15.3 Subscription & Entitlement Integration
 - AI access is governed strictly by the Phase 7 entitlement key `edge_ai`.
 - `DEFAULT_FREE_PLAN` does not include `edge_ai`. Free users encounter an informative upgrade banner directing to `/subscription`.
+- The Analytics Edge AI panel and the main Command Center use the same Phase 7 entitlement; analytics features that are deterministic remain governed separately.
 - Pro tier includes `edge_ai` (seeded in migration `0022_subscriptions_and_plans.sql`).
-- Serverless endpoints enforce `canUseFeature(sub, 'edge_ai')`, rejecting unentitled calls with `403 AI_NOT_ENTITLED`. Expired or cancelled subscriptions are revoked.
+- The analyze endpoint requires a valid Supabase session, verifies account ownership, and enforces `canUseFeature(sub, 'edge_ai')` before contacting Gemini. Missing authorization configuration or subscription data fails closed; unentitled calls receive `403 AI_NOT_ENTITLED`. Expired or cancelled subscriptions are revoked.
 
 ### 15.4 Grounded Deterministic Analytics
 Before any LLM invocation, deterministic metrics are calculated locally via `computeQuickAnalytics()`:
@@ -1620,7 +1621,6 @@ Before any LLM invocation, deterministic metrics are calculated locally via `com
 - **Final Test Suite:** **781 passed / 0 failed across 40 test files**
 - **Production Build:** **PASS (exit code 0, 12s build duration)**
 - **Migration & Rollback:** `0024_ai_usage_and_settings.sql` & `0024_ai_usage_and_settings_rollback.sql`
-
 
 
 

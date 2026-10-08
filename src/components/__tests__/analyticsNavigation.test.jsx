@@ -37,12 +37,16 @@ const state = vi.hoisted(() => ({
     selectedAccount: { id: 'acc-0001', name: 'Main' },
     getAccountName: (id) => (id === 'acc-0001' ? 'Main' : ''),
   },
+  auth: {
+    canUse: () => true,
+  },
 }));
 
 const provider = vi.hoisted(() => ({ analyze: vi.fn() }));
 
 vi.mock('../../context/DataContext', () => ({ useData: () => state.data }));
 vi.mock('../../context/AccountContext', () => ({ useAccounts: () => state.accounts }));
+vi.mock('../../context/AuthContext', () => ({ useAuth: () => state.auth }));
 // The default provider is "enabled" so we can PROVE folder navigation never
 // fires an analysis (only each AI feature's own explicit CTA may).
 vi.mock('../../lib/ai/provider', () => ({

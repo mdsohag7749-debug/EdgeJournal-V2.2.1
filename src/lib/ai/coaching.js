@@ -757,6 +757,8 @@ export function safeCoachingErrorMessage(code) {
       return 'AI coaching is only available after selecting a single account. Your journal data was not changed.';
     case AI_ERROR_CODES.AI_NOT_CONFIGURED:
       return 'EdgeJournal AI is not configured yet. No journal data was sent to any provider.';
+    case AI_ERROR_CODES.AI_NOT_ENTITLED:
+      return 'Your active plan does not include Edge AI. Upgrade to Pro or another eligible plan to access AI analysis.';
     case AI_ERROR_CODES.AI_RATE_LIMITED:
     case AI_ERROR_CODES.AI_TIMEOUT:
     case AI_ERROR_CODES.AI_UNAVAILABLE:

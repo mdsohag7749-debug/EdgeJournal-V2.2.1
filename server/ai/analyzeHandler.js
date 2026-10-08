@@ -91,7 +91,7 @@ export async function handleAnalyze({ method, data, authorization, ip, source, s
     };
   }
 
-  // 3: account scope — structural + optional user binding.
+  // 3: account scope — authenticated account ownership + Phase 7 entitlement.
   let scopeInfo;
   try {
     scopeInfo = await resolveAccountScope({

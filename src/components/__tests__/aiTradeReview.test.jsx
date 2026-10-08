@@ -71,6 +71,7 @@ describe('AITradeReview — production Journal review flow', () => {
   it('renders the safe error copy for every controlled AI code without leaking internals', () => {
     const codes = [
       'AI_NOT_CONFIGURED',
+      'AI_NOT_ENTITLED',
       'AI_TIMEOUT',
       'AI_RATE_LIMITED',
       'AI_INVALID_RESPONSE',

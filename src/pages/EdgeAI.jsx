@@ -44,7 +44,7 @@ import AICoaching from '../components/ai/AICoaching';
 export default function EdgeAI({ onNavigate }) {
   const { trades } = useData();
   const { allAccounts, selectedAccount, accounts } = useAccounts();
-  const auth = useAuthSafe();
+  const auth = useAuth();
 
   const [activeTab, setActiveTab] = useState('command');
   const [aiStatus, setAiStatus] = useState('NOT_CONFIGURED');
@@ -98,7 +98,7 @@ export default function EdgeAI({ onNavigate }) {
   }, [accountTrades]);
 
   // Check entitlement
-  const isEntitled = Boolean(auth?.canUse ? auth.canUse('edge_ai') : true);
+  const isEntitled = Boolean(auth.canUse?.('edge_ai'));
   const currentPlanName = auth?.currentPlan?.name || (isEntitled ? 'Pro' : 'Free');
 
   // Cancel any running analysis on unmount
@@ -1003,15 +1003,4 @@ export default function EdgeAI({ onNavigate }) {
       )}
     </div>
   );
-}
-
-function useAuthSafe() {
-  try {
-    return useAuth();
-  } catch (_) {
-    return {
-      canUse: () => true,
-      currentPlan: { name: 'Pro', features: ['edge_ai'] },
-    };
-  }
 }

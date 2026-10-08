@@ -134,6 +134,7 @@ describe('AI Journal Intelligence — production Analytics flow (Sprint 9.3)', (
   it('renders the safe error copy for every controlled journal AI code', () => {
     const codes = [
       'AI_NOT_CONFIGURED',
+      'AI_NOT_ENTITLED',
       'AI_ACCOUNT_SCOPE_ERROR',
       'AI_RATE_LIMITED',
       'AI_TIMEOUT',

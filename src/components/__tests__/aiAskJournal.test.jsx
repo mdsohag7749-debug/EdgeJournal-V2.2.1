@@ -176,7 +176,7 @@ describe('AI Ask Journal — production Analytics flow (Sprint 9.5)', () => {
   });
 
   it('renders the safe error copy for every controlled Ask Journal AI code', () => {
-    const codes = ['AI_NOT_CONFIGURED', 'AI_ACCOUNT_SCOPE_ERROR', 'AI_RATE_LIMITED', 'AI_TIMEOUT', 'AI_UNAVAILABLE', 'AI_PROVIDER_ERROR', 'AI_INVALID_RESPONSE', 'AI_NOT_ENOUGH_DATA', 'ANOTHER_THING'];
+    const codes = ['AI_NOT_CONFIGURED', 'AI_NOT_ENTITLED', 'AI_ACCOUNT_SCOPE_ERROR', 'AI_RATE_LIMITED', 'AI_TIMEOUT', 'AI_UNAVAILABLE', 'AI_PROVIDER_ERROR', 'AI_INVALID_RESPONSE', 'AI_NOT_ENOUGH_DATA', 'ANOTHER_THING'];
     for (const code of codes) {
       const message = safeAskJournalErrorMessage(code);
       expect(typeof message).toBe('string');

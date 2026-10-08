@@ -57,10 +57,14 @@ const state = vi.hoisted(() => ({
     selectedAccount: { id: 'acc-0001', name: 'Main' },
     getAccountName: (id) => (id === 'acc-0001' ? 'Main' : ''),
   },
+  auth: {
+    canUse: () => true,
+  },
 }));
 
 vi.mock('../../context/DataContext', () => ({ useData: () => state.data }));
 vi.mock('../../context/AccountContext', () => ({ useAccounts: () => state.accounts }));
+vi.mock('../../context/AuthContext', () => ({ useAuth: () => state.auth }));
 
 function trade(id = 't-0', overrides = {}) {
   return {
@@ -99,6 +103,7 @@ beforeEach(() => {
   state.accounts.allAccounts = false;
   state.accounts.selectedAccount = { id: ACC, name: 'Main' };
   state.accounts.accounts = [{ id: ACC, name: 'Main' }];
+  state.auth.canUse = () => true;
   // Default: closed, disabled provider config (the foundation default).
   aiMocks.resolveAIConfig.mockReturnValue({ enabled: false, provider: 'none' });
   aiMocks.fetchRemoteHealth.mockReset();
@@ -130,6 +135,21 @@ describe('Edge AI Command Center — production Analytics flow (Sprint 9.5)', ()
     expect(screen.getByText('Trade Review')).toBeInTheDocument();
     expect(screen.getByText('AI Coach')).toBeInTheDocument();
     expect(screen.getByText('Ask Journal')).toBeInTheDocument();
+  });
+
+  it('Free users cannot open Analytics Edge AI actions and see the Pro eligibility message', () => {
+    state.auth.canUse = (feature) => feature !== 'edge_ai';
+    const analyze = vi.fn();
+
+    render(<EdgeAICommandCenter provider={{ analyze }} />);
+
+    expect(cardButton('Open Journal Intelligence')).toBeDisabled();
+    expect(cardButton('Open Trade Review')).toBeDisabled();
+    expect(screen.getAllByText(/edge ai analysis requires pro or another eligible plan/i)).toHaveLength(2);
+    expect(within(detailRegion()).queryByRole('button', { name: 'Analyze Journal' })).not.toBeInTheDocument();
+
+    fireEvent.click(cardButton('Open Journal Intelligence'));
+    expect(analyze).not.toHaveBeenCalled();
   });
 
   it('expands ONLY the selected feature; the others stay collapsed', () => {
@@ -180,26 +200,25 @@ describe('Edge AI Command Center — production Analytics flow (Sprint 9.5)', ()
     expect(screen.getByText(/requires a single account/i)).toBeInTheDocument();
   });
 
-  it('reports live state chips upward from the expanded feature', async () => {
+  it('lets Pro users execute Analytics Edge AI and reports live state upward', async () => {
     let resolveRequest;
-    const provider = {
-      analyze: async () => {
-        await new Promise((resolve) => {
-          resolveRequest = resolve;
-        });
-        return {
-          ok: true,
-          status: 'ok',
-          analysis: {
-            summary: 'Executive read shows consistent execution quality.',
-            keyInsights: [{ title: 'Pullback strength', observation: 'Positive recorded results.', evidence: 'Setup performance lists positive net PnL.', confidence: 0.7 }],
-            strengths: ['Follows the plan'],
-            confidence: 0.6,
-            disclaimer: 'Not financial advice.',
-          },
-        };
-      },
-    };
+    const analyze = vi.fn(async () => {
+      await new Promise((resolve) => {
+        resolveRequest = resolve;
+      });
+      return {
+        ok: true,
+        status: 'ok',
+        analysis: {
+          summary: 'Executive read shows consistent execution quality.',
+          keyInsights: [{ title: 'Pullback strength', observation: 'Positive recorded results.', evidence: 'Setup performance lists positive net PnL.', confidence: 0.7 }],
+          strengths: ['Follows the plan'],
+          confidence: 0.6,
+          disclaimer: 'Not financial advice.',
+        },
+      };
+    });
+    const provider = { analyze };
 
     render(<EdgeAICommandCenter provider={provider} />);
     const journalTab = cardButton('Open Journal Intelligence');
@@ -216,6 +235,7 @@ describe('Edge AI Command Center — production Analytics flow (Sprint 9.5)', ()
 
     resolveRequest();
     await screen.findByText(/executive read shows consistent execution quality/i);
+    expect(analyze).toHaveBeenCalledTimes(1);
     expect(within(detailRegion()).getByRole('button', { name: 'Analyze Journal' })).not.toBeDisabled();
     await waitFor(() => {
       expect(screen.getAllByText('Result ready').length).toBeGreaterThan(0);
