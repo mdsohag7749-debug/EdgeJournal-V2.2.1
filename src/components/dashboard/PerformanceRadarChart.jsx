@@ -20,15 +20,15 @@ export default function PerformanceRadarChart({ radarScores }) {
       className="card card-lift"
       style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="dash-radar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
           <ShieldCheck size={18} color="#10b981" /> Institutional Performance Radar
         </h3>
-        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>6 Core Performance Pillars</span>
+        <span className="dash-radar-caption" style={{ fontSize: 12, color: 'var(--text-muted)' }}>6 Core Performance Pillars</span>
       </div>
 
-      <div style={{ width: '100%', flex: 1, minHeight: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <ResponsiveContainer>
+      <div style={{ width: '100%', height: 280, minHeight: 280 }}>
+        <ResponsiveContainer width="100%" height="100%">
           <RadarChart cx="50%" cy="50%" outerRadius="75%" data={data}>
             <PolarGrid stroke="var(--border)" />
             <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-muted)', fontSize: 12, fontWeight: 600 }} />

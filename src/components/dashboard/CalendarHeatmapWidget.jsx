@@ -7,18 +7,18 @@ const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 // Cell colors
 const NEUTRAL = {
-  background: 'var(--card-hover)',
-  border: '1px solid var(--border)',
+  background: 'rgba(255, 255, 255, 0.03)',
+  border: '1px solid rgba(255, 255, 255, 0.06)',
   color: 'var(--text-faint)',
 };
 const PROFIT = {
-  background: 'rgba(47, 214, 110, 0.12)',
-  border: '1px solid rgba(47, 214, 110, 0.38)',
+  background: 'rgba(54, 224, 192, 0.14)',
+  border: '1px solid rgba(54, 224, 192, 0.35)',
   color: 'var(--win)',
 };
 const LOSS = {
-  background: 'rgba(255, 77, 94, 0.12)',
-  border: '1px solid rgba(255, 77, 94, 0.38)',
+  background: 'rgba(255, 77, 94, 0.14)',
+  border: '1px solid rgba(255, 77, 94, 0.35)',
   color: 'var(--loss)',
 };
 

@@ -248,7 +248,7 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
 
   const update = useCallback(
     async (id, patch) => {
-      if (!userId) return;
+      if (!userId) return null;
       const isPendingItem = typeof id === 'string' && id.startsWith('pending_');
       const previous = itemsRef.current.find((it) => it.id === id);
 
@@ -264,6 +264,7 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
         } else {
           enqueueChange({ table, userId, type: 'update', itemId: id, item: patch, label });
         }
+        return merged;
       };
 
       if (!isOnline() || isPendingItem) return queueOffline();
@@ -283,9 +284,11 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
         const moved = rowContext?.accountId && saved?.accountId && saved.accountId !== rowContext.accountId;
         setItems((prev) => (moved ? prev.filter((it) => it.id !== id) : prev.map((it) => (it.id === id ? saved : it))));
         onChange?.({ type: 'updated', trade: saved, previous });
+        return saved;
       } catch (err) {
         if (isNetworkError(err)) return queueOffline();
         console.error(`Failed to update ${table.slice(0, -1)} in Supabase:`, err.message || err);
+        return null;
       }
     },
     [table, userId, toRow, fromRow, label, rowOpts, onChange]

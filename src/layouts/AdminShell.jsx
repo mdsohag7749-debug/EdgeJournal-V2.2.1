@@ -97,7 +97,7 @@ export default function AdminShell() {
   const headerMeta = HEADER_META[activeSection] || HEADER_META.overview;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+    <div className="admin-shell" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
       {/* Keyboard accessible skip-link */}
       <a href="#admin-main-content" className="skip-link">
         Skip to admin content

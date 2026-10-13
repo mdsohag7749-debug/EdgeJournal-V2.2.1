@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useLayoutEffect, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { DataProvider, useData } from '../context/DataContext';
@@ -52,6 +52,12 @@ function AppShellContent() {
   const location = useLocation();
   const navigate = useNavigate();
   const { trades, goals, plans, reflections, study, challenges } = useData();
+
+  // Every workspace section starts at its own top, regardless of how far the
+  // previous page was scrolled. The sidebar has a separate scroll container.
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   useEffect(() => {
     let isMounted = true;
@@ -141,7 +147,7 @@ function AppShellContent() {
           </span>
         </div>
       )}
-      <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <div className="app-workspace" style={{ display: 'flex', minHeight: '100vh' }}>
         <Sidebar
           active={activeRoute.id}
           onNavigate={handleNavigate}

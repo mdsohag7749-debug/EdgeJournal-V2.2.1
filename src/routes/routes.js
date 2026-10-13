@@ -7,21 +7,48 @@
 // page. Adding a new page later only requires adding one entry here.
 
 import { lazy } from 'react';
+import { LOW_GRAPHICS_LOADER_FINISH_MS, TRADING_LOADER_FINISH_MS } from '../components/LoadingScreen';
 
-const Dashboard = lazy(() => import('../pages/Dashboard'));
-const PreMarketPlan = lazy(() => import('../pages/PreMarketPlan'));
-const TradingJournal = lazy(() => import('../pages/TradingJournal'));
-const Reflections = lazy(() => import('../pages/Reflections'));
-const Study = lazy(() => import('../pages/Study'));
-const Goals = lazy(() => import('../pages/Goals'));
-const Challenges = lazy(() => import('../pages/Challenges'));
-const Analytics = lazy(() => import('../pages/Analytics'));
-const Psychology = lazy(() => import('../pages/Psychology'));
-const System = lazy(() => import('../pages/System'));
-const Profile = lazy(() => import('../pages/Profile'));
-const Settings = lazy(() => import('../pages/Settings'));
-const Subscription = lazy(() => import('../pages/Subscription'));
-const EdgeAI = lazy(() => import('../pages/EdgeAI'));
+let hasDelayedInitialPageLoad = false;
+
+function lazyPage(loadPage) {
+  return lazy(() => {
+    const startedAt = performance.now();
+    const shouldFinishLoader = !hasDelayedInitialPageLoad;
+    hasDelayedInitialPageLoad = true;
+    let lowGraphics = document.documentElement.dataset.graphicsMode === 'low';
+    if (!document.documentElement.dataset.graphicsMode) {
+      try {
+        lowGraphics = window.localStorage.getItem('edgejournal-graphics-mode') === 'low';
+      } catch {
+        lowGraphics = false;
+      }
+    }
+
+    return loadPage().then((pageModule) => {
+      if (!shouldFinishLoader) return pageModule;
+      const finishAfter = lowGraphics ? LOW_GRAPHICS_LOADER_FINISH_MS : TRADING_LOADER_FINISH_MS;
+      const remaining = finishAfter - (performance.now() - startedAt);
+      if (remaining <= 0) return pageModule;
+      return new Promise((resolve) => setTimeout(resolve, remaining)).then(() => pageModule);
+    });
+  });
+}
+
+const Dashboard = lazyPage(() => import('../pages/Dashboard'));
+const PreMarketPlan = lazyPage(() => import('../pages/PreMarketPlan'));
+const TradingJournal = lazyPage(() => import('../pages/TradingJournal'));
+const Reflections = lazyPage(() => import('../pages/Reflections'));
+const Study = lazyPage(() => import('../pages/Study'));
+const Goals = lazyPage(() => import('../pages/Goals'));
+const Challenges = lazyPage(() => import('../pages/Challenges'));
+const Analytics = lazyPage(() => import('../pages/Analytics'));
+const Psychology = lazyPage(() => import('../pages/Psychology'));
+const System = lazyPage(() => import('../pages/System'));
+const Profile = lazyPage(() => import('../pages/Profile'));
+const Settings = lazyPage(() => import('../pages/Settings'));
+const Subscription = lazyPage(() => import('../pages/Subscription'));
+const EdgeAI = lazyPage(() => import('../pages/EdgeAI'));
 
 export const routes = [
   {

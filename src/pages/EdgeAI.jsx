@@ -37,6 +37,7 @@ import { QUICK_QUESTION_PROMPTS, validateAIUserQuery } from '../lib/ai/aiPrompts
 import { askEdgeAI } from '../lib/ai/aiClient';
 import { AI_ERROR_CODES, AI_DISCLAIMER } from '../lib/ai/types';
 import { safeAskJournalErrorMessage } from '../lib/ai/askJournal';
+import { prepareErrorSound, prepareSuccessSound } from '../lib/feedbackSound';
 import AIAskJournal from '../components/ai/AIAskJournal';
 import AIJournalIntelligence from '../components/ai/AIJournalIntelligence';
 import AICoaching from '../components/ai/AICoaching';
@@ -111,23 +112,28 @@ export default function EdgeAI({ onNavigate }) {
   }, []);
 
   async function handleAskQuestion(customQuery = null) {
+    const playErrorSound = prepareErrorSound();
     const queryToUse = customQuery || question;
     const queryCheck = validateAIUserQuery(queryToUse);
     if (!queryCheck.valid) {
       setAnalysisError(queryCheck.error);
+      playErrorSound();
       return;
     }
 
     if (allAccounts || !selectedAccount?.id) {
       setAnalysisError('Please select a specific trading account from the header to analyze.');
+      playErrorSound();
       return;
     }
 
     if (!isEntitled) {
       setAnalysisError('Your active plan does not include Edge AI. Please upgrade to Pro.');
+      playErrorSound();
       return;
     }
 
+    const playSuccessSound = prepareSuccessSound();
     setAnalyzing(true);
     setAnalysisError(null);
     setAnalysisResult(null);
@@ -146,12 +152,14 @@ export default function EdgeAI({ onNavigate }) {
 
       setAnalysisResult(result);
       setLastAnalysisTime(new Date());
+      playSuccessSound();
     } catch (err) {
       if (err?.name === 'AbortError' || /abort/i.test(String(err?.message || ''))) {
         setAnalysisError('Analysis cancelled.');
       } else {
         const code = err?.code || AI_ERROR_CODES.AI_PROVIDER_ERROR;
         setAnalysisError(safeAskJournalErrorMessage(code));
+        playErrorSound();
       }
     } finally {
       setAnalyzing(false);
@@ -161,6 +169,7 @@ export default function EdgeAI({ onNavigate }) {
 
   function handleCancel() {
     if (abortControllerRef.current) {
+      prepareErrorSound()();
       abortControllerRef.current.abort();
     }
   }
@@ -177,8 +186,11 @@ export default function EdgeAI({ onNavigate }) {
         style={{
           padding: '24px 28px',
           borderRadius: 16,
-          background: 'linear-gradient(135deg, rgba(193, 18, 31, 0.08) 0%, rgba(20, 20, 25, 0.95) 100%)',
-          border: '1px solid var(--border)',
+          background: 'linear-gradient(135deg, rgba(66, 217, 255, 0.1) 0%, rgba(13, 20, 36, 0.95) 100%)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid rgba(66, 217, 255, 0.2)',
+          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -191,16 +203,16 @@ export default function EdgeAI({ onNavigate }) {
                   width: 38,
                   height: 38,
                   borderRadius: 10,
-                  background: 'linear-gradient(135deg, var(--red), var(--red-strong))',
+                  background: 'linear-gradient(135deg, #42d9ff 0%, #36e0c0 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 4px 14px rgba(193, 18, 31, 0.35)',
+                  boxShadow: '0 4px 18px rgba(66, 217, 255, 0.35)',
                 }}
               >
-                <Brain size={20} color="#fff" />
+                <Brain size={20} color="#080d18" strokeWidth={2.4} />
               </div>
-              <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>
+              <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0, letterSpacing: '-0.02em', color: '#f8fafc' }}>
                 Edge AI Command Center
               </h1>
             </div>
@@ -223,13 +235,13 @@ export default function EdgeAI({ onNavigate }) {
                 fontWeight: 700,
                 background:
                   aiStatus === 'READY'
-                    ? 'rgba(34, 197, 94, 0.12)'
+                    ? 'rgba(54, 224, 192, 0.14)'
                     : aiStatus === 'UNAVAILABLE'
                     ? 'rgba(245, 158, 11, 0.12)'
                     : 'rgba(255, 255, 255, 0.05)',
                 color:
                   aiStatus === 'READY'
-                    ? 'var(--win)'
+                    ? '#36e0c0'
                     : aiStatus === 'UNAVAILABLE'
                     ? '#f59e0b'
                     : 'var(--text-faint)',
@@ -256,8 +268,8 @@ export default function EdgeAI({ onNavigate }) {
                 borderRadius: 20,
                 fontSize: 12,
                 fontWeight: 700,
-                background: isEntitled ? 'rgba(59, 130, 246, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                color: isEntitled ? 'var(--blue, #3b82f6)' : 'var(--loss)',
+                background: isEntitled ? 'rgba(66, 217, 255, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                color: isEntitled ? '#42d9ff' : 'var(--loss)',
                 border: '1px solid currentColor',
               }}
             >
@@ -286,18 +298,19 @@ export default function EdgeAI({ onNavigate }) {
                   alignItems: 'center',
                   gap: 8,
                   padding: '8px 16px',
-                  borderRadius: 8,
-                  border: active ? '1px solid rgba(193, 18, 31, 0.5)' : '1px solid transparent',
-                  background: active ? 'rgba(193, 18, 31, 0.15)' : 'transparent',
-                  color: active ? 'var(--text)' : 'var(--text-muted)',
+                  borderRadius: 10,
+                  border: active ? '1px solid rgba(66, 217, 255, 0.35)' : '1px solid transparent',
+                  background: active ? 'rgba(66, 217, 255, 0.12)' : 'transparent',
+                  color: active ? '#42d9ff' : 'var(--text-muted)',
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
+                  boxShadow: active ? '0 0 16px rgba(66, 217, 255, 0.12)' : 'none',
                   transition: 'all 0.15s ease',
                 }}
               >
-                <Icon size={15} color={active ? 'var(--red)' : 'currentColor'} />
+                <Icon size={15} color={active ? '#42d9ff' : 'currentColor'} />
                 {tab.label}
               </button>
             );

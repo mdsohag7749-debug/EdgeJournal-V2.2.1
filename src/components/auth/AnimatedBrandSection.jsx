@@ -59,7 +59,7 @@ export default function AnimatedBrandSection({ label = 'The trading journal for 
             strokeLinecap="round"
             initial={reduceMotion ? {} : { pathLength: 0, opacity: 0 }}
             whileInView={reduceMotion ? {} : { pathLength: 1, opacity: 1 }}
-            viewport={{ once: true, amount: 0.6 }}
+            viewport={{ once: true, amount: 0.15 }}
             transition={reduceMotion ? { duration: 0 } : { duration: 1.6, ease: 'easeInOut' }}
           />
           <motion.path
@@ -70,7 +70,7 @@ export default function AnimatedBrandSection({ label = 'The trading journal for 
             strokeLinecap="round"
             initial={reduceMotion ? {} : { pathLength: 0, opacity: 0 }}
             whileInView={reduceMotion ? {} : { pathLength: 1, opacity: 1 }}
-            viewport={{ once: true, amount: 0.5 }}
+            viewport={{ once: true, amount: 0.15 }}
             transition={reduceMotion ? { duration: 0 } : { duration: 1.1, delay: 0.7, ease: 'easeInOut' }}
           />
           <motion.line className="auth-brand-curve-tick" x1="1200" y1="96" x2="1200" y2="190" />

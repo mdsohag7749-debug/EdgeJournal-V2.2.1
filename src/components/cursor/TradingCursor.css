@@ -7,15 +7,6 @@
   pointer-events: none;
 }
 
-/* Hiding the native cursor only while our cursor is live. Restored on
-   unmount/mouseleave via the `.cursor-hidden` class on <html>. */
-html.cursor-hidden,
-html.cursor-hidden *,
-html.cursor-hidden *::before,
-html.cursor-hidden *::after {
-  cursor: none !important;
-}
-
 /* Full-viewport candle canvas, sits behind the ring/dot. */
 .cursor-canvas {
   position: fixed;
@@ -58,12 +49,4 @@ html.cursor-hidden *::after {
   transform: translate3d(-1000px, -1000px, 0) translate(-50%, -50%);
   pointer-events: none;
   will-change: transform, opacity;
-}
-
-/* Touch devices should never see our cursor or be affected by it: the
-   overlay is only mounted for capable pointers, but keep this as a belt. */
-@media (pointer: coarse) {
-  .cursor-overlay {
-    display: none;
-  }
 }

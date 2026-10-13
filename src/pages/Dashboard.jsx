@@ -18,6 +18,7 @@ import RecentTradesTable from '../components/dashboard/RecentTradesTable';
 import TradingInsightsWidget from '../components/dashboard/TradingInsightsWidget';
 import DayTradesModal from '../components/dashboard/DayTradesModal';
 import TradeFormPanel from './panels/TradeFormPanel';
+import { prepareSuccessSound } from '../lib/feedbackSound';
 import { Plus, Download, Calendar, Filter, User, Bell, Trophy, TrendingUp, ArrowUpRight, ArrowDownRight, AlertTriangle, XCircle, CheckCircle } from 'lucide-react';
 
 export default function Dashboard({ onNavigate }) {
@@ -39,7 +40,7 @@ export default function Dashboard({ onNavigate }) {
     const cutoff = new Date(now);
 
     if (dateRange === '30D') cutoff.setDate(now.getDate() - 30);
-    else if (dateRange === 'WEEK') cutoff.setDate(now.getDate() - 7);
+    else if (dateRange === '7D' || dateRange === 'WEEK') cutoff.setDate(now.getDate() - 7);
     else if (dateRange === 'MONTH') cutoff.setDate(1);
 
     const cutoffISO = cutoff.toISOString().split('T')[0];
@@ -78,8 +79,16 @@ export default function Dashboard({ onNavigate }) {
   }, [activeChallenges, accounts, trades.items, selectedAccount]);
 
   function handleSaveTrade(form) {
-    if (editingTrade) trades.update(editingTrade.id, form);
-    else trades.add(form);
+    const playSavedSound = prepareSuccessSound();
+    if (editingTrade) {
+      trades.update(editingTrade.id, form).then((saved) => {
+        if (saved) playSavedSound();
+      });
+    } else {
+      trades.add(form).then((saved) => {
+        if (saved) playSavedSound();
+      });
+    }
     setTradePanelOpen(false);
     setEditingTrade(null);
   }
@@ -110,51 +119,60 @@ export default function Dashboard({ onNavigate }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Top Header Controls Bar */}
+      {/* Top Header Controls Bar (Matching Reference Visual Style) */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
         className="card"
         style={{
-          padding: '16px 22px',
+          padding: '20px 24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: 16,
-          background: 'var(--card)',
-          border: '1px solid var(--border)',
+          gap: 18,
+          background: 'rgba(13, 20, 36, 0.65)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 18,
+          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div
             style={{
-              width: 42,
-              height: 42,
-              borderRadius: '50%',
-              background: 'rgba(59, 130, 246, 0.12)',
+              width: 46,
+              height: 46,
+              borderRadius: 14,
+              background: 'linear-gradient(135deg, rgba(66, 217, 255, 0.2), rgba(54, 224, 192, 0.2))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#3b82f6',
+              color: '#42d9ff',
               fontWeight: 700,
               overflow: 'hidden',
               flexShrink: 0,
+              border: '1px solid rgba(66, 217, 255, 0.25)',
+              boxShadow: '0 0 16px rgba(66, 217, 255, 0.15)',
             }}
           >
             {profile?.avatarUrl ? (
               <img src={profile.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <User size={20} />
+              <User size={22} />
             )}
           </div>
           <div>
-            <h2 style={{ fontSize: 18, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-              Good {greeting.label}, {userName} <span style={{ fontSize: 16 }}>{greeting.emoji}</span>
+            <h2 style={{ fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: '#f8fafc', letterSpacing: '-0.02em' }}>
+              Welcome back, {userName} <span style={{ fontSize: 18 }}>👋</span>
             </h2>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--text-muted)' }}>
-              <span style={{ fontWeight: 600, color: 'var(--text)' }}>Account:</span>
+            <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 3 }}>
+              Track your progress, analyze your trades, and build a better tomorrow.
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-faint)', marginTop: 6 }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Account:</span>
               <AccountSwitcher />
             </div>
           </div>
@@ -162,19 +180,28 @@ export default function Dashboard({ onNavigate }) {
 
         {/* Date Filter & Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          {/* Date Range Selector */}
-          <div style={{ display: 'flex', gap: 4, background: 'var(--card-hover)', padding: 3, borderRadius: 8 }}>
+          {/* Date Range Selector Pills */}
+          <div
+            style={{
+              display: 'flex',
+              gap: 3,
+              background: 'rgba(10, 16, 29, 0.7)',
+              padding: 3,
+              borderRadius: 10,
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+            }}
+          >
             {[
-              { id: 'ALL', label: 'All Time' },
-              { id: 'MONTH', label: 'This Month' },
-              { id: '30D', label: '30 Days' },
-              { id: 'WEEK', label: 'This Week' },
+              { id: '7D', label: '7D' },
+              { id: '30D', label: '30D' },
+              { id: 'MONTH', label: 'Month' },
+              { id: 'ALL', label: 'ALL' },
             ].map((r) => (
               <button
                 key={r.id}
                 className={`btn btn-sm ${dateRange === r.id ? 'btn-accent' : 'btn-ghost'}`}
                 onClick={() => setDateRange(r.id)}
-                style={{ fontSize: 12, padding: '4px 10px' }}
+                style={{ fontSize: 11.5, padding: '4px 11px', borderRadius: 7 }}
               >
                 {r.label}
               </button>
@@ -184,9 +211,9 @@ export default function Dashboard({ onNavigate }) {
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => navigate('/settings?section=backup')}
-            style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
+            style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, borderRadius: 10 }}
           >
-            <Download size={14} /> Import / Backup
+            <Download size={14} color="#42d9ff" /> Import / Backup
           </button>
 
           <button
@@ -195,9 +222,9 @@ export default function Dashboard({ onNavigate }) {
               setEditingTrade(null);
               setTradePanelOpen(true);
             }}
-            style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6 }}
+            style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6, borderRadius: 10 }}
           >
-            <Plus size={15} /> Log Trade
+            <Plus size={15} strokeWidth={2.5} /> Log Trade
           </button>
         </div>
       </motion.div>

@@ -73,7 +73,9 @@ export default function SidePanel({ open, onClose, title, subtitle, width = 'nar
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'rgba(17,24,39,0.22)',
+              background: 'rgba(4, 7, 14, 0.72)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
             }}
           />
           <motion.div
@@ -94,9 +96,11 @@ export default function SidePanel({ open, onClose, title, subtitle, width = 'nar
               bottom: 0,
               width: pxWidth,
               maxWidth: '100vw',
-              background: 'var(--bg-elevated)',
-              borderLeft: '1px solid var(--border)',
-              boxShadow: '-24px 0 60px rgba(0,0,0,0.12)',
+              background: 'rgba(10, 16, 29, 0.94)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              borderLeft: '1px solid rgba(66, 217, 255, 0.15)',
+              boxShadow: '-24px 0 60px rgba(0,0,0,0.6)',
               display: 'flex',
               flexDirection: 'column',
               outline: 'none',

@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import {
   User,
-  Palette,
   Wallet,
   Bell,
   ShieldCheck,
@@ -19,11 +18,11 @@ import {
   Download,
   Upload,
   Check,
+  Gauge,
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { useAccounts } from '../context/AccountContext';
-import { useTheme } from '../context/ThemeContext';
 import AccountsManager from '../components/accounts/AccountsManager';
 import { exportAllData, downloadJSONFile, importAllData, estimateStorageBytes, validateBackupData } from '../lib/storage';
 import { restoreAccounts } from '../lib/accountsApi';
@@ -66,7 +65,6 @@ function loadPrefs() {
 
 const SECTIONS = [
   { key: 'profile', label: 'Profile', icon: User },
-  { key: 'appearance', label: 'Appearance', icon: Palette },
   { key: 'accounts', label: 'Accounts', icon: Wallet },
   { key: 'notifications', label: 'Notifications', icon: Bell },
   { key: 'security', label: 'Security', icon: ShieldCheck },
@@ -75,7 +73,7 @@ const SECTIONS = [
   { key: 'about', label: 'About', icon: Info },
 ];
 
-export default function Settings({ defaultSection = 'accounts' }) {
+export default function Settings({ defaultSection = 'profile' }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const sectionFromUrl = searchParams.get('section');
   const [active, setActive] = useState(defaultSection);
@@ -99,17 +97,10 @@ export default function Settings({ defaultSection = 'accounts' }) {
     setSearchParams(next, { replace: true });
   }
 
-  const activeSection = SECTIONS.find((s) => s.key === active) || SECTIONS[2];
+  const activeSection = SECTIONS.find((s) => s.key === active) || SECTIONS.find((s) => s.key === 'accounts');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div>
-        <h1 style={{ fontSize: 24, fontWeight: 700 }}>Settings</h1>
-        <p style={{ fontSize: 13.5, color: 'var(--text-muted)', marginTop: 4 }}>
-          Manage your profile, appearance, accounts, system and more
-        </p>
-      </div>
-
       <div className="settings-layout" style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         {/* Section rail */}
         <div className="settings-rail" style={{ width: 220, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -128,7 +119,7 @@ export default function Settings({ defaultSection = 'accounts' }) {
                   borderRadius: 12,
                   border: '1px solid transparent',
                   background: isActive ? 'var(--red-glow)' : 'transparent',
-                  borderColor: isActive ? 'rgba(193,18,31,0.3)' : 'var(--border)',
+                  borderColor: isActive ? 'rgba(66, 217, 255, 0.35)' : 'var(--border)',
                   color: isActive ? 'var(--red)' : 'var(--text-muted)',
                   fontWeight: isActive ? 700 : 500,
                   fontSize: 13.5,
@@ -156,7 +147,6 @@ export default function Settings({ defaultSection = 'accounts' }) {
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
               {activeSection.key === 'profile' && <SectionProfile />}
-              {activeSection.key === 'appearance' && <SectionAppearance />}
               {activeSection.key === 'accounts' && <AccountsManager />}
               {activeSection.key === 'notifications' && <SectionNotifications />}
               {activeSection.key === 'security' && <SectionSecurity />}
@@ -182,87 +172,6 @@ function SectionTitle({ icon: Icon, title, description }) {
         {Icon && <Icon size={16} />} {title}
       </h3>
       {description && <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 6 }}>{description}</p>}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------- Appearance
-function SectionAppearance() {
-  const { theme, accent, setTheme, setAccent, THEME_PRESETS, ACCENT_PRESETS } = useTheme();
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <ScrollCard>
-        <SectionTitle icon={Palette} title="Appearance" description="Choose the overall look and accent color of EdgeJournal." />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10 }}>Theme</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(200px, 100%), 1fr))', gap: 12 }}>
-              {Object.values(THEME_PRESETS).map((t) => {
-                const isActive = theme === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => setTheme(t.id)}
-                    style={{
-                      borderRadius: 14,
-                      border: isActive ? '1.5px solid var(--red)' : '1px solid var(--border)',
-                      padding: 12,
-                      background: 'var(--bg-elevated)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 10,
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <div style={{ width: 34, height: 26, borderRadius: 6, background: t.previewBg, border: '1px solid rgba(0,0,0,0.2)' }} />
-                      <div style={{ width: 34, height: 26, borderRadius: 6, background: t.previewCard, border: '1px solid rgba(0,0,0,0.2)' }} />
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{t.name}</span>
-                      {isActive && <Check size={15} color="var(--red)" />}
-                    </div>
-                    <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{t.description}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10 }}>Accent Color</div>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              {Object.values(ACCENT_PRESETS).map((a) => {
-                const isActive = accent === a.id;
-                return (
-                  <button
-                    key={a.id}
-                    onClick={() => setAccent(a.id)}
-                    title={a.name}
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 12,
-                      background: a.color,
-                      cursor: 'pointer',
-                      border: isActive ? '2px solid var(--text)' : '2px solid transparent',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'transform 0.15s ease',
-                    }}
-                  >
-                    {isActive && <Check size={18} color="#fff" />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </ScrollCard>
     </div>
   );
 }
@@ -538,6 +447,7 @@ function EditableList({ title, description, items, onChange }) {
         {items.map((item) => (
           <div
             key={item}
+            className="settings-editable-row"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -585,6 +495,7 @@ function SectionSystem() {
   const { models, setModels, riskCriteria, setRiskCriteria, checklistCriteria, setChecklistCriteria } = useData();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <GraphicsPerformanceSetting />
       <ScrollCard>
         <SectionTitle icon={SlidersHorizontal} title="System" description="Configure the trading models and checklists used throughout your journal." />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))', gap: 16 }}>
@@ -594,6 +505,62 @@ function SectionSystem() {
         </div>
       </ScrollCard>
     </div>
+  );
+}
+
+const GRAPHICS_MODE_KEY = 'edgejournal-graphics-mode';
+
+function GraphicsPerformanceSetting() {
+  const [mode, setMode] = useState(() => {
+    try {
+      const savedMode = localStorage.getItem(GRAPHICS_MODE_KEY);
+      return ['low', 'high', 'ultra'].includes(savedMode) ? savedMode : 'high';
+    } catch {
+      return 'high';
+    }
+  });
+
+  function chooseMode(nextMode) {
+    setMode(nextMode);
+    document.documentElement.dataset.graphicsMode = nextMode;
+    window.dispatchEvent(new CustomEvent('edgejournal-graphics-mode-change', { detail: nextMode }));
+    try {
+      localStorage.setItem(GRAPHICS_MODE_KEY, nextMode);
+    } catch {
+      // The current page still receives the selected mode if storage is unavailable.
+    }
+  }
+
+  return (
+    <ScrollCard>
+      <SectionTitle icon={Gauge} title="Graphics Performance" description="Choose how much visual blur and motion EdgeJournal uses on this device." />
+      <div role="group" aria-label="Graphics performance mode" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(230px, 100%), 1fr))', gap: 12 }}>
+        {[
+          { value: 'low', title: 'Low Graphics', detail: 'Reduced visual effects for smoother use on slower devices.' },
+          { value: 'high', title: 'High Graphics', detail: 'Full glass blur, reflections, and ambient motion.' },
+          { value: 'ultra', title: 'Ultra High', detail: 'Maximum transparent water-glass, luminous rims, and ambient depth.' },
+        ].map((option) => {
+          const selected = mode === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => chooseMode(option.value)}
+              style={{
+                textAlign: 'left', padding: 15, borderRadius: 12, cursor: 'pointer', color: 'var(--text)',
+                border: `1px solid ${selected ? 'var(--cyan)' : 'var(--border)'}`,
+                background: selected ? 'var(--cyan-dim)' : 'rgba(255,255,255,0.025)',
+                boxShadow: selected ? '0 0 18px var(--cyan-glow)' : 'none',
+              }}
+            >
+              <span style={{ display: 'block', fontWeight: 700, fontSize: 14 }}>{option.title}{selected ? ' · Selected' : ''}</span>
+              <span style={{ display: 'block', marginTop: 6, color: 'var(--text-muted)', fontSize: 12.5, lineHeight: 1.5 }}>{option.detail}</span>
+            </button>
+          );
+        })}
+      </div>
+    </ScrollCard>
   );
 }
 

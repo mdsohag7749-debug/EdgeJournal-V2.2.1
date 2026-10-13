@@ -1,5 +1,6 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Check, Wallet, Settings, Archive, Star, Layers } from 'lucide-react';
 import { useAccounts } from '../../context/AccountContext';
@@ -18,7 +19,7 @@ function useClickOutside(ref, onClose, active) {
   useEffect(() => {
     if (!active) return undefined;
     function handler(e) {
-      if (ref.current && !ref.current.contains(e.target)) onClose();
+      if (ref.current && !ref.current.contains(e.target) && !e.target.closest('[data-account-switcher-menu]')) onClose();
     }
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -29,9 +30,49 @@ export default function AccountSwitcher() {
   const { accounts, selectedAccountId, selectedAccount, allAccounts, selectAccount, selectAllAccounts } = useAccounts();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const triggerRef = useRef(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 12, right: 12 });
   const navigate = useNavigate();
 
   useClickOutside(ref, () => setOpen(false), open);
+
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    let positionFrame = 0;
+    const measurePosition = () => {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const nextPosition = {
+        top: Math.max(12, Math.min(rect.bottom + 8, window.innerHeight - 440)),
+        right: Math.max(12, window.innerWidth - rect.right),
+      };
+      setMenuPosition((current) => (
+        current.top === nextPosition.top && current.right === nextPosition.right ? current : nextPosition
+      ));
+    };
+    const updatePosition = (event) => {
+      // The menu is fixed to the viewport. Scrolling its own account list
+      // cannot move the trigger, so avoid a state update for every scroll tick.
+      if (event?.target?.closest?.('[data-account-switcher-menu]')) return;
+      if (!event) {
+        measurePosition();
+        return;
+      }
+      if (positionFrame) return;
+      positionFrame = window.requestAnimationFrame(() => {
+        positionFrame = 0;
+        measurePosition();
+      });
+    };
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      if (positionFrame) window.cancelAnimationFrame(positionFrame);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [open]);
 
   const active = accounts.filter((a) => a.status !== 'archived');
   const archived = accounts.filter((a) => a.status === 'archived');
@@ -46,8 +87,10 @@ export default function AccountSwitcher() {
   }
 
   return (
+    <>
     <div ref={ref} style={{ position: 'relative' }}>
       <button
+        ref={triggerRef}
         className="btn btn-ghost btn-sm"
         onClick={() => setOpen((o) => !o)}
         style={{ display: 'inline-flex', alignItems: 'center', gap: 8, maxWidth: 220 }}
@@ -87,21 +130,25 @@ export default function AccountSwitcher() {
         <ChevronDown size={13} style={{ transition: 'transform 0.2s ease', transform: open ? 'rotate(180deg)' : 'none' }} />
       </button>
 
+    </div>
+      {typeof document !== 'undefined' && createPortal(
       <AnimatePresence>
         {open && (
           <motion.div
             initial={{ opacity: 0, y: -6, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="card"
+            transition={{ duration: 0.16, ease: 'easeOut' }}
+            className="card account-switcher-menu"
+            data-account-switcher-menu
             style={{
-              position: 'absolute',
-              right: 0,
-              top: 'calc(100% + 8px)',
+              position: 'fixed',
+              right: menuPosition.right,
+              top: menuPosition.top,
               width: 300,
               maxWidth: '80vw',
-              zIndex: 80,
+              maxHeight: 'calc(100vh - 24px)',
+              zIndex: 10000,
               padding: 8,
               boxShadow: 'var(--shadow-lifted)',
             }}
@@ -269,6 +316,7 @@ export default function AccountSwitcher() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      , document.body)}
+    </>
   );
 }

@@ -3,16 +3,13 @@ import { useData } from '../context/DataContext';
 import { useAccounts } from '../context/AccountContext';
 import { computeAnalytics } from '../lib/analytics';
 import EmptyState from '../components/EmptyState';
-import EdgeAICommandCenter from '../components/ai/EdgeAICommandCenter';
 import PerformanceIntelligence from '../components/performance/PerformanceIntelligence';
 import DeepPerformanceAnalytics from '../components/performance/DeepPerformanceAnalytics';
 import RiskAnalytics from '../components/performance/RiskAnalytics';
 import EquityAnalytics from '../components/performance/EquityAnalytics';
 import InstitutionalInsights from '../components/performance/InstitutionalInsights';
-import EmotionAnalytics from '../components/performance/EmotionAnalytics';
 import MistakeAnalytics from '../components/performance/MistakeAnalytics';
 import MistakePatternIntelligence from '../components/performance/MistakePatternIntelligence';
-import RuleComplianceAnalytics from '../components/performance/RuleComplianceAnalytics';
 import SmartTradeInsights from '../components/performance/SmartTradeInsights';
 import SetupIntelligence from '../components/performance/SetupIntelligence';
 import SetupPerformanceDashboard from '../components/performance/SetupPerformanceDashboard';
@@ -21,8 +18,6 @@ import PairSessionHeatmap from '../components/performance/PairSessionHeatmap';
 import RiskExecutionIntelligence from '../components/performance/RiskExecutionIntelligence';
 import PatternDetection from '../components/performance/PatternDetection';
 import Recommendations from '../components/performance/Recommendations';
-import DisciplineScore20 from '../components/performance/DisciplineScore20';
-import PsychologyInsights from '../components/dashboard/PsychInsights';
 import AnalyticsHeader from '../components/analytics/AnalyticsHeader';
 import AnalyticsSection from '../components/analytics/AnalyticsSection';
 import { AnalyticsTree, AnalyticsSectionSelector } from '../components/analytics/AnalyticsTree';
@@ -42,14 +37,12 @@ import {
 } from 'recharts';
 import { BarChart3, Clock, Compass } from 'lucide-react';
 
-const WIN_COLOR = '#16a34a';
-const LOSS_COLOR = '#dc2626';
+const WIN_COLOR = '#36e0c0';
+const LOSS_COLOR = '#ff4d5e';
 
 // ---- Sprint 9.6 information architecture ----
-// The whole Analytics page is organised into seven conceptual folders so it
-// reads as ONE trading-intelligence command center rather than a long stack
-// of unrelated cards. Every feature/metric from before is preserved — only
-// the visual hierarchy changed. No analytics calculation was touched.
+// The Analytics page is organised into focused sections; psychology and AI
+// details live on their dedicated pages to avoid duplicating the same panels.
 const GROUPS = [
   {
     key: 'performance',
@@ -87,9 +80,9 @@ const GROUPS = [
     key: 'pattern',
     index: '05',
     id: 'analytics-group-pattern',
-    title: 'Pattern & Psychology',
-    short: 'Patterns & Mind',
-    eyebrow: 'MISTAKE PATTERNS · PSYCHOLOGY · RULE COMPLIANCE · DISCIPLINE SCORE 2.0',
+    title: 'Patterns & Mistakes',
+    short: 'Patterns',
+    eyebrow: 'TRADE SEQUENCES · MISTAKE FREQUENCY · MISTAKE CONTEXT',
   },
   {
     key: 'action',
@@ -98,14 +91,6 @@ const GROUPS = [
     title: 'Action & Improvement',
     short: 'Action',
     eyebrow: 'ACTION RECOMMENDATIONS · SMART INSIGHTS · WEEKLY PERFORMANCE',
-  },
-  {
-    key: 'edgeai',
-    index: '07',
-    id: 'analytics-group-edgeai',
-    title: 'EDGE AI',
-    short: 'Edge AI',
-    eyebrow: 'JOURNAL INTELLIGENCE · TRADE REVIEW · AI COACH · ASK JOURNAL',
   },
 ];
 
@@ -377,10 +362,6 @@ function GroupContent({ groupKey, a, onNavigate }) {
           <PatternDetection />
           <MistakeAnalytics />
           <MistakePatternIntelligence />
-          <EmotionAnalytics />
-          <PsychologyInsights />
-          <RuleComplianceAnalytics />
-          <DisciplineScore20 />
         </>
       );
     case 'action':
@@ -396,11 +377,6 @@ function GroupContent({ groupKey, a, onNavigate }) {
           </div>
         </>
       );
-    case 'edgeai':
-      // EXACTLY ONE AI Command Center remains on this page. All four AI
-      // features (Journal Intelligence, Trade Review, AI Coach, Ask Journal)
-      // live inside it and keep their explicit-trigger contracts untouched.
-      return <EdgeAICommandCenter onNavigate={onNavigate} />;
     default:
       return null;
   }

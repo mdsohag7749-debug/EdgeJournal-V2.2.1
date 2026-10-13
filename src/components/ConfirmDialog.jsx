@@ -54,7 +54,9 @@ export default function ConfirmDialog({ open, title, message, onConfirm, onCance
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'rgba(5,5,6,0.55)',
+        background: 'rgba(4, 7, 14, 0.72)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
       }}
       onClick={onCancel}
     >

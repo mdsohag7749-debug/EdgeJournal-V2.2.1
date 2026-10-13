@@ -99,10 +99,6 @@ export default function TradingCursor() {
     const pool = Array.from({ length: MAX_PARTICLES }, () => ({ active: false }));
     const lastSpawn = { t: -Infinity, x: -Infinity, y: -Infinity };
 
-    const setNativeHidden = (hidden) => {
-      document.documentElement.classList.toggle('cursor-hidden', hidden);
-    };
-
     const spawnAt = (x, y) => {
       const now = performance.now();
       if (now - lastSpawn.t < SPAWN_INTERVAL_MS) return;
@@ -203,7 +199,6 @@ export default function TradingCursor() {
 
     const onMouseLeave = () => {
       visible = false;
-      setNativeHidden(false);
     };
 
     const onPointerDown = () => {
@@ -274,7 +269,6 @@ export default function TradingCursor() {
       dot.style.transform = `translate3d(${dotX}px, ${dotY}px, 0) translate(-50%, -50%)`;
 
       if (ctx && mode === 'full') draw();
-      setNativeHidden(visible);
     };
 
     const resizeCanvas = () => {
@@ -304,7 +298,7 @@ export default function TradingCursor() {
       window.removeEventListener('mouseleave', onMouseLeave);
       window.removeEventListener('blur', onMouseLeave);
       window.removeEventListener('resize', resizeCanvas);
-      setNativeHidden(false);
+      document.documentElement.classList.remove('cursor-hidden');
       pool.forEach((p) => {
         p.active = false;
       });

@@ -285,6 +285,9 @@ export default function AuthLayout({ eyebrow, title, subtitle, children, footer,
       {/* FAQ (unchanged) */}
       <AuthFAQ />
 
+      {/* Closing brand signature belongs with the landing content, before its footer. */}
+      <AnimatedBrandSection />
+
       {/* Premium footer — 3-column closing section */}
       <footer className="auth-footer">
         <div className="auth-footer-inner">
@@ -345,10 +348,6 @@ export default function AuthLayout({ eyebrow, title, subtitle, children, footer,
           </div>
         </div>
       </footer>
-
-      {/* Breath + transition into the final cinematic brand section */}
-      <div className="auth-footer-gap" aria-hidden="true" />
-      <AnimatedBrandSection />
     </div>
   );
 }

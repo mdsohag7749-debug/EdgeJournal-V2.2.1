@@ -42,13 +42,16 @@ export default function AdminSidebar({
 
   const sidebarContent = (isMobile = false) => (
     <div
+      className="admin-sidebar-surface"
       style={{
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         width: '100%',
-        background: 'var(--bg-elevated)',
-        borderRight: isMobile ? 'none' : '1px solid var(--border)',
+        background: 'rgba(10, 16, 29, 0.85)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderRight: isMobile ? 'none' : '1px solid rgba(255, 255, 255, 0.07)',
         overflowY: 'auto',
         overflowX: 'hidden',
       }}

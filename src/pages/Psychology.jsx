@@ -35,8 +35,6 @@ import {
   Award,
   Grid3x3,
   History,
-  TrendingUp,
-  TrendingDown,
   Gauge,
   XCircle,
   ListChecks,
@@ -240,8 +238,6 @@ export default function Psychology({ onNavigate }) {
   const emotionDist = emotion.distribution.map((e) => ({ ...e, color: PSYCH_NEGATIVE.includes(e.key) ? NEG : POS }));
   const mistakeDist = mistakes.perMistake.map((m) => ({ ...m, color: NEG }));
 
-  const confidenceTrend = (emotion.monthlyTrend || []).map((m) => ({ label: m.label, Confidence: m.Confidence }));
-  const stressTrend = (emotion.monthlyTrend || []).map((m) => ({ label: m.label, Stress: m.Stress }));
 
   if (list.length === 0) {
     return (
@@ -349,16 +345,6 @@ export default function Psychology({ onNavigate }) {
       <Chart icon={<History size={15} color={CYAN} />} title="Emotion Timeline" accent={CYAN}>
         <EmotionTimeline data={emotion.monthlyTrend || []} />
       </Chart>
-
-      {/* Three trend widgets */}
-      <div className="dash-two-col-even">
-        <Chart icon={<TrendingUp size={15} color={BLUE} />} title="Confidence Trend" accent={BLUE}>
-          <Lines data={confidenceTrend} domain={[1, 5]} series={[{ key: 'Confidence', color: BLUE, name: 'Confidence' }]} />
-        </Chart>
-        <Chart icon={<TrendingDown size={15} color={AMBER} />} title="Stress Trend" accent={AMBER}>
-          <Lines data={stressTrend} domain={[1, 5]} series={[{ key: 'Stress', color: AMBER, name: 'Stress' }]} />
-        </Chart>
-      </div>
 
       <div className="dash-two-col-even">
         <Chart icon={<Grid3x3 size={15} color={CYAN} />} title="Fear vs Confidence" accent={CYAN}>

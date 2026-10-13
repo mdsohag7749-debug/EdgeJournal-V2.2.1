@@ -29,7 +29,7 @@ function AnimatedValue({ value, format }) {
   return <>{typeof value === 'number' ? format(display) : display}</>;
 }
 
-export default function StatCard({ label, value, valueClass, icon: Icon, sub, delay = 0, accent = '#C1121F', format = (v) => v, trend }) {
+export default function StatCard({ label, value, valueClass, icon: Icon, sub, delay = 0, accent = '#42d9ff', format = (v) => v, trend }) {
   return (
     <motion.div
       className="card card-lift"

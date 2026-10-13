@@ -4,6 +4,7 @@ import { useData } from '../context/DataContext';
 import { useAccounts } from '../context/AccountContext';
 import { useAuth } from '../context/AuthContext';
 import TradeFormPanel from './panels/TradeFormPanel';
+import { prepareSuccessSound } from '../lib/feedbackSound';
 import TradeReviewPanel from '../components/tradeReview/TradeReviewPanel';
 import SavedViewsPanel from '../components/SavedViewsPanel';
 import { loadSavedViews, persistNewView, persistRename, persistDelete } from '../lib/savedViews';
@@ -240,8 +241,8 @@ const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, 
           {t.model && <span className="tag tag-neutral">{t.model}</span>}
           {tags.length > 0 && (
             <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {tags.slice(0, 2).map((tag) => (
-                <TagChip key={tag} name={tag} library={library} />
+              {tags.slice(0, 2).map((tag, i) => (
+                <TagChip key={`${tag}-${i}`} name={tag} library={library} />
               ))}
               {tags.length > 2 && <span className="tag tag-neutral">+{tags.length - 2}</span>}
             </span>
@@ -684,8 +685,16 @@ export default function TradingJournal() {
   }, [filtered, reviewIndex]);
 
   function handleSave(form) {
-    if (editing) trades.update(editing.id, form);
-    else trades.add(form);
+    const playSavedSound = prepareSuccessSound();
+    if (editing) {
+      trades.update(editing.id, form).then((saved) => {
+        if (saved) playSavedSound();
+      });
+    } else {
+      trades.add(form).then((saved) => {
+        if (saved) playSavedSound();
+      });
+    }
     setPanelOpen(false);
   }
 

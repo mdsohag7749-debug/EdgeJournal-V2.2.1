@@ -1,4 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { MotionConfig } from 'framer-motion';
 import AppShell from './layouts/AppShell';
 import AdminShell from './layouts/AdminShell';
 import Login from './pages/auth/Login';
@@ -19,11 +21,38 @@ import TradingCursor from './components/cursor/TradingCursor';
 export default function App() {
   const location = useLocation();
   const showTradingCursor = location.pathname === '/login';
+  const [graphicsMode, setGraphicsMode] = useState(() => {
+    try {
+      const savedMode = window.localStorage.getItem('edgejournal-graphics-mode');
+      return ['low', 'high', 'ultra'].includes(savedMode) ? savedMode : 'high';
+    } catch {
+      return 'high';
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.graphicsMode = graphicsMode;
+  }, [graphicsMode]);
+
+  useEffect(() => {
+    const normalizeMode = (value) => (['low', 'ultra'].includes(value) ? value : 'high');
+    const onGraphicsModeChange = (event) => setGraphicsMode(normalizeMode(event.detail));
+    const syncGraphicsMode = (event) => {
+      if (event.key === 'edgejournal-graphics-mode') setGraphicsMode(normalizeMode(event.newValue));
+    };
+    window.addEventListener('edgejournal-graphics-mode-change', onGraphicsModeChange);
+    window.addEventListener('storage', syncGraphicsMode);
+    return () => {
+      window.removeEventListener('edgejournal-graphics-mode-change', onGraphicsModeChange);
+      window.removeEventListener('storage', syncGraphicsMode);
+    };
+  }, []);
 
   return (
-    <>
-      {showTradingCursor && <TradingCursor />}
-      <Routes>
+    <MotionConfig reducedMotion={graphicsMode === 'low' ? 'always' : 'never'} transition={graphicsMode === 'low' ? { duration: 0 } : undefined}>
+      <>
+        {showTradingCursor && <TradingCursor />}
+        <Routes>
         <Route
           path="/login"
           element={
@@ -64,7 +93,8 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-      </Routes>
-    </>
+        </Routes>
+      </>
+    </MotionConfig>
   );
 }
