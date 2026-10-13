@@ -26,7 +26,7 @@ export default function Header({ title, subtitle }) {
   }
 
   function handleSearchClick() {
-    navigate('/journal');
+    navigate('/journal', { state: { focusJournalSearch: true } });
   }
 
   return (
@@ -102,7 +102,7 @@ export default function Header({ title, subtitle }) {
               border: '1px solid rgba(255, 255, 255, 0.06)',
             }}
           >
-            ⌘K
+            {typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K'}
           </span>
         </button>
 

@@ -101,8 +101,8 @@ export default function AccountSwitcher() {
             width: 22,
             height: 22,
             borderRadius: 6,
-            background: 'var(--red-glow)',
-            color: 'var(--red)',
+            background: 'rgba(66,217,255,0.14)',
+            color: '#42d9ff',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -125,7 +125,7 @@ export default function AccountSwitcher() {
         {allAccounts ? (
           <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-faint)' }}>{active.length}</span>
         ) : (
-          selectedAccount?.isDefault && <Star size={11} fill="var(--red)" color="var(--red)" />
+          selectedAccount?.isDefault && <Star size={11} fill="#42d9ff" color="#42d9ff" />
         )}
         <ChevronDown size={13} style={{ transition: 'transform 0.2s ease', transform: open ? 'rotate(180deg)' : 'none' }} />
       </button>
@@ -164,7 +164,7 @@ export default function AccountSwitcher() {
                   padding: '9px 10px',
                   borderRadius: 10,
                   border: 'none',
-                  background: allAccounts ? 'var(--red-glow)' : 'transparent',
+                  background: allAccounts ? 'rgba(66,217,255,0.14)' : 'transparent',
                   color: 'var(--text)',
                   cursor: 'pointer',
                   width: '100%',
@@ -178,7 +178,7 @@ export default function AccountSwitcher() {
                     borderRadius: 7,
                     background: 'var(--card)',
                     border: '1px solid var(--border)',
-                    color: 'var(--red)',
+                    color: '#42d9ff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -191,7 +191,7 @@ export default function AccountSwitcher() {
                   <div style={{ fontWeight: 600, fontSize: 13 }}>All Accounts</div>
                   <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>Combined · {active.length} account{active.length === 1 ? '' : 's'}</div>
                 </div>
-                {allAccounts && <Check size={15} color="var(--red)" />}
+                {allAccounts && <Check size={15} color="#42d9ff" />}
               </button>
 
               <div style={{ padding: '10px 10px 4px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-faint)' }}>
@@ -215,7 +215,7 @@ export default function AccountSwitcher() {
                       padding: '9px 10px',
                       borderRadius: 10,
                       border: 'none',
-                      background: isSel ? 'var(--red-glow)' : 'transparent',
+                      background: isSel ? 'rgba(66,217,255,0.14)' : 'transparent',
                       color: 'var(--text)',
                       cursor: 'pointer',
                       width: '100%',
@@ -229,7 +229,7 @@ export default function AccountSwitcher() {
                         borderRadius: 7,
                         background: 'var(--card)',
                         border: '1px solid var(--border)',
-                        color: a.isDefault ? 'var(--red)' : 'var(--text-muted)',
+                        color: a.isDefault ? '#42d9ff' : 'var(--text-muted)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -241,13 +241,13 @@ export default function AccountSwitcher() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.name}</span>
-                        {a.isDefault && <Star size={10} fill="var(--red)" color="var(--red)" />}
+                        {a.isDefault && <Star size={10} fill="#42d9ff" color="#42d9ff" />}
                       </div>
                       <div className="mono" style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
                         {formatBalance(a.currentBalance, a.currency) || formatBalance(0, a.currency)}
                       </div>
                     </div>
-                    {isSel && <Check size={15} color="var(--red)" />}
+                    {isSel && <Check size={15} color="#42d9ff" />}
                   </button>
                 );
               })}
@@ -270,7 +270,7 @@ export default function AccountSwitcher() {
                           padding: '8px 10px',
                           borderRadius: 10,
                           border: 'none',
-                          background: isSel ? 'var(--red-glow)' : 'transparent',
+                          background: isSel ? 'rgba(66,217,255,0.14)' : 'transparent',
                           color: 'var(--text-faint)',
                           cursor: 'pointer',
                           width: '100%',
@@ -280,7 +280,7 @@ export default function AccountSwitcher() {
                         <Wallet size={13} />
                         <span style={{ flex: 1, fontSize: 13 }}>{a.name}</span>
                         {a.status && <span style={{ fontSize: 10.5, fontWeight: 700 }}>{STATUS_META[a.status]?.label}</span>}
-                        {isSel && <Check size={14} color="var(--red)" />}
+                        {isSel && <Check size={14} color="#42d9ff" />}
                       </button>
                     );
                   })}

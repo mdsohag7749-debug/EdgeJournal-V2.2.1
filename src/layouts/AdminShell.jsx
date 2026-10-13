@@ -48,7 +48,7 @@ const HEADER_META = {
     subtitle: 'Append-only chronological audit trail of platform administrative actions and security events',
   },
   settings: {
-    title: 'System Settings',
+    title: 'Platform Settings',
     subtitle: 'Platform parameters, operational controls, timezone, currency, and security hardening',
   },
   ai: {

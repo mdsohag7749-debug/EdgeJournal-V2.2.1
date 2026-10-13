@@ -210,11 +210,11 @@ export default function AdminUsers() {
               {metricsLoading ? (
                 <div style={{ width: 40, height: 28, background: 'rgba(255,255,255,0.06)', borderRadius: 6 }} />
               ) : (
-                <span style={{ fontSize: 26, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--red)' }}>
+                <span style={{ fontSize: 26, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>
                   {metrics?.admins ?? '—'}
                 </span>
               )}
-              <span className="tag tag-red" style={{ fontSize: 10 }}>Admin</span>
+              <span className="tag admin-role-badge" style={{ fontSize: 10 }}>Admin</span>
             </div>
           </div>
 
@@ -461,7 +461,7 @@ export default function AdminUsers() {
                                 height: 28,
                                 borderRadius: '50%',
                                 background: isAdmin
-                                  ? 'linear-gradient(135deg, var(--red), var(--red-strong))'
+                                  ? 'linear-gradient(135deg, var(--cyan), var(--teal))'
                                   : 'rgba(255,255,255,0.06)',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -494,7 +494,7 @@ export default function AdminUsers() {
 
                       {/* Role Badge */}
                       <td style={{ padding: '12px 18px' }}>
-                        <span className={isAdmin ? 'tag tag-red' : 'tag tag-neutral'} style={{ fontSize: 10.5 }}>
+                        <span className={isAdmin ? 'tag admin-role-badge' : 'tag tag-neutral'} style={{ fontSize: 10.5 }}>
                           {isAdmin ? 'Administrator' : 'Standard'}
                         </span>
                       </td>

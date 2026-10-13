@@ -29,8 +29,8 @@ export default function AccountCard({ account, isSelected, onSelect, onEdit, onD
         cursor: onSelect ? 'pointer' : 'default',
         position: 'relative',
         opacity: archived ? 0.72 : 1,
-        borderColor: isSelected ? 'rgba(193,18,31,0.45)' : 'var(--border)',
-        boxShadow: isSelected ? '0 0 0 1px rgba(193,18,31,0.25), var(--shadow-lifted)' : undefined,
+        borderColor: isSelected ? 'rgba(66,217,255,0.45)' : 'var(--border)',
+        boxShadow: isSelected ? '0 0 0 1px rgba(66,217,255,0.25), var(--shadow-lifted)' : undefined,
       }}
     >
       {isSelected && (
@@ -46,8 +46,8 @@ export default function AccountCard({ account, isSelected, onSelect, onEdit, onD
             fontWeight: 700,
             letterSpacing: '0.04em',
             textTransform: 'uppercase',
-            color: 'var(--red)',
-            background: 'var(--red-glow)',
+            color: '#42d9ff',
+            background: 'rgba(66,217,255,0.12)',
             padding: '3px 8px',
             borderRadius: 999,
           }}
@@ -63,9 +63,9 @@ export default function AccountCard({ account, isSelected, onSelect, onEdit, onD
             width: 44,
             height: 44,
             borderRadius: 12,
-            background: 'linear-gradient(135deg, rgba(193,18,31,0.22), rgba(193,18,31,0.06))',
-            border: '1px solid rgba(193,18,31,0.25)',
-            color: 'var(--red)',
+            background: 'linear-gradient(135deg, rgba(66,217,255,0.2), rgba(54,224,192,0.07))',
+            border: '1px solid rgba(66,217,255,0.3)',
+            color: '#42d9ff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -82,7 +82,7 @@ export default function AccountCard({ account, isSelected, onSelect, onEdit, onD
             <h3 style={{ fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 200 }}>{account.name}</h3>
             {account.isDefault && (
               <span className="tag tag-red" style={{ gap: 4 }}>
-                <Star size={10} fill="var(--red)" /> Default
+                <Star size={10} fill="#42d9ff" color="#42d9ff" /> Default
               </span>
             )}
           </div>

@@ -12,7 +12,10 @@ import { LOW_GRAPHICS_LOADER_FINISH_MS, TRADING_LOADER_FINISH_MS } from '../comp
 let hasDelayedInitialPageLoad = false;
 
 function lazyPage(loadPage) {
-  return lazy(() => {
+  let pagePromise;
+  const preload = () => {
+    if (pagePromise) return pagePromise;
+
     const startedAt = performance.now();
     const shouldFinishLoader = !hasDelayedInitialPageLoad;
     hasDelayedInitialPageLoad = true;
@@ -25,14 +28,19 @@ function lazyPage(loadPage) {
       }
     }
 
-    return loadPage().then((pageModule) => {
+    pagePromise = loadPage().then((pageModule) => {
       if (!shouldFinishLoader) return pageModule;
       const finishAfter = lowGraphics ? LOW_GRAPHICS_LOADER_FINISH_MS : TRADING_LOADER_FINISH_MS;
       const remaining = finishAfter - (performance.now() - startedAt);
       if (remaining <= 0) return pageModule;
       return new Promise((resolve) => setTimeout(resolve, remaining)).then(() => pageModule);
     });
-  });
+    return pagePromise;
+  };
+
+  const Component = lazy(preload);
+  Component.preload = preload;
+  return Component;
 }
 
 const Dashboard = lazyPage(() => import('../pages/Dashboard'));

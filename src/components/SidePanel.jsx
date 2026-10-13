@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-export default function SidePanel({ open, onClose, title, subtitle, width = 'narrow', children, footer }) {
+export default function SidePanel({ open, onClose, title, subtitle, width = 'narrow', children, footer, panelClassName }) {
   const panelRef = useRef(null);
   const lastFocused = useRef(null);
   const titleId = useRef(`sidepanel-title-${Math.random().toString(36).slice(2, 8)}`).current;
@@ -62,7 +62,7 @@ export default function SidePanel({ open, onClose, title, subtitle, width = 'nar
   return (
     <AnimatePresence>
       {open && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 500 }}>
           <motion.div
             onClick={onClose}
             initial={{ opacity: 0 }}
@@ -80,6 +80,7 @@ export default function SidePanel({ open, onClose, title, subtitle, width = 'nar
           />
           <motion.div
             ref={panelRef}
+            className={panelClassName}
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
@@ -127,7 +128,7 @@ export default function SidePanel({ open, onClose, title, subtitle, width = 'nar
                 <X size={18} />
               </button>
             </div>
-            <div className="scroll-thin" style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+            <div className="scroll-thin" style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain', padding: 24 }}>
               {children}
             </div>
             {footer && (

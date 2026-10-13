@@ -173,7 +173,7 @@ export default function AdminSettings() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }} data-testid="admin-platform-settings-page">
       {/* Top Telemetry / Status Banner */}
       <div
         className="card"
@@ -195,12 +195,12 @@ export default function AdminSettings() {
               width: 40,
               height: 40,
               borderRadius: 10,
-              background: 'linear-gradient(135deg, rgba(193, 18, 31, 0.15), rgba(193, 18, 31, 0.05))',
+              background: 'linear-gradient(135deg, rgba(66, 217, 255, 0.14), rgba(66, 217, 255, 0.04))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '1px solid rgba(193, 18, 31, 0.25)',
-              color: 'var(--red)',
+              border: '1px solid rgba(66, 217, 255, 0.25)',
+              color: 'var(--cyan)',
             }}
           >
             <Sliders size={20} />
@@ -337,7 +337,7 @@ export default function AdminSettings() {
             color: 'var(--text-muted)',
           }}
         >
-          <RefreshCw size={28} className="spin" style={{ margin: '0 auto 12px', display: 'block', color: 'var(--red)' }} />
+          <RefreshCw size={28} className="spin" style={{ margin: '0 auto 12px', display: 'block', color: 'var(--cyan)' }} />
           <p style={{ margin: 0, fontSize: 14 }}>Loading system configuration parameters…</p>
         </div>
       ) : (
@@ -367,7 +367,7 @@ export default function AdminSettings() {
                   gap: 8,
                 }}
               >
-                <Globe size={18} color="var(--red)" />
+                <Globe size={18} color="var(--cyan)" />
                 General Platform Settings
               </h3>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
@@ -571,7 +571,7 @@ export default function AdminSettings() {
                   gap: 8,
                 }}
               >
-                <Sliders size={18} color="var(--red)" />
+                <Sliders size={18} color="var(--cyan)" />
                 Platform Operational Controls
               </h3>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
@@ -796,7 +796,7 @@ export default function AdminSettings() {
                     gap: 8,
                   }}
                 >
-                  <Lock size={18} color="var(--red)" />
+                  <Lock size={18} color="var(--cyan)" />
                   Administrative Controls (Admin-Only)
                 </h3>
                 <span
@@ -805,9 +805,9 @@ export default function AdminSettings() {
                     fontWeight: 700,
                     padding: '2px 8px',
                     borderRadius: 6,
-                    background: 'rgba(193, 18, 31, 0.1)',
-                    border: '1px solid rgba(193, 18, 31, 0.25)',
-                    color: 'var(--red)',
+                    background: 'rgba(66, 217, 255, 0.1)',
+                    border: '1px solid rgba(66, 217, 255, 0.25)',
+                    color: 'var(--cyan)',
                   }}
                 >
                   NOT EXPOSED TO TRADERS
@@ -919,8 +919,8 @@ export default function AdminSettings() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
-                  background: 'var(--red)',
-                  color: '#fff',
+                  background: 'var(--cyan)',
+                  color: '#07111d',
                   border: 'none',
                   padding: '8px 18px',
                   borderRadius: 8,
@@ -991,7 +991,7 @@ export default function AdminSettings() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--red)',
+                    color: 'var(--cyan)',
                     flexShrink: 0,
                   }}
                 >
@@ -1039,9 +1039,9 @@ export default function AdminSettings() {
                   onClick={confirmMaintenanceEnable}
                   className="btn btn-primary btn-sm"
                   style={{
-                    background: 'var(--red)',
-                    color: '#fff',
-                    border: 'none',
+                    background: 'var(--cyan)',
+                  color: '#07111d',
+                  border: 'none',
                     fontWeight: 600,
                   }}
                 >

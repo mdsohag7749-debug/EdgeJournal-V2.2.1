@@ -87,6 +87,7 @@ export default function BreakdownGrids({ stats }) {
           <Layers size={18} color="#42d9ff" /> Edge Performance Breakdowns
         </h3>
         <div
+          className="dashboard-breakdown-tabs"
           style={{
             display: 'flex',
             gap: 4,

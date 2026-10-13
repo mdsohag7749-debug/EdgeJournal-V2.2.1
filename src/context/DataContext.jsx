@@ -296,7 +296,7 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
 
   const remove = useCallback(
     async (id) => {
-      if (!userId) return;
+      if (!userId) return false;
       const isPendingItem = typeof id === 'string' && id.startsWith('pending_');
 
       const queueOffline = () => {
@@ -308,6 +308,7 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
         } else {
           enqueueChange({ table, userId, type: 'delete', itemId: id, label });
         }
+        return true;
       };
 
       if (!isOnline() || isPendingItem) return queueOffline();
@@ -317,9 +318,11 @@ function useSupabaseCollection(table, userId, { toRow, fromRow, orderColumn, asc
         if (error) throw error;
         setItems((prev) => prev.filter((it) => it.id !== id));
         onChange?.({ type: 'deleted', trade: { id } });
+        return true;
       } catch (err) {
         if (isNetworkError(err)) return queueOffline();
         console.error(`Failed to delete ${table.slice(0, -1)} from Supabase:`, err.message || err);
+        return false;
       }
     },
     [table, userId, label, onChange]

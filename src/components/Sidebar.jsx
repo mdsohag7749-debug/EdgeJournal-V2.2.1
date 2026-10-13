@@ -16,7 +16,6 @@ import {
   CreditCard,
   ShieldCheck,
   Sparkles,
-  Zap,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -242,54 +241,6 @@ export default function Sidebar({ active, onNavigate, collapsed, onToggleCollaps
           );
         })}
       </nav>
-
-      {/* Decorative Brand Motivation Card (inspired by design reference) */}
-      {!collapsed && (
-        <div
-          style={{
-            margin: '8px 10px 10px',
-            padding: '13px 14px',
-            borderRadius: 14,
-            background: 'linear-gradient(180deg, rgba(13, 20, 36, 0.75), rgba(8, 13, 24, 0.9))',
-            border: '1px solid rgba(66, 217, 255, 0.12)',
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)',
-          }}
-        >
-          <div
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: 8,
-              background: 'rgba(54, 224, 192, 0.15)',
-              color: '#36e0c0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 8,
-            }}
-          >
-            <Zap size={13} />
-          </div>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: '#f8fafc',
-              lineHeight: 1.35,
-              marginBottom: 4,
-            }}
-          >
-            Better Decisions.
-            <br />
-            Bigger Opportunities.
-          </div>
-          <div style={{ fontSize: 10.5, color: '#94a3b8', lineHeight: 1.4 }}>
-            Your trading journey, powered by EdgeJournal.
-          </div>
-        </div>
-      )}
 
       {/* Collapse Toggle & Status Footer */}
       <div

@@ -3,6 +3,7 @@ import { useData } from '../context/DataContext';
 import GoalFormPanel from './panels/GoalFormPanel';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { formatDate } from '../lib/utils';
+import { prepareSuccessSound } from '../lib/feedbackSound';
 import { Plus, Pencil, Trash2, Target, CheckCircle2 } from 'lucide-react';
 
 const PERIODS = ['All', 'Daily', 'Weekly', 'Monthly', 'Quarterly', 'Annual'];
@@ -39,9 +40,10 @@ export default function Goals() {
     setEditing(g);
     setPanelOpen(true);
   }
-  function handleSave(form) {
-    if (editing) goals.update(editing.id, form);
-    else goals.add(form);
+  async function handleSave(form) {
+    const playSuccess = prepareSuccessSound();
+    const saved = editing ? await goals.update(editing.id, form) : await goals.add(form);
+    if (saved) playSuccess();
     setPanelOpen(false);
   }
   function toggleComplete(g) {
@@ -192,8 +194,10 @@ export default function Goals() {
         title="Delete goal?"
         message="This will permanently remove this goal and its progress."
         onCancel={() => setConfirmId(null)}
-        onConfirm={() => {
-          goals.remove(confirmId);
+        onConfirm={async () => {
+          const playSuccess = prepareSuccessSound();
+          const removed = await goals.remove(confirmId);
+          if (removed) playSuccess();
           setConfirmId(null);
         }}
       />

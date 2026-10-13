@@ -31,21 +31,18 @@ function PageTransition({ children }) {
 // the data store (DataProvider) and the persistent nav chrome.
 // Auth pages (Login/Register/ForgotPassword) live outside this shell
 // entirely — see src/App.jsx.
-export default function AppShell() {
+export default function AppShell({ onInitialReady }) {
   return (
     <AccountProvider>
       <DataProvider>
-        <AppShellContent />
+        <AppShellContent onInitialReady={onInitialReady} />
       </DataProvider>
     </AccountProvider>
   );
 }
 
-// Split out so it can read `trades.loading`/`goals.loading`/`plans.loading`/
-// `reflections.loading`/`study.loading` from DataContext — gates the
-// shell behind the first Supabase fetch for each so pages never render
-// a misleading empty state before real data arrives.
-function AppShellContent() {
+// Split out so it can coordinate the shared startup loader with Supabase data and the initial page chunk.
+function AppShellContent({ onInitialReady }) {
   const { isAdmin } = useAuth();
   const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 760);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
@@ -84,6 +81,16 @@ function AppShellContent() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  useEffect(() => {
+    function onGlobalSearchShortcut(event) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        navigate('/journal', { state: { focusJournalSearch: true } });
+      }
+    }
+    window.addEventListener('keydown', onGlobalSearchShortcut);
+    return () => window.removeEventListener('keydown', onGlobalSearchShortcut);
+  }, [navigate]);
   // Show the full-screen loader only on the very first data resolution.
   // After the app has loaded once, later re-loads (e.g. switching
   // accounts or a background refetch) update in place instead of flashing
@@ -104,6 +111,23 @@ function AppShellContent() {
   }, []);
 
   const activeRoute = routes.find((r) => r.path === location.pathname) || defaultRoute;
+  const [initialRouteReady, setInitialRouteReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.resolve(activeRoute.Component.preload?.())
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setInitialRouteReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeRoute.Component]);
+
+  useEffect(() => {
+    if (initialized && initialRouteReady) onInitialReady?.();
+  }, [initialized, initialRouteReady, onInitialReady]);
 
   function handleNavigate(id) {
     if (id === 'admin') {
@@ -112,10 +136,6 @@ function AppShellContent() {
     }
     const target = routes.find((r) => r.id === id);
     if (target) navigate(target.path);
-  }
-
-  if (!initialized && anyLoading) {
-    return <LoadingScreen message="Loading your trades, goals, plans, reflections, study notes, and challenges…" />;
   }
 
   return (
@@ -164,7 +184,7 @@ function AppShellContent() {
                   path={path}
                   element={
                     <PageTransition>
-                      <Suspense fallback={<LoadingScreen message="Loading page..." />}>
+                      <Suspense fallback={initialRouteReady ? <LoadingScreen message="Loading page..." /> : null}>
                         <Component onNavigate={handleNavigate} />
                       </Suspense>
                     </PageTransition>

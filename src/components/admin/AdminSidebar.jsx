@@ -28,7 +28,7 @@ export const ADMIN_NAV_ITEMS = [
   { id: 'reports', label: 'Reports', icon: FileText, path: '/admin/reports', phase: null, functional: true },
   { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard, path: '/admin/subscriptions', phase: null, functional: true },
   { id: 'audit-logs', label: 'Audit Logs', icon: ScrollText, path: '/admin/audit-logs', phase: null, functional: true },
-  { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings', phase: null, functional: true },
+  { id: 'settings', label: 'Platform Settings', icon: Settings, path: '/admin/settings', phase: null, functional: true },
 ];
 
 export default function AdminSidebar({
@@ -74,12 +74,12 @@ export default function AdminSidebar({
               width: 32,
               height: 32,
               borderRadius: 9,
-              background: 'linear-gradient(135deg, var(--red), var(--red-strong))',
+              background: 'linear-gradient(135deg, var(--cyan), var(--teal))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              boxShadow: '0 4px 14px rgba(193, 18, 31, 0.35)',
+              boxShadow: '0 4px 14px rgba(66, 217, 255, 0.32)',
             }}
           >
             <TrendingUp size={16} color="#fff" />
@@ -99,7 +99,7 @@ export default function AdminSidebar({
                 EdgeJournal
               </span>
               <span
-                className="tag tag-red"
+                className="tag admin-role-badge"
                 style={{ fontSize: 10, padding: '2px 6px', letterSpacing: '0.04em' }}
               >
                 ADMIN
@@ -164,9 +164,9 @@ export default function AdminSidebar({
                 borderRadius: 10,
                 border: 'none',
                 cursor: isFunctional ? 'pointer' : 'not-allowed',
-                background: isActive ? 'var(--red-glow)' : 'transparent',
+                background: isActive ? 'var(--cyan-dim)' : 'transparent',
                 color: isActive
-                  ? 'var(--red)'
+                  ? 'var(--cyan)'
                   : isFunctional
                   ? 'var(--text)'
                   : 'var(--text-faint)',
@@ -189,7 +189,7 @@ export default function AdminSidebar({
                     bottom: '20%',
                     width: 3,
                     borderRadius: 4,
-                    background: 'var(--red)',
+                    background: 'var(--cyan)',
                   }}
                 />
               )}

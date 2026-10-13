@@ -1,9 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatMoneyShort, pnlClass } from '../../lib/utils';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const MONTHS = Array.from({ length: 12 }, (_, month) =>
+  new Date(2020, month, 1).toLocaleDateString(undefined, { month: 'short' }),
+);
 
 // Cell colors
 const NEUTRAL = {
@@ -35,9 +38,27 @@ export default function CalendarHeatmapWidget({ dayMap, onSelectDay }) {
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
   const [tooltip, setTooltip] = useState(null);
+  const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
+  const [pickerYear, setPickerYear] = useState(cursor.getFullYear());
+  const monthPickerRef = useRef(null);
 
   const monthLabel = cursor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-  const monthValue = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`;
+
+  useEffect(() => {
+    if (!isMonthPickerOpen) return undefined;
+    const closeOnOutsideClick = (event) => {
+      if (!monthPickerRef.current?.contains(event.target)) setIsMonthPickerOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setIsMonthPickerOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isMonthPickerOpen]);
 
   // Build the flat month grid (leading nulls = adjacent-month padding).
   const cells = useMemo(() => {
@@ -101,15 +122,74 @@ export default function CalendarHeatmapWidget({ dayMap, onSelectDay }) {
           >
             <ChevronLeft size={15} />
           </button>
-          <input
-            type="month"
-            value={monthValue}
-            onChange={(e) => {
-              const [y, m] = (e.target.value || '').split('-').map(Number);
-              if (y && m) setCursor(new Date(y, m - 1, 1));
-            }}
-            style={{ colorScheme: 'dark', color: 'var(--text)', background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 6px', fontSize: 11, fontWeight: 700, width: 108 }}
-          />
+          <div className="calendar-month-picker-wrap" ref={monthPickerRef}>
+            <button
+              type="button"
+              className="calendar-month-trigger"
+              aria-haspopup="dialog"
+              aria-expanded={isMonthPickerOpen}
+              onClick={() => {
+                setPickerYear(cursor.getFullYear());
+                setIsMonthPickerOpen((open) => !open);
+              }}
+            >
+              {monthLabel}
+              <CalendarIcon size={11} aria-hidden="true" />
+            </button>
+            {isMonthPickerOpen && (
+              <div className="calendar-month-popover" role="dialog" aria-label="Choose month and year">
+                <div className="calendar-month-year-row">
+                  <button
+                    type="button"
+                    aria-label="Previous year"
+                    onClick={() => setPickerYear((year) => year - 1)}
+                    className="calendar-month-year-nav"
+                  >
+                    <ChevronLeft size={15} />
+                  </button>
+                  <span aria-live="polite">{pickerYear}</span>
+                  <button
+                    type="button"
+                    aria-label="Next year"
+                    onClick={() => setPickerYear((year) => year + 1)}
+                    className="calendar-month-year-nav"
+                  >
+                    <ChevronRight size={15} />
+                  </button>
+                </div>
+                <div className="calendar-month-grid">
+                  {MONTHS.map((month, index) => {
+                    const isSelected = cursor.getFullYear() === pickerYear && cursor.getMonth() === index;
+                    return (
+                      <button
+                        key={month}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => {
+                          setCursor(new Date(pickerYear, index, 1));
+                          setIsMonthPickerOpen(false);
+                        }}
+                        className={`calendar-month-option${isSelected ? ' is-selected' : ''}`}
+                      >
+                        {month}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  className="calendar-this-month"
+                  onClick={() => {
+                    const now = new Date();
+                    setCursor(new Date(now.getFullYear(), now.getMonth(), 1));
+                    setIsMonthPickerOpen(false);
+                  }}
+                >
+                  This month
+                </button>
+              </div>
+            )}
+          </div>
           <button
             className="btn btn-ghost btn-icon btn-sm"
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}

@@ -109,7 +109,7 @@ export default function AdminEdgeAI() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Brain size={22} color="var(--red)" />
+            <Brain size={22} color="var(--cyan)" />
             Edge AI Command Center & Telemetry
           </h2>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-muted)' }}>
@@ -240,7 +240,7 @@ export default function AdminEdgeAI() {
       {/* Configuration & Controls Section */}
       <div style={{ padding: '22px 24px', borderRadius: 14, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
         <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Sliders size={18} color="var(--red)" />
+          <Sliders size={18} color="var(--cyan)" />
           Operational Controls & System Settings
         </h3>
 
@@ -255,7 +255,7 @@ export default function AdminEdgeAI() {
                 id="aiEnabledCheck"
                 checked={aiEnabled}
                 onChange={(e) => setAiEnabled(e.target.checked)}
-                style={{ width: 18, height: 18, accentColor: 'var(--red)', cursor: 'pointer' }}
+                style={{ width: 18, height: 18, accentColor: 'var(--cyan)', cursor: 'pointer' }}
               />
               <label htmlFor="aiEnabledCheck" style={{ fontSize: 13.5, cursor: 'pointer' }}>
                 {aiEnabled ? 'AI Enabled for Entitled Users' : 'AI Globally Disabled'}
@@ -276,7 +276,7 @@ export default function AdminEdgeAI() {
                 id="aiMaintCheck"
                 checked={aiMaintenance}
                 onChange={(e) => setAiMaintenance(e.target.checked)}
-                style={{ width: 18, height: 18, accentColor: 'var(--red)', cursor: 'pointer' }}
+                style={{ width: 18, height: 18, accentColor: 'var(--cyan)', cursor: 'pointer' }}
               />
               <label htmlFor="aiMaintCheck" style={{ fontSize: 13.5, cursor: 'pointer' }}>
                 {aiMaintenance ? 'Maintenance Active (Temporarily Paused)' : 'Normal Operations'}
@@ -344,7 +344,7 @@ export default function AdminEdgeAI() {
               style={{
                 padding: '9px 20px',
                 borderRadius: 8,
-                background: 'var(--red)',
+                background: 'var(--cyan)',
                 color: '#fff',
                 fontSize: 13.5,
                 fontWeight: 600,
@@ -366,7 +366,7 @@ export default function AdminEdgeAI() {
       <div style={{ padding: '22px 24px', borderRadius: 14, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Layers size={18} color="var(--red)" />
+            <Layers size={18} color="var(--cyan)" />
             Aggregate AI Request Ledger
           </h3>
           <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>

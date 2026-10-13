@@ -207,7 +207,7 @@ export default function AdminAuditLogs() {
         >
           {/* Section Indicator */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <ShieldCheck size={18} color="var(--red)" />
+            <ShieldCheck size={18} color="var(--cyan)" />
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
                 Administrative Audit Ledger

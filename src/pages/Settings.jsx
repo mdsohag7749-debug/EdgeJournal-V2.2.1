@@ -28,6 +28,7 @@ import { exportAllData, downloadJSONFile, importAllData, estimateStorageBytes, v
 import { restoreAccounts } from '../lib/accountsApi';
 import { updateProfile } from '../lib/profileApi';
 import { uploadAvatar } from '../lib/avatarApi';
+import { prepareSuccessSound } from '../lib/feedbackSound';
 
 const COMMON_TIMEZONES = [
   'UTC',
@@ -118,9 +119,9 @@ export default function Settings({ defaultSection = 'profile' }) {
                   padding: '11px 13px',
                   borderRadius: 12,
                   border: '1px solid transparent',
-                  background: isActive ? 'var(--red-glow)' : 'transparent',
-                  borderColor: isActive ? 'rgba(66, 217, 255, 0.35)' : 'var(--border)',
-                  color: isActive ? 'var(--red)' : 'var(--text-muted)',
+                  background: isActive ? 'rgba(66, 217, 255, 0.12)' : 'transparent',
+                  borderColor: isActive ? 'rgba(66, 217, 255, 0.4)' : 'var(--border)',
+                  color: isActive ? '#42d9ff' : 'var(--text-muted)',
                   fontWeight: isActive ? 700 : 500,
                   fontSize: 13.5,
                   cursor: 'pointer',
@@ -203,6 +204,7 @@ function SectionProfile() {
       setMessage({ type: 'error', text: 'Username must be 3-30 characters: letters, numbers, "_" or "." only.' });
       return;
     }
+    const playSuccess = prepareSuccessSound();
     setSaving(true);
     setMessage(null);
     try {
@@ -214,6 +216,7 @@ function SectionProfile() {
       });
       setProfile(updated);
       setMessage({ type: 'success', text: 'Profile updated.' });
+      playSuccess();
     } catch (err) {
       const isUniqueViolation = err?.code === '23505';
       setMessage({ type: 'error', text: isUniqueViolation ? 'That username is already taken.' : err.message || 'Could not save your profile.' });
@@ -226,12 +229,14 @@ function SectionProfile() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file || !user?.id) return;
+    const playSuccess = prepareSuccessSound();
     setUploadingAvatar(true);
     setMessage(null);
     try {
       const updated = await uploadAvatar(user.id, file);
       setProfile(updated);
       setMessage({ type: 'success', text: 'Profile photo updated.' });
+      playSuccess();
     } catch (err) {
       setMessage({ type: 'error', text: err.message || 'Could not upload your photo.' });
     } finally {
@@ -346,6 +351,7 @@ function SectionNotifications() {
   ];
 
   function toggle(key) {
+    const playSuccess = prepareSuccessSound();
     setPrefs((p) => {
       const next = { ...p, [key]: !p[key] };
       try {
@@ -355,6 +361,7 @@ function SectionNotifications() {
       }
       return next;
     });
+    playSuccess();
   }
 
   return (
@@ -392,11 +399,13 @@ function SectionSecurity() {
 
   async function handleReset() {
     if (!user?.email) return;
+    const playSuccess = prepareSuccessSound();
     setSending(true);
     setMessage(null);
     try {
       await requestPasswordReset(user.email);
       setMessage({ type: 'success', text: `Password reset link sent to ${user.email}.` });
+      playSuccess();
     } catch (err) {
       setMessage({ type: 'error', text: err.message || 'Could not send a reset link.' });
     } finally {
@@ -431,11 +440,15 @@ function EditableList({ title, description, items, onChange }) {
   function add() {
     const v = draft.trim();
     if (!v || items.includes(v)) return;
+    const playSuccess = prepareSuccessSound();
     onChange([...items, v]);
+    playSuccess();
     setDraft('');
   }
   function remove(item) {
+    const playSuccess = prepareSuccessSound();
     onChange(items.filter((i) => i !== item));
+    playSuccess();
   }
 
   return (
@@ -466,7 +479,7 @@ function EditableList({ title, description, items, onChange }) {
           </div>
         ))}
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 8, width: '100%', minWidth: 0 }}>
         <input
           type="text"
           value={draft}
@@ -474,7 +487,9 @@ function EditableList({ title, description, items, onChange }) {
           onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), add())}
           placeholder="Add new..."
           style={{
-            flex: 1,
+            flex: '1 1 0%',
+            width: 0,
+            minWidth: 0,
             background: 'var(--bg-elevated)',
             border: '1px solid var(--border)',
             borderRadius: 8,
@@ -483,7 +498,7 @@ function EditableList({ title, description, items, onChange }) {
             fontSize: 13.5,
           }}
         />
-        <button className="btn btn-accent btn-sm" onClick={add}>
+        <button className="btn btn-accent btn-sm" onClick={add} style={{ flex: '0 0 auto' }}>
           <Plus size={14} /> Add
         </button>
       </div>
@@ -509,18 +524,28 @@ function SectionSystem() {
 }
 
 const GRAPHICS_MODE_KEY = 'edgejournal-graphics-mode';
+const WATER_GLASS_TRANSPARENT_KEY = 'edgejournal-water-glass-transparent';
 
 function GraphicsPerformanceSetting() {
   const [mode, setMode] = useState(() => {
     try {
       const savedMode = localStorage.getItem(GRAPHICS_MODE_KEY);
-      return ['low', 'high', 'ultra'].includes(savedMode) ? savedMode : 'high';
+      return ['low', 'high', 'ultra', 'ultra-water'].includes(savedMode) ? savedMode : 'high';
     } catch {
       return 'high';
     }
   });
+  const [transparent, setTransparent] = useState(() => {
+    try {
+      return localStorage.getItem(WATER_GLASS_TRANSPARENT_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   function chooseMode(nextMode) {
+    if (nextMode === mode) return;
+    const playSuccess = prepareSuccessSound();
     setMode(nextMode);
     document.documentElement.dataset.graphicsMode = nextMode;
     window.dispatchEvent(new CustomEvent('edgejournal-graphics-mode-change', { detail: nextMode }));
@@ -529,6 +554,21 @@ function GraphicsPerformanceSetting() {
     } catch {
       // The current page still receives the selected mode if storage is unavailable.
     }
+    playSuccess();
+  }
+
+  function toggleTransparent() {
+    const nextValue = !transparent;
+    const playSuccess = prepareSuccessSound();
+    setTransparent(nextValue);
+    document.documentElement.dataset.waterGlassTransparent = String(nextValue);
+    window.dispatchEvent(new CustomEvent('edgejournal-water-glass-transparent-change', { detail: nextValue }));
+    try {
+      localStorage.setItem(WATER_GLASS_TRANSPARENT_KEY, String(nextValue));
+    } catch {
+      // The current page still receives the selected setting if storage is unavailable.
+    }
+    playSuccess();
   }
 
   return (
@@ -539,8 +579,50 @@ function GraphicsPerformanceSetting() {
           { value: 'low', title: 'Low Graphics', detail: 'Reduced visual effects for smoother use on slower devices.' },
           { value: 'high', title: 'High Graphics', detail: 'Full glass blur, reflections, and ambient motion.' },
           { value: 'ultra', title: 'Ultra High', detail: 'Maximum transparent water-glass, luminous rims, and ambient depth.' },
+          { value: 'ultra-water', title: 'Ultra High + Water Glass', detail: 'A full water-glass theme with refracted aqua light, flowing reflections, and luminous transparent surfaces.' },
         ].map((option) => {
           const selected = mode === option.value;
+          if (option.value === 'ultra-water') {
+            return (
+              <div
+                key={option.value}
+                style={{
+                  display: 'flex', flexDirection: 'column', borderRadius: 12, overflow: 'hidden',
+                  border: `1px solid ${selected ? 'var(--cyan)' : 'var(--border)'}`,
+                  background: selected ? 'var(--cyan-dim)' : 'rgba(255,255,255,0.025)',
+                  boxShadow: selected ? '0 0 18px var(--cyan-glow)' : 'none',
+                }}
+              >
+                <button
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => chooseMode(option.value)}
+                  style={{ width: '100%', flex: 1, textAlign: 'left', padding: 15, cursor: 'pointer', color: 'var(--text)', border: 0, background: 'transparent' }}
+                >
+                  <span style={{ display: 'block', fontWeight: 700, fontSize: 14 }}>{option.title}{selected ? ' · Selected' : ''}</span>
+                  <span style={{ display: 'block', marginTop: 6, color: 'var(--text-muted)', fontSize: 12.5, lineHeight: 1.5 }}>{option.detail}</span>
+                </button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '9px 12px', borderTop: '1px solid rgba(178, 247, 246, 0.14)', background: 'rgba(3, 22, 30, 0.16)' }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text)' }}>Transparent</span>
+                  <button
+                    type="button"
+                    aria-label={`Transparent ${transparent ? 'on' : 'off'}`}
+                    aria-pressed={transparent}
+                    onClick={toggleTransparent}
+                    style={{
+                      minWidth: 54, padding: '5px 10px', borderRadius: 999, cursor: 'pointer', fontSize: 10.5, fontWeight: 800,
+                      color: transparent ? '#42d9ff' : 'var(--text-muted)',
+                      background: transparent ? 'rgba(66,217,255,0.15)' : 'rgba(255,255,255,0.06)',
+                      border: `1px solid ${transparent ? 'rgba(66,217,255,0.45)' : 'var(--border)'}`,
+                      boxShadow: transparent ? '0 0 12px rgba(66,217,255,0.16)' : 'none',
+                    }}
+                  >
+                    {transparent ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+              </div>
+            );
+          }
           return (
             <button
               key={option.value}
@@ -600,11 +682,13 @@ function SectionBackup() {
     );
     const stamp = new Date().toISOString().slice(0, 10);
     downloadJSONFile(data, `edgejournal-backup-${stamp}.json`);
+    prepareSuccessSound()();
   }
 
   async function handleImportFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const playSuccess = prepareSuccessSound();
     setImporting(true);
     try {
       const text = await file.text();
@@ -631,6 +715,7 @@ function SectionBackup() {
       await refetchAccounts();
       reloadLedger();
       setImportMsg({ type: 'success', text: 'Backup imported successfully.' });
+      playSuccess();
     } catch (err) {
       setImportMsg({
         type: 'error',

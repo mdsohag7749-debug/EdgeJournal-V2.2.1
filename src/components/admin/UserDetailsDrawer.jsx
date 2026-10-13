@@ -173,7 +173,7 @@ export default function UserDetailsDrawer({
                     height: 56,
                     borderRadius: '50%',
                     background: isAdmin
-                      ? 'linear-gradient(135deg, var(--red), var(--red-strong))'
+                      ? 'linear-gradient(135deg, var(--cyan), var(--teal))'
                       : 'rgba(255, 255, 255, 0.08)',
                     color: '#fff',
                     display: 'flex',
@@ -214,7 +214,7 @@ export default function UserDetailsDrawer({
                   {user.email}
                 </p>
                 <div style={{ marginTop: 6 }}>
-                  <span className={isAdmin ? 'tag tag-red' : 'tag tag-neutral'} style={{ fontSize: 11 }}>
+                  <span className={isAdmin ? 'tag admin-role-badge' : 'tag tag-neutral'} style={{ fontSize: 11 }}>
                     {isAdmin ? 'Administrator' : 'Standard User'}
                   </span>
                 </div>
@@ -348,7 +348,7 @@ export default function UserDetailsDrawer({
                   className="btn btn-sm"
                   style={{
                     width: '100%',
-                    background: isAdmin ? 'rgba(234, 179, 8, 0.15)' : 'var(--red)',
+                    background: isAdmin ? 'rgba(234, 179, 8, 0.15)' : 'var(--cyan)',
                     color: isAdmin ? '#eab308' : '#fff',
                     border: isAdmin ? '1px solid rgba(234, 179, 8, 0.3)' : 'none',
                     fontWeight: 600,

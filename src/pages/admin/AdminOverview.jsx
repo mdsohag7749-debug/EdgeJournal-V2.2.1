@@ -13,15 +13,22 @@ import {
   Server,
   Layers,
 } from 'lucide-react';
-import { fetchAdminMetrics, fetchRecentUsers } from '../../lib/adminApi';
+import { fetchAdminMetrics, fetchRecentUsers, fetchAdminAuditLogs } from '../../lib/adminApi';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export default function AdminOverview() {
+  const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [metrics, setMetrics] = useState(null);
   const [recentUsers, setRecentUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [auditCheck, setAuditCheck] = useState(null);
+  const systemStatus = loading ? 'Checking' : error ? 'Unavailable' : metrics?.system?.status === 'operational' ? 'Operational' : 'Unavailable';
+  const systemHealthy = systemStatus === 'Operational';
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -29,12 +36,17 @@ export default function AdminOverview() {
     setError(null);
 
     try {
-      const [metricsData, usersData] = await Promise.all([
-        fetchAdminMetrics(),
-        fetchRecentUsers(5),
+      const [coreResult, auditResult] = await Promise.allSettled([
+        Promise.all([fetchAdminMetrics(), fetchRecentUsers(5)]),
+        fetchAdminAuditLogs({ pageSize: 1 }),
       ]);
+      if (coreResult.status === 'rejected') throw coreResult.reason;
+      const [metricsData, usersData] = coreResult.value;
       setMetrics(metricsData);
       setRecentUsers(usersData);
+      setAuditCheck(auditResult.status === 'fulfilled'
+        ? { available: true, total: auditResult.value.total, latest: auditResult.value.logs[0] || null }
+        : { available: false, total: null, latest: null });
       setLastUpdated(new Date());
     } catch (err) {
       setError(err?.message || 'Failed to load admin dashboard data.');
@@ -67,12 +79,12 @@ export default function AdminOverview() {
               width: 8,
               height: 8,
               borderRadius: '50%',
-              background: 'var(--win)',
-              boxShadow: '0 0 10px rgba(47, 214, 110, 0.4)',
+              background: error ? 'var(--loss)' : loading ? 'var(--yellow)' : 'var(--win)',
+              boxShadow: error ? '0 0 10px rgba(239, 68, 68, 0.35)' : '0 0 10px rgba(47, 214, 110, 0.35)',
             }}
           />
           <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-            Phase 1 Security Engine Active
+            {loading ? 'Checking admin access and platform data…' : error ? 'Platform checks need attention' : isAdmin ? 'Admin access verified · platform data reachable' : 'Admin access not verified'}
           </span>
           {lastUpdated && (
             <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>
@@ -200,7 +212,7 @@ export default function AdminOverview() {
             >
               <div>
                 <span>Admins: </span>
-                <strong style={{ color: 'var(--red)', fontFamily: 'var(--font-mono)' }}>
+                <strong style={{ color: 'var(--cyan)', fontFamily: 'var(--font-mono)' }}>
                   {loading ? '—' : metrics?.users?.admins ?? 0}
                 </strong>
               </div>
@@ -313,10 +325,10 @@ export default function AdminOverview() {
               <div>
                 <span className="drawer-label" style={{ fontSize: 11 }}>System Status</span>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
-                  <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--win)', fontFamily: 'var(--font-display)' }}>
-                    Operational
+                  <span style={{ fontSize: 22, fontWeight: 700, color: systemHealthy ? 'var(--win)' : error ? 'var(--loss)' : 'var(--text-muted)', fontFamily: 'var(--font-display)' }}>
+                    {systemStatus}
                   </span>
-                  <span className="tag tag-win" style={{ fontSize: 10.5 }}>Healthy</span>
+                  <span className={systemHealthy ? 'tag tag-win' : 'tag tag-neutral'} style={{ fontSize: 10.5 }}>{loading ? 'Checking' : systemHealthy ? 'Healthy' : 'Needs attention'}</span>
                 </div>
               </div>
               <div
@@ -348,8 +360,8 @@ export default function AdminOverview() {
                 justifyContent: 'space-between',
               }}
             >
-              <span>Security Definer:</span>
-              <strong style={{ color: 'var(--win)' }}>Enforced</strong>
+              <span>Admin RLS access:</span>
+              <strong style={{ color: systemHealthy ? 'var(--win)' : 'var(--text-muted)' }}>{error ? 'Unavailable' : metrics?.system?.rlsStatus ? 'Live queries pass' : loading ? 'Checking' : 'Unavailable'}</strong>
             </div>
           </div>
         </div>
@@ -438,7 +450,7 @@ export default function AdminOverview() {
                       </td>
                       <td style={{ padding: '14px 18px' }}>
                         <span
-                          className={u.role === 'admin' ? 'tag tag-red' : 'tag tag-neutral'}
+                          className={u.role === 'admin' ? 'tag admin-role-badge' : 'tag tag-neutral'}
                           style={{ fontSize: 10.5 }}
                         >
                           {u.role}
@@ -462,9 +474,59 @@ export default function AdminOverview() {
 
       {/* Security Foundation Status Card */}
       <section aria-labelledby="security-heading">
-        <h2 id="security-heading" style={{ fontSize: 16, fontWeight: 700, marginBottom: 14, color: 'var(--text)' }}>
-          Phase 1 Security Foundation
-        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
+          <div>
+            <h2 id="security-heading" style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>System Health &amp; Security</h2>
+            <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 3 }}>Security architecture and live admin data checks.</p>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/admin/audit-logs')}>
+              <Clock size={13} /> Audit Logs
+            </button>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/admin/settings')}>
+              <ShieldCheck size={13} /> Platform Settings
+            </button>
+          </div>
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 12,
+            marginBottom: 14,
+          }}
+        >
+          {[
+            {
+              label: 'Core platform data',
+              status: systemStatus,
+              detail: 'Live admin queries across users, accounts, and trades.',
+              healthy: systemHealthy,
+            },
+            {
+              label: 'Admin session',
+              status: isAdmin ? 'Verified' : 'Unavailable',
+              detail: 'Current session has platform administrator access.',
+              healthy: isAdmin,
+            },
+            {
+              label: 'Audit trail',
+              status: auditCheck ? (auditCheck.available ? 'Reachable' : 'Unavailable') : 'Checking',
+              detail: auditCheck?.available
+                ? `${auditCheck.total} recorded admin events${auditCheck.latest?.createdAt ? ` · latest ${new Date(auditCheck.latest.createdAt).toLocaleString()}` : ''}.`
+                : 'Checks access to the administrative audit log.',
+              healthy: auditCheck?.available === true,
+            },
+          ].map((check) => (
+            <div key={check.label} className="card" style={{ padding: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <strong style={{ fontSize: 13, color: 'var(--text)' }}>{check.label}</strong>
+                <span className={check.healthy ? 'tag tag-win' : 'tag tag-neutral'} style={{ fontSize: 10 }}>{check.status}</span>
+              </div>
+              <p style={{ marginTop: 8, fontSize: 12, lineHeight: 1.45, color: 'var(--text-muted)' }}>{check.detail}</p>
+            </div>
+          ))}
+        </div>
         <div className="card" style={{ padding: 22 }}>
           <div
             style={{

@@ -182,6 +182,7 @@ export default function Dashboard({ onNavigate }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           {/* Date Range Selector Pills */}
           <div
+            className="dashboard-date-range"
             style={{
               display: 'flex',
               gap: 3,
@@ -268,6 +269,7 @@ export default function Dashboard({ onNavigate }) {
               return (
                 <div
                   key={c.id}
+                  className="dashboard-challenge-card"
                   style={{
                     padding: 14,
                     background: 'var(--card-hover)',

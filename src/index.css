@@ -3366,6 +3366,91 @@ textarea {
   border-color: rgba(221, 228, 255, 0.15);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
+
+/* Keep native select menus readable with the app's dark aqua glass surfaces. */
+#main-content select,
+#admin-main-content select {
+  color-scheme: dark;
+}
+#main-content select option,
+#admin-main-content select option {
+  background-color: #0b303b;
+  color: #e8ffff;
+}
+#main-content select option:checked,
+#admin-main-content select option:checked {
+  background-color: #167d84;
+  color: #ffffff;
+}
+
+/* Aqua glass skin for the Log Trade side panel and its main form sections. */
+.trade-form-side-panel {
+  background: linear-gradient(155deg, rgba(22, 101, 117, 0.94), rgba(7, 37, 49, 0.96) 52%, rgba(8, 53, 59, 0.94)) !important;
+  border-left-color: rgba(142, 247, 242, 0.4) !important;
+  box-shadow: -24px 0 60px rgba(0, 8, 14, 0.44), inset 1px 0 0 rgba(235, 255, 255, 0.16) !important;
+}
+.trade-form-side-panel > div:first-child {
+  background: linear-gradient(110deg, rgba(191, 255, 255, 0.09), rgba(50, 157, 175, 0.055)) !important;
+  border-bottom-color: rgba(178, 247, 246, 0.2) !important;
+}
+.trade-form-side-panel > .scroll-thin {
+  background: linear-gradient(180deg, rgba(28, 105, 119, 0.14), rgba(8, 47, 57, 0.08)) !important;
+}
+.trade-form-side-panel > div:last-child {
+  background: linear-gradient(110deg, rgba(191, 255, 255, 0.1), rgba(50, 157, 175, 0.08)) !important;
+  border-top-color: rgba(178, 247, 246, 0.2) !important;
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+}
+.trade-form-side-panel .trade-form-grid > div > .card {
+  background: linear-gradient(145deg, rgba(191, 255, 255, 0.105), rgba(50, 157, 175, 0.07) 52%, rgba(8, 36, 45, 0.16)) !important;
+  border-color: rgba(178, 247, 246, 0.25) !important;
+  box-shadow: inset 0 1px 0 rgba(235, 255, 255, 0.13), 0 10px 28px rgba(0, 8, 14, 0.16) !important;
+  backdrop-filter: blur(20px) saturate(165%);
+  -webkit-backdrop-filter: blur(20px) saturate(165%);
+}
+.trade-form-side-panel .scroll-thin > div > .card:first-child {
+  background: linear-gradient(135deg, rgba(191, 255, 255, 0.13), rgba(50, 157, 175, 0.1) 52%, rgba(8, 36, 45, 0.2)) !important;
+  border-color: rgba(178, 247, 246, 0.28) !important;
+}
+.trade-form-side-panel .trade-form-section-risk-position-size [style*='rgba(18, 18, 26, 0.6)'] {
+  background: linear-gradient(135deg, rgba(191, 255, 255, 0.09), rgba(50, 157, 175, 0.065) 52%, rgba(8, 36, 45, 0.14)) !important;
+  border-color: rgba(178, 247, 246, 0.2) !important;
+}
+.trade-form-side-panel .trade-form-section-risk-position-size [style*='rgba(18, 18, 26, 0.6)'] > div:nth-child(2) > div {
+  background: linear-gradient(140deg, rgba(162, 244, 246, 0.08), rgba(22, 93, 108, 0.12)) !important;
+  border-color: rgba(178, 247, 246, 0.17) !important;
+}
+.trade-form-side-panel .trade-form-section-mistakes label:not(:has(input:checked)) {
+  background: rgba(45, 145, 162, 0.11) !important;
+  border-color: rgba(178, 247, 246, 0.18) !important;
+}
+.trade-form-side-panel .trade-form-section-mistakes label:not(:has(input:checked)):hover {
+  background: rgba(84, 221, 231, 0.16) !important;
+  border-color: rgba(142, 255, 248, 0.36) !important;
+}
+.trade-form-side-panel .trade-form-section-trading-psychology button[aria-pressed='false'] {
+  background: rgba(45, 145, 162, 0.11) !important;
+  border-color: rgba(178, 247, 246, 0.18) !important;
+  color: rgba(232, 255, 255, 0.72) !important;
+}
+.trade-form-side-panel .trade-form-section-trading-psychology button[aria-pressed='false']:hover {
+  background: rgba(84, 221, 231, 0.16) !important;
+  border-color: rgba(142, 255, 248, 0.36) !important;
+  color: #efffff !important;
+}
+.trade-form-side-panel .trade-form-section-trade [role='radiogroup'] {
+  background: linear-gradient(135deg, rgba(191, 255, 255, 0.1), rgba(50, 157, 175, 0.08) 55%, rgba(8, 36, 45, 0.14)) !important;
+  border-color: rgba(178, 247, 246, 0.24) !important;
+}
+.trade-form-side-panel .trade-form-section-trade [role='radiogroup'] button[aria-checked='false'] {
+  background: rgba(103, 220, 224, 0.08) !important;
+  color: rgba(232, 255, 255, 0.76) !important;
+}
+.trade-form-side-panel .trade-form-section-trade [role='radiogroup'] button[aria-checked='false']:hover {
+  background: rgba(84, 221, 231, 0.17) !important;
+  color: #efffff !important;
+}
 input:not([type='checkbox']):not([type='radio']):not([type='file']):hover,
 select:hover,
 textarea:hover {
@@ -3648,29 +3733,29 @@ html[data-graphics-mode='high'] #admin-main-content .card::after {
 }
 
 /* Ultra High: brighter, deeper water-glass while keeping the app backdrop visible. */
-html[data-graphics-mode='ultra'] #root::before {
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #root::before {
   opacity: 0.9 !important;
 }
-html[data-graphics-mode='ultra'] body::before {
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) body::before {
   animation: glass-light-drift 18s ease-in-out infinite alternate !important;
   filter: blur(70px) !important;
   opacity: 0.48 !important;
 }
-html[data-graphics-mode='ultra'] body::after {
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) body::after {
   animation: glass-light-drift 21s ease-in-out -6s infinite alternate-reverse !important;
   filter: blur(74px) !important;
   opacity: 0.42 !important;
 }
-html[data-graphics-mode='ultra'] #main-content .card,
-html[data-graphics-mode='ultra'] #admin-main-content .card,
-html[data-graphics-mode='ultra'] #main-content .dash-kpi-card,
-html[data-graphics-mode='ultra'] #admin-main-content .dash-kpi-card,
-html[data-graphics-mode='ultra'] aside[aria-label='Main sidebar'],
-html[data-graphics-mode='ultra'] .admin-sidebar-desktop > div > .admin-sidebar-surface,
-html[data-graphics-mode='ultra'] aside[aria-label='Mobile Admin Navigation'] .admin-sidebar-surface,
-html[data-graphics-mode='ultra'] .app-header,
-html[data-graphics-mode='ultra'] #admin-main-content > header,
-html[data-graphics-mode='ultra'] .account-switcher-menu {
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #main-content .card,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #admin-main-content .card,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #main-content .dash-kpi-card,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #admin-main-content .dash-kpi-card,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) aside[aria-label='Main sidebar'],
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) .admin-sidebar-desktop > div > .admin-sidebar-surface,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) aside[aria-label='Mobile Admin Navigation'] .admin-sidebar-surface,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) .app-header,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #admin-main-content > header,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) .account-switcher-menu {
   background: rgba(190, 205, 255, 0.006) !important;
   background-image: none !important;
   border-color: rgba(230, 238, 255, 0.3) !important;
@@ -3678,48 +3763,144 @@ html[data-graphics-mode='ultra'] .account-switcher-menu {
   backdrop-filter: blur(46px) saturate(190%) brightness(118%) !important;
   -webkit-backdrop-filter: blur(46px) saturate(190%) brightness(118%) !important;
 }
-html[data-graphics-mode='ultra'] #main-content .card::before,
-html[data-graphics-mode='ultra'] #admin-main-content .card::before {
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #main-content .card::before,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #admin-main-content .card::before {
   opacity: 0.78 !important;
   animation: glass-edge-flow 14s ease-in-out infinite alternate !important;
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.42), rgba(186, 202, 255, 0.2) 24%, transparent 49%, rgba(128, 224, 238, 0.14) 82%, rgba(255, 255, 255, 0.18)) !important;
 }
-html[data-graphics-mode='ultra'] #main-content .card::after,
-html[data-graphics-mode='ultra'] #admin-main-content .card::after {
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #main-content .card::after,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #admin-main-content .card::after {
   opacity: 0.58 !important;
   animation: glass-sheen 9s ease-in-out infinite !important;
 }
-html[data-graphics-mode='ultra'] .app-header .header-search,
-html[data-graphics-mode='ultra'] .app-header .header-date-pill,
-html[data-graphics-mode='ultra'] .app-header .header-icon-button,
-html[data-graphics-mode='ultra'] .app-header .header-user-surface {
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) .app-header .header-search,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) .app-header .header-date-pill,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) .app-header .header-icon-button,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) .app-header .header-user-surface {
   background: rgba(210, 225, 255, 0.025) !important;
 }
-html[data-graphics-mode='ultra'] #main-content input:not([type='checkbox']):not([type='radio']):not([type='file']),
-html[data-graphics-mode='ultra'] #main-content select,
-html[data-graphics-mode='ultra'] #main-content textarea,
-html[data-graphics-mode='ultra'] #main-content .settings-editable-row {
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #main-content input:not([type='checkbox']):not([type='radio']):not([type='file']),
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #main-content select,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #main-content textarea,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #main-content .settings-editable-row {
   background: rgba(210, 225, 255, 0.035) !important;
 }
-html[data-graphics-mode='ultra'] #main-content .settings-editable-row {
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) #main-content .settings-editable-row {
   border-color: rgba(230, 238, 255, 0.16) !important;
 }
-html[data-graphics-mode='ultra'] .analytics-hero,
-html[data-graphics-mode='ultra'] .analytics-group,
-html[data-graphics-mode='ultra'] .analytics-selector {
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) .analytics-hero,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) .analytics-group,
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) .analytics-selector {
   background: linear-gradient(135deg, rgba(220, 232, 255, 0.022), rgba(178, 196, 255, 0.008) 52%, rgba(111, 220, 232, 0.018)) !important;
   border-color: rgba(226, 237, 255, 0.26) !important;
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.24), inset 0 -1px 0 rgba(145, 184, 255, 0.1) !important;
   backdrop-filter: blur(42px) saturate(185%) brightness(116%) !important;
   -webkit-backdrop-filter: blur(42px) saturate(185%) brightness(116%) !important;
 }
-html[data-graphics-mode='ultra'] .analytics-group-headrow {
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) .analytics-group-headrow {
   background: linear-gradient(100deg, rgba(210, 226, 255, 0.042), rgba(255, 255, 255, 0.008) 50%, rgba(159, 163, 255, 0.026)) !important;
 }
-html[data-graphics-mode='ultra'] .analytics-group-index {
+:is(html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) .analytics-group-index {
   background: rgba(155, 202, 255, 0.05) !important;
 }
 
+/* Ultra High + Water Glass: refracted aqua light, transparent glass, and soft water reflections. */
+html[data-graphics-mode='ultra-water'] body {
+  background-color: #06151d !important;
+  background-image:
+    radial-gradient(ellipse 66% 40% at 12% 8%, rgba(36, 213, 218, 0.2), transparent 68%),
+    radial-gradient(ellipse 58% 48% at 91% 18%, rgba(61, 173, 224, 0.18), transparent 70%),
+    radial-gradient(ellipse 76% 56% at 52% 105%, rgba(27, 196, 173, 0.14), transparent 69%),
+    linear-gradient(145deg, #06131c 0%, #09212b 48%, #071720 100%) !important;
+}
+html[data-graphics-mode='ultra-water'] #root::before {
+  background-image:
+    radial-gradient(ellipse 35% 15% at 19% 22%, rgba(171, 255, 250, 0.11), transparent 72%),
+    radial-gradient(ellipse 40% 18% at 83% 58%, rgba(98, 227, 238, 0.09), transparent 74%),
+    linear-gradient(128deg, transparent 0 28%, rgba(191, 255, 255, 0.055) 28.12%, transparent 28.45% 72%, rgba(91, 227, 220, 0.045) 72.12%, transparent 72.42%);
+}
+html[data-graphics-mode='ultra-water'] body::before {
+  background: radial-gradient(circle, rgba(36, 218, 220, 0.46), rgba(36, 218, 220, 0) 70%) !important;
+  opacity: 0.44 !important;
+}
+html[data-graphics-mode='ultra-water'] body::after {
+  background: radial-gradient(circle, rgba(68, 239, 207, 0.39), rgba(68, 239, 207, 0) 70%) !important;
+  filter: blur(70px) !important;
+  opacity: 0.48 !important;
+}
+html[data-graphics-mode='ultra-water'] #main-content .card,
+html[data-graphics-mode='ultra-water'] #admin-main-content .card,
+html[data-graphics-mode='ultra-water'] #main-content .dash-kpi-card,
+html[data-graphics-mode='ultra-water'] #admin-main-content .dash-kpi-card,
+html[data-graphics-mode='ultra-water'] aside[aria-label='Main sidebar'],
+html[data-graphics-mode='ultra-water'] .admin-sidebar-desktop > div > .admin-sidebar-surface,
+html[data-graphics-mode='ultra-water'] aside[aria-label='Mobile Admin Navigation'] .admin-sidebar-surface,
+html[data-graphics-mode='ultra-water'] .app-header,
+html[data-graphics-mode='ultra-water'] #admin-main-content > header {
+  background-color: rgba(8, 36, 45, 0.34) !important;
+  background-image: linear-gradient(135deg, rgba(191, 255, 255, 0.105), rgba(116, 225, 231, 0.035) 32%, rgba(7, 35, 46, 0.12) 70%, rgba(101, 231, 204, 0.075)) !important;
+  border-color: rgba(178, 247, 246, 0.3) !important;
+  box-shadow: 0 24px 66px rgba(0, 8, 14, 0.3), inset 0 1px 0 rgba(235, 255, 255, 0.28), inset 0 -1px 0 rgba(68, 231, 220, 0.13) !important;
+  backdrop-filter: blur(50px) saturate(185%) brightness(112%) !important;
+  -webkit-backdrop-filter: blur(50px) saturate(185%) brightness(112%) !important;
+}
+html[data-graphics-mode='ultra-water'] #main-content .card::before,
+html[data-graphics-mode='ultra-water'] #admin-main-content .card::before {
+  background: linear-gradient(145deg, rgba(226, 255, 255, 0.56), rgba(142, 236, 255, 0.26) 22%, transparent 46%, rgba(71, 247, 224, 0.28) 79%, rgba(218, 255, 255, 0.4)) !important;
+  opacity: 0.9 !important;
+  animation-duration: 11s !important;
+}
+html[data-graphics-mode='ultra-water'] #main-content .card::after,
+html[data-graphics-mode='ultra-water'] #admin-main-content .card::after {
+  background: linear-gradient(100deg, transparent 12%, rgba(225, 255, 255, 0.12) 34%, rgba(156, 255, 249, 0.55) 49%, rgba(203, 246, 255, 0.16) 57%, transparent 82%) !important;
+  animation-duration: 7s !important;
+}
+html[data-graphics-mode='ultra-water'] .app-header .header-search,
+html[data-graphics-mode='ultra-water'] .app-header .header-date-pill,
+html[data-graphics-mode='ultra-water'] .app-header .header-icon-button,
+html[data-graphics-mode='ultra-water'] .app-header .header-user-surface,
+html[data-graphics-mode='ultra-water'] #main-content input:not([type='checkbox']):not([type='radio']):not([type='file']),
+html[data-graphics-mode='ultra-water'] #main-content select,
+html[data-graphics-mode='ultra-water'] #main-content textarea {
+  background-color: rgba(103, 220, 224, 0.075) !important;
+  border-color: rgba(188, 250, 249, 0.25) !important;
+  box-shadow: inset 0 1px 0 rgba(241, 255, 255, 0.18), 0 8px 22px rgba(0, 15, 22, 0.12) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-graphics-mode='ultra-water'] body::before,
+  html[data-graphics-mode='ultra-water'] body::after,
+  html[data-graphics-mode='ultra-water'] #main-content .card::before,
+  html[data-graphics-mode='ultra-water'] #main-content .card::after,
+  html[data-graphics-mode='ultra-water'] #admin-main-content .card::before,
+  html[data-graphics-mode='ultra-water'] #admin-main-content .card::after { animation: none !important; }
+}
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] #main-content .card,
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] #admin-main-content .card,
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] #main-content .dash-kpi-card,
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] #admin-main-content .dash-kpi-card,
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] aside[aria-label='Main sidebar'],
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] .admin-sidebar-desktop > div > .admin-sidebar-surface,
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] aside[aria-label='Mobile Admin Navigation'] .admin-sidebar-surface,
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] .app-header,
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] #admin-main-content > header {
+  background-color: rgba(7, 33, 43, 0.12) !important;
+  background-image: linear-gradient(135deg, rgba(191, 255, 255, 0.045), rgba(116, 225, 231, 0.012) 32%, rgba(7, 35, 46, 0.035) 70%, rgba(101, 231, 204, 0.03)) !important;
+  border-color: rgba(178, 247, 246, 0.36) !important;
+  box-shadow: 0 24px 66px rgba(0, 8, 14, 0.2), inset 0 1px 0 rgba(235, 255, 255, 0.32), inset 0 -1px 0 rgba(68, 231, 220, 0.16) !important;
+  backdrop-filter: blur(56px) saturate(205%) brightness(118%) !important;
+  -webkit-backdrop-filter: blur(56px) saturate(205%) brightness(118%) !important;
+}
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] .app-header .header-search,
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] .app-header .header-date-pill,
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] .app-header .header-icon-button,
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] .app-header .header-user-surface,
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] #main-content input:not([type='checkbox']):not([type='radio']):not([type='file']),
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] #main-content select,
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] #main-content textarea {
+  background-color: rgba(103, 220, 224, 0.035) !important;
+  border-color: rgba(188, 250, 249, 0.29) !important;
+}
 html[data-graphics-mode='low'] body::before,
 html[data-graphics-mode='low'] body::after,
 html[data-graphics-mode='low'] #root::before {
@@ -3922,3 +4103,290 @@ html[data-graphics-mode='low'] .market-loading-low-chart i { animation: low-cand
 html[data-graphics-mode='low'] .market-loading-low-progress i { animation: low-progress-step 0.64s cubic-bezier(0.22, 1, 0.36, 1) 1 both !important; }
 @keyframes low-candle-step { to { transform: scaleY(1); } }
 @keyframes low-progress-step { to { transform: translateX(285%); } }
+
+/* Let the app-wide graphics preference reach the admin workspace too. The
+   admin shell used to paint an opaque gradient over the shared light layers. */
+:is(html[data-graphics-mode='high'], html[data-graphics-mode='ultra'], html[data-graphics-mode='ultra-water']) .admin-shell {
+  background: transparent !important;
+}
+html[data-graphics-mode='ultra-water'] #admin-main-content input:not([type='checkbox']):not([type='radio']):not([type='file']),
+html[data-graphics-mode='ultra-water'] #admin-main-content select,
+html[data-graphics-mode='ultra-water'] #admin-main-content textarea {
+  background-color: rgba(103, 220, 224, 0.075) !important;
+  border-color: rgba(188, 250, 249, 0.25) !important;
+  box-shadow: inset 0 1px 0 rgba(241, 255, 255, 0.18), 0 8px 22px rgba(0, 15, 22, 0.12) !important;
+}
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] #admin-main-content input:not([type='checkbox']):not([type='radio']):not([type='file']),
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] #admin-main-content select,
+html[data-graphics-mode='ultra-water'][data-water-glass-transparent='true'] #admin-main-content textarea {
+  background-color: rgba(103, 220, 224, 0.035) !important;
+  border-color: rgba(188, 250, 249, 0.29) !important;
+}
+
+/* Shared aqua identity for administrator navigation and role markers. */
+.admin-role-badge {
+  background: rgba(66, 217, 255, 0.12) !important;
+  border: 1px solid rgba(66, 217, 255, 0.32) !important;
+  color: #42d9ff !important;
+}
+
+.admin-sidebar-desktop nav button:not([aria-current='page']):hover,
+aside[aria-label='Mobile Admin Navigation'] nav button:not([aria-current='page']):hover {
+  background: rgba(66, 217, 255, 0.08) !important;
+  color: #42d9ff !important;
+}
+
+
+/* Aqua-glass treatment for analytics panels that set their own dark surfaces. */
+#admin-main-content [data-testid='admin-analytics-page'] [style*='var(--bg-elevated)'] {
+  background: linear-gradient(135deg, rgba(191, 255, 255, 0.09), rgba(50, 157, 175, 0.07) 46%, rgba(8, 36, 45, 0.18)) !important;
+  border-color: rgba(178, 247, 246, 0.24) !important;
+  box-shadow: 0 16px 40px rgba(0, 8, 14, 0.18), inset 0 1px 0 rgba(235, 255, 255, 0.14) !important;
+  backdrop-filter: blur(26px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(175%) !important;
+}
+#admin-main-content [data-testid='admin-analytics-page'] [style*='var(--bg)'] {
+  background: rgba(45, 145, 162, 0.09) !important;
+  border-color: rgba(178, 247, 246, 0.16) !important;
+}
+
+/* Keep reports controls, metric tiles, and report panels in the aqua admin glass theme. */
+#admin-main-content [data-testid='admin-reports-page'] [style*='var(--bg-elevated)'] {
+  background: linear-gradient(135deg, rgba(191, 255, 255, 0.09), rgba(50, 157, 175, 0.07) 46%, rgba(8, 36, 45, 0.18)) !important;
+  border-color: rgba(178, 247, 246, 0.24) !important;
+  box-shadow: 0 16px 40px rgba(0, 8, 14, 0.18), inset 0 1px 0 rgba(235, 255, 255, 0.14) !important;
+  backdrop-filter: blur(26px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(175%) !important;
+}
+#admin-main-content [data-testid='admin-reports-page'] [style*='var(--bg)'] {
+  background: rgba(45, 145, 162, 0.09) !important;
+  border-color: rgba(178, 247, 246, 0.16) !important;
+}
+
+/* Give the audit ledger and its table the same aqua glass surface as other admin pages. */
+#admin-main-content [data-testid='admin-audit-logs-page'] [style*='var(--bg-elevated)'] {
+  background: linear-gradient(135deg, rgba(191, 255, 255, 0.09), rgba(50, 157, 175, 0.07) 46%, rgba(8, 36, 45, 0.18)) !important;
+  border-color: rgba(178, 247, 246, 0.24) !important;
+  box-shadow: 0 16px 40px rgba(0, 8, 14, 0.18), inset 0 1px 0 rgba(235, 255, 255, 0.14) !important;
+  backdrop-filter: blur(26px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(175%) !important;
+}
+#admin-main-content [data-testid='admin-audit-logs-page'] [style*='var(--bg)'] {
+  background: rgba(45, 145, 162, 0.09) !important;
+  border-color: rgba(178, 247, 246, 0.16) !important;
+}
+
+/* Match Platform Settings form panels and sticky action bar to the aqua admin theme. */
+#admin-main-content [data-testid='admin-platform-settings-page'] form [style*='var(--bg-elevated)'] {
+  background: linear-gradient(135deg, rgba(191, 255, 255, 0.09), rgba(50, 157, 175, 0.07) 46%, rgba(8, 36, 45, 0.18)) !important;
+  border-color: rgba(178, 247, 246, 0.24) !important;
+  box-shadow: 0 16px 40px rgba(0, 8, 14, 0.18), inset 0 1px 0 rgba(235, 255, 255, 0.14) !important;
+  backdrop-filter: blur(26px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(175%) !important;
+}
+#admin-main-content [data-testid='admin-platform-settings-page'] form [style*='var(--bg)'] {
+  background: rgba(45, 145, 162, 0.09) !important;
+  border-color: rgba(178, 247, 246, 0.16) !important;
+}
+
+/* Keep subscription tables, badges, and their panels consistent with aqua glass. */
+#admin-main-content [data-testid='admin-subscriptions-page'] [style*='var(--bg-elevated)'] {
+  background: linear-gradient(135deg, rgba(191, 255, 255, 0.09), rgba(50, 157, 175, 0.07) 46%, rgba(8, 36, 45, 0.18)) !important;
+  border-color: rgba(178, 247, 246, 0.24) !important;
+  box-shadow: 0 16px 40px rgba(0, 8, 14, 0.18), inset 0 1px 0 rgba(235, 255, 255, 0.14) !important;
+  backdrop-filter: blur(26px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(175%) !important;
+}
+#admin-main-content [data-testid='admin-subscriptions-page'] [style*='var(--bg)'] {
+  background: rgba(45, 145, 162, 0.09) !important;
+  border-color: rgba(178, 247, 246, 0.16) !important;
+}
+#admin-main-content [data-testid='admin-subscriptions-page'] .table thead tr {
+  background: rgba(36, 121, 139, 0.22) !important;
+}
+
+/* Aqua glass treatment for the signed-in administrator chip in the shared admin header. */
+#admin-main-content > header .admin-identity-chip {
+  background: linear-gradient(135deg, rgba(191, 255, 255, 0.12), rgba(50, 157, 175, 0.1) 52%, rgba(8, 36, 45, 0.2)) !important;
+  border-color: rgba(178, 247, 246, 0.3) !important;
+  box-shadow: inset 0 1px 0 rgba(235, 255, 255, 0.16), 0 8px 24px rgba(0, 8, 14, 0.14) !important;
+  backdrop-filter: blur(22px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(170%) !important;
+}
+
+/* Aqua-glass surfaces for dashboard challenge cards; retain semantic status colors. */
+.dashboard-challenge-card {
+  background: linear-gradient(135deg, rgba(191, 255, 255, 0.1), rgba(50, 157, 175, 0.08) 48%, rgba(8, 36, 45, 0.16)) !important;
+  border-color: rgba(178, 247, 246, 0.24) !important;
+  box-shadow: inset 0 1px 0 rgba(235, 255, 255, 0.13), 0 12px 28px rgba(0, 8, 14, 0.16) !important;
+  backdrop-filter: blur(22px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(170%) !important;
+}
+.dashboard-challenge-card [style*='var(--bg)'] {
+  background: rgba(45, 145, 162, 0.14) !important;
+}
+
+/* Aqua glass date-range selector on the dashboard, with a clear cyan active range. */
+.dashboard-date-range {
+  background: linear-gradient(135deg, rgba(191, 255, 255, 0.12), rgba(50, 157, 175, 0.1) 55%, rgba(8, 36, 45, 0.18)) !important;
+  border-color: rgba(178, 247, 246, 0.25) !important;
+  box-shadow: inset 0 1px 0 rgba(235, 255, 255, 0.12), 0 6px 18px rgba(0, 8, 14, 0.12);
+  backdrop-filter: blur(18px) saturate(165%);
+  -webkit-backdrop-filter: blur(18px) saturate(165%);
+}
+.dashboard-date-range .btn-ghost {
+  color: rgba(220, 250, 251, 0.76) !important;
+  border-color: transparent !important;
+  background: transparent !important;
+}
+.dashboard-date-range .btn-ghost:hover {
+  color: #ecffff !important;
+  background: rgba(84, 221, 231, 0.12) !important;
+}
+.dashboard-date-range .btn-accent {
+  color: #05212a !important;
+  border-color: rgba(142, 255, 248, 0.78) !important;
+  background: linear-gradient(135deg, #8bf3ee, #3ad7c7) !important;
+  box-shadow: 0 0 14px rgba(74, 229, 198, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.55) !important;
+}
+
+/* Shared aqua glass palette for dashboard chart and breakdown filters. */
+.dashboard-chart-tabs,
+.dashboard-breakdown-tabs {
+  background: linear-gradient(135deg, rgba(191, 255, 255, 0.12), rgba(50, 157, 175, 0.1) 55%, rgba(8, 36, 45, 0.18)) !important;
+  border: 1px solid rgba(178, 247, 246, 0.25) !important;
+  box-shadow: inset 0 1px 0 rgba(235, 255, 255, 0.12), 0 6px 18px rgba(0, 8, 14, 0.12);
+  backdrop-filter: blur(18px) saturate(165%);
+  -webkit-backdrop-filter: blur(18px) saturate(165%);
+}
+.dashboard-chart-tabs .btn-ghost,
+.dashboard-breakdown-tabs .btn-ghost {
+  color: rgba(220, 250, 251, 0.76) !important;
+  border-color: transparent !important;
+  background: transparent !important;
+}
+.dashboard-chart-tabs .btn-ghost:hover,
+.dashboard-breakdown-tabs .btn-ghost:hover {
+  color: #ecffff !important;
+  background: rgba(84, 221, 231, 0.12) !important;
+}
+.dashboard-chart-tabs .btn-accent,
+.dashboard-breakdown-tabs .btn-accent {
+  color: #05212a !important;
+  border-color: rgba(142, 255, 248, 0.78) !important;
+  background: linear-gradient(135deg, #8bf3ee, #3ad7c7) !important;
+  box-shadow: 0 0 14px rgba(74, 229, 198, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.55) !important;
+}
+
+/* Native month inputs use a browser-owned gray popup; use an aqua-glass picker instead. */
+.calendar-month-picker-wrap { position: relative; }
+.calendar-month-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid rgba(178, 247, 246, 0.25);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(191, 255, 255, 0.1), rgba(50, 157, 175, 0.08));
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.calendar-month-trigger:hover,
+.calendar-month-trigger[aria-expanded='true'] {
+  border-color: rgba(119, 239, 231, 0.58);
+  background: rgba(60, 196, 201, 0.16);
+  box-shadow: 0 0 12px rgba(74, 229, 198, 0.12);
+}
+.calendar-month-popover {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 236px;
+  padding: 12px;
+  border: 1px solid rgba(178, 247, 246, 0.32);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(22, 95, 109, 0.96), rgba(7, 39, 50, 0.97) 68%, rgba(9, 55, 61, 0.96));
+  color: #e8ffff;
+  box-shadow: 0 18px 42px rgba(0, 8, 14, 0.42), inset 0 1px 0 rgba(235, 255, 255, 0.18), 0 0 22px rgba(74, 229, 198, 0.1);
+  backdrop-filter: blur(24px) saturate(175%);
+  -webkit-backdrop-filter: blur(24px) saturate(175%);
+}
+.calendar-month-year-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px 9px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(178, 247, 246, 0.19);
+  font-size: 14px;
+  font-weight: 750;
+}
+.calendar-month-year-nav {
+  display: grid;
+  width: 28px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid rgba(178, 247, 246, 0.16);
+  border-radius: 7px;
+  background: rgba(191, 255, 255, 0.055);
+  color: rgba(232, 255, 255, 0.82);
+  cursor: pointer;
+}
+.calendar-month-year-nav:hover {
+  background: rgba(84, 221, 231, 0.18);
+  border-color: rgba(142, 255, 248, 0.38);
+}
+.calendar-month-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.calendar-month-option {
+  min-height: 32px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: rgba(191, 255, 255, 0.045);
+  color: rgba(232, 255, 255, 0.86);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+}
+.calendar-month-option:hover {
+  border-color: rgba(142, 255, 248, 0.3);
+  background: rgba(84, 221, 231, 0.16);
+  color: #fff;
+}
+.calendar-month-option.is-selected {
+  border-color: rgba(142, 255, 248, 0.78);
+  background: linear-gradient(135deg, #8bf3ee, #3ad7c7);
+  color: #05212a;
+  font-weight: 750;
+  box-shadow: 0 0 12px rgba(74, 229, 198, 0.22);
+}
+.calendar-this-month {
+  display: block;
+  margin: 9px 0 0 auto;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #9df2eb;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.calendar-this-month:hover {
+  border-color: rgba(142, 255, 248, 0.2);
+  background: rgba(84, 221, 231, 0.12);
+  color: #e8ffff;
+}

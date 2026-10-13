@@ -68,7 +68,8 @@ export default function EquityAndPnLCharts({ stats }) {
 
   const doughnutData = stats.breakdown || [];
   const pairData = (stats.pairPerformance || []).slice(0, 5);
-  const strokeColor = stats.netPnl >= 0 ? '#42d9ff' : '#ff4d5e';
+  const strokeColor = stats.netPnl >= 0 ? '#42d9ff' : '#ff7185';
+  const lossColor = '#ff7185';
   const equityCurveWithZeroCrossings = [];
   (stats.equityCurve || []).forEach((point, index, curve) => {
     const equity = Number(point.equity) || 0;
@@ -140,8 +141,8 @@ export default function EquityAndPnLCharts({ stats }) {
                     <stop offset="95%" stopColor={strokeColor} stopOpacity={0.0} />
                   </linearGradient>
                   <linearGradient id="equityLossGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ff6876" stopOpacity={0.5} />
-                    <stop offset="95%" stopColor="#ff6876" stopOpacity={0.12} />
+                    <stop offset="5%" stopColor={lossColor} stopOpacity={0.28} />
+                    <stop offset="95%" stopColor={lossColor} stopOpacity={0.035} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid stroke="rgba(255, 255, 255, 0.05)" vertical={false} />
@@ -150,8 +151,8 @@ export default function EquityAndPnLCharts({ stats }) {
                 <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(66, 217, 255, 0.2)', strokeWidth: 1 }} />
                 <Area type="monotone" dataKey="profitLine" stroke="none" fillOpacity={1} fill="url(#equityGrad)" />
                 <Area type="monotone" dataKey="lossLine" stroke="none" fillOpacity={1} fill="url(#equityLossGrad)" />
-                <Line type="monotone" dataKey="profitLine" stroke="#42d9ff" strokeWidth={2.8} dot={false} activeDot={false} />
-                <Line type="monotone" dataKey="lossLine" stroke="#ff4d5e" strokeWidth={2.8} dot={false} activeDot={false} />
+                <Line type="monotone" dataKey="profitLine" stroke="#42d9ff" strokeWidth={2} dot={false} activeDot={false} />
+                <Line type="monotone" dataKey="lossLine" stroke={lossColor} strokeWidth={2} dot={false} activeDot={false} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -248,7 +249,7 @@ export default function EquityAndPnLCharts({ stats }) {
             </h3>
             <p style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>Breakdown by execution result</p>
           </div>
-          <div style={{ display: 'flex', gap: 4, background: 'rgba(10, 16, 29, 0.7)', padding: 3, borderRadius: 8, border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+          <div className="dashboard-chart-tabs" style={{ display: 'flex', gap: 4, background: 'rgba(10, 16, 29, 0.7)', padding: 3, borderRadius: 8, border: '1px solid rgba(255, 255, 255, 0.06)' }}>
             <button
               className={`btn btn-sm ${activeTab === 'doughnut' ? 'btn-accent' : 'btn-ghost'}`}
               onClick={() => setActiveTab('doughnut')}

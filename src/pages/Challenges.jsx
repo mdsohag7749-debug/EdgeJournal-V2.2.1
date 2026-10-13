@@ -4,6 +4,7 @@ import { useData } from '../context/DataContext';
 import { useAccounts } from '../context/AccountContext';
 import { formatMoney, formatDate } from '../lib/utils';
 import { computeChallengeMetrics } from '../lib/challengeStats';
+import { prepareSuccessSound } from '../lib/feedbackSound';
 import ChallengeFormPanel from './panels/ChallengeFormPanel';
 import ConfirmDialog from '../components/ConfirmDialog';
 import AccountSwitcher from '../components/accounts/AccountSwitcher';
@@ -113,12 +114,12 @@ export default function Challenges({ onNavigate }) {
 
   const list = activeTab === 'active' ? activeChallenges : completedChallenges;
 
-  function handleSave(challenge) {
-    if (editing) {
-      challenges.update(editing.id, challenge);
-    } else {
-      challenges.add(challenge);
-    }
+  async function handleSave(challenge) {
+    const playSuccess = prepareSuccessSound();
+    const saved = editing
+      ? await challenges.update(editing.id, challenge)
+      : await challenges.add(challenge);
+    if (saved) playSuccess();
     setFormOpen(false);
     setEditing(null);
   }
@@ -128,9 +129,11 @@ export default function Challenges({ onNavigate }) {
     setFormOpen(true);
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!deleteTarget) return;
-    challenges.remove(deleteTarget.id);
+    const playSuccess = prepareSuccessSound();
+    const removed = await challenges.remove(deleteTarget.id);
+    if (removed) playSuccess();
     setDeleteTarget(null);
   }
 

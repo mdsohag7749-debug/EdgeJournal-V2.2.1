@@ -3,6 +3,7 @@ import { useData } from '../context/DataContext';
 import ReflectionFormPanel from './panels/ReflectionFormPanel';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { formatDate } from '../lib/utils';
+import { prepareSuccessSound } from '../lib/feedbackSound';
 import { Plus, Pencil, Trash2, MessageSquareText, Star } from 'lucide-react';
 
 const PERIODS = ['Daily', 'Weekly', 'Monthly', 'Quarterly'];
@@ -35,9 +36,10 @@ export default function Reflections() {
     setEditing(r);
     setPanelOpen(true);
   }
-  function handleSave(form) {
-    if (editing) reflections.update(editing.id, form);
-    else reflections.add(form);
+  async function handleSave(form) {
+    const playSuccess = prepareSuccessSound();
+    const saved = editing ? await reflections.update(editing.id, form) : await reflections.add(form);
+    if (saved) playSuccess();
     setPanelOpen(false);
   }
 
@@ -123,8 +125,10 @@ export default function Reflections() {
         title="Delete reflection?"
         message="This will permanently remove this reflection entry."
         onCancel={() => setConfirmId(null)}
-        onConfirm={() => {
-          reflections.remove(confirmId);
+        onConfirm={async () => {
+          const playSuccess = prepareSuccessSound();
+          const removed = await reflections.remove(confirmId);
+          if (removed) playSuccess();
           setConfirmId(null);
         }}
       />

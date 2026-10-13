@@ -372,7 +372,7 @@ export default function AdminSubscriptions() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }} data-testid="admin-subscriptions-page">
       {/* Informational Scope Notice */}
       <div
         className="card"

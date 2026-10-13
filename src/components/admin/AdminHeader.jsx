@@ -54,7 +54,7 @@ export default function AdminHeader({ title = 'Overview', subtitle = 'Platform h
               {title}
             </h1>
             <span
-              className="tag tag-red"
+              className="tag admin-role-badge"
               style={{
                 fontSize: 11,
                 padding: '2px 8px',
@@ -122,6 +122,7 @@ export default function AdminHeader({ title = 'Overview', subtitle = 'Platform h
 
         {/* Current Admin Identity */}
         <div
+          className="admin-identity-chip"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -150,7 +151,7 @@ export default function AdminHeader({ title = 'Overview', subtitle = 'Platform h
                 width: 28,
                 height: 28,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, var(--red), var(--red-strong))',
+                background: 'linear-gradient(135deg, var(--cyan), var(--teal))',
                 color: '#fff',
                 fontSize: 11,
                 fontWeight: 700,

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, memo, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAccounts } from '../context/AccountContext';
 import { useAuth } from '../context/AuthContext';
@@ -359,6 +360,9 @@ const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, 
 });
 
 export default function TradingJournal() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const searchInputRef = useRef(null);
   const { trades, plans, tagLibrary } = useData();
   const { accounts, getAccountName, selectedAccountId, preferredAccountId } = useAccounts();
   const { user } = useAuth();
@@ -380,6 +384,11 @@ export default function TradingJournal() {
 
   // ---- Feature 1 & 2: search + advanced filters
   const [query, setQuery] = useState('');
+  useEffect(() => {
+    if (!location.state?.focusJournalSearch) return;
+    requestAnimationFrame(() => searchInputRef.current?.focus());
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
   const [filters, setFilters] = useState(BLANK_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
@@ -843,6 +852,7 @@ export default function TradingJournal() {
           <div style={{ position: 'relative', flex: '1 1 240px', minWidth: 200 }}>
             <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', pointerEvents: 'none' }} />
             <input
+              ref={searchInputRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}

@@ -4,6 +4,7 @@ import StudyFormPanel from './panels/StudyFormPanel';
 import Lightbox from '../components/Lightbox';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { formatDate } from '../lib/utils';
+import { prepareSuccessSound } from '../lib/feedbackSound';
 import { Plus, Pencil, Trash2, GraduationCap } from 'lucide-react';
 
 const FILTERS = ['All', 'Daily', 'Weekly', 'Monthly', 'Asia', 'London', 'NYAM', 'NY Lunch', 'NYPM'];
@@ -29,9 +30,10 @@ export default function Study() {
     setEditing(s);
     setPanelOpen(true);
   }
-  function handleSave(form) {
-    if (editing) study.update(editing.id, form);
-    else study.add(form);
+  async function handleSave(form) {
+    const playSuccess = prepareSuccessSound();
+    const saved = editing ? await study.update(editing.id, form) : await study.add(form);
+    if (saved) playSuccess();
     setPanelOpen(false);
   }
 
@@ -117,8 +119,10 @@ export default function Study() {
         title="Delete study entry?"
         message="This will permanently remove this entry and its screenshot."
         onCancel={() => setConfirmId(null)}
-        onConfirm={() => {
-          study.remove(confirmId);
+        onConfirm={async () => {
+          const playSuccess = prepareSuccessSound();
+          const removed = await study.remove(confirmId);
+          if (removed) playSuccess();
           setConfirmId(null);
         }}
       />

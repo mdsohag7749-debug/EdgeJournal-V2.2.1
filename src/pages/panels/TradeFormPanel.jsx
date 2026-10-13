@@ -58,7 +58,7 @@ const PSYCH_EMOTIONS = [
 function Section({ icon, title, accent = { bg: 'rgba(255,255,255,0.06)', fg: 'var(--text-muted)' }, children }) {
   return (
     <div
-      className="card"
+      className={`card trade-form-section trade-form-section-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
       style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12, background: 'var(--card)' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -339,6 +339,7 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
     <SidePanel
       open={open}
       onClose={onClose}
+      panelClassName="trade-form-side-panel"
       title={initial ? 'Edit Trade' : 'Log Trade'}
       subtitle="Fill the essentials — everything else is calculated for you"
       width="wide"

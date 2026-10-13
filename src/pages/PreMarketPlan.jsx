@@ -4,6 +4,7 @@ import PlanFormPanel from './panels/PlanFormPanel';
 import Lightbox from '../components/Lightbox';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { formatDate } from '../lib/utils';
+import { prepareSuccessSound } from '../lib/feedbackSound';
 import { Plus, ChevronDown, Pencil, Trash2, Sunrise, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 const BIAS_ICON = { Bullish: TrendingUp, Bearish: TrendingDown, Neutral: Minus };
@@ -27,9 +28,10 @@ export default function PreMarketPlan() {
     setEditing(plan);
     setPanelOpen(true);
   }
-  function handleSave(form) {
-    if (editing) plans.update(editing.id, form);
-    else plans.add(form);
+  async function handleSave(form) {
+    const playSuccess = prepareSuccessSound();
+    const saved = editing ? await plans.update(editing.id, form) : await plans.add(form);
+    if (saved) playSuccess();
     setPanelOpen(false);
   }
   function toggleExpand(id) {
@@ -124,8 +126,10 @@ export default function PreMarketPlan() {
         title="Delete pre-market plan?"
         message="This will permanently remove this plan and its screenshots."
         onCancel={() => setConfirmId(null)}
-        onConfirm={() => {
-          plans.remove(confirmId);
+        onConfirm={async () => {
+          const playSuccess = prepareSuccessSound();
+          const removed = await plans.remove(confirmId);
+          if (removed) playSuccess();
           setConfirmId(null);
         }}
       />
