@@ -86,6 +86,7 @@ export default function Register() {
   if (registered) {
     return (
       <AuthLayout
+        mode="register"
         eyebrow="Almost there"
         title="Confirm your email"
         subtitle={`We sent a confirmation link to ${form.email || 'your inbox'}.`}
@@ -118,17 +119,7 @@ export default function Register() {
     );
   }
 
-  return (
-    <AuthLayout
-      eyebrow="Get started"
-      title="Create your account"
-      subtitle="Start journaling your trades and building your edge."
-      footer={
-        <p className="auth-footer-note">
-          Already have an account? <Link to="/login">Sign in</Link>
-        </p>
-      }
-    >
+  const registrationForm = (
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <FormField
           id="register-name"
@@ -205,6 +196,21 @@ export default function Register() {
         <div className="auth-divider">Or continue with</div>
         <SocialButtons />
       </form>
+  );
+
+  return (
+    <AuthLayout
+      mode="register"
+      eyebrow="Get started"
+      title="Create your account"
+      subtitle="Start journaling your trades and building your edge."
+      footer={
+        <p className="auth-footer-note">
+          Already have an account? <Link to="/login">Sign in</Link>
+        </p>
+      }
+    >
+      {registrationForm}
     </AuthLayout>
   );
 }

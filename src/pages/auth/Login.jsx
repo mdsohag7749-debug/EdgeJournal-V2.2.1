@@ -53,6 +53,8 @@ export default function Login() {
   return (
     <>
       <AuthLayout
+        compact
+      mode="login"
         eyebrow="Welcome back"
         title="Sign in to EdgeJournal"
         subtitle="Log in to keep your trading journal up to date."
@@ -92,7 +94,7 @@ export default function Login() {
             <input type="checkbox" checked={form.remember} onChange={(e) => set('remember', e.target.checked)} />
             Remember me
           </label>
-          <Link to="/forgot-password" style={{ fontSize: 13, fontWeight: 600, color: 'var(--red)', textDecoration: 'none' }}>
+          <Link to="/forgot-password" style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>
             Forgot password?
           </Link>
         </div>

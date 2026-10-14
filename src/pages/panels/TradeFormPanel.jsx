@@ -16,6 +16,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import SidePanel from '../../components/SidePanel';
+import GlassDateTimePicker from '../../components/GlassDateTimePicker';
 import ImageUpload from '../../components/ImageUpload';
 import { TradeScreenshotManager } from '../../components/TradeScreenshots';
 import { useData } from '../../context/DataContext';
@@ -134,7 +135,10 @@ function PsychRating({ emotion, value, onChange }) {
   const borderColor = pos ? 'rgba(47,214,110,0.4)' : 'rgba(255,77,94,0.4)';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>{emotion.key}</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 18 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>{emotion.key}</span>
+        {!!value && <button type="button" onClick={() => onChange(null)} aria-label={`Clear ${emotion.key} rating`} style={{ padding: '1px 5px', border: '1px solid rgba(66,217,255,0.25)', borderRadius: 5, background: 'rgba(66,217,255,0.08)', color: '#42d9ff', fontSize: 9.5, cursor: 'pointer' }}>Clear</button>}
+      </div>
       <div style={{ display: 'flex', gap: 5 }}>
         {[1, 2, 3, 4, 5].map((n) => {
           const active = (value || 0) >= n;
@@ -142,7 +146,7 @@ function PsychRating({ emotion, value, onChange }) {
             <button
               key={n}
               type="button"
-              onClick={() => onChange(n)}
+              onClick={() => onChange(value === n ? null : n)}
               aria-label={`${emotion.key} ${n} of 5`}
               aria-pressed={active}
               style={{
@@ -275,7 +279,9 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
   function setPsych(key, value) {
     const clamp = (n) => Math.min(5, Math.max(1, Number.isFinite(Number(n)) ? Number(n) : 1));
     setForm((f) => {
-      const next = { ...(f.psychology || {}), [key]: clamp(value) };
+      const next = { ...(f.psychology || {}) };
+      if (value === null) delete next[key];
+      else next[key] = clamp(value);
       return { ...f, psychology: next };
     });
     setErrors((e) => (e.psychology ? { ...e, psychology: undefined } : e));
@@ -432,7 +438,7 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
           </div>
         </div>
 
-        <div className="trade-form-grid" style={{ gridTemplateColumns: '1.02fr 0.98fr', gap: 16, alignItems: 'start' }}>
+        <div className="trade-form-grid" style={{ display: 'grid', gridTemplateColumns: '1.02fr 0.98fr', gap: 16, alignItems: 'start' }}>
           {/* LEFT: mechanics */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <Section icon={<Building2 size={14} />} title="Account">
@@ -531,18 +537,23 @@ export default function TradeFormPanel({ open, onClose, onSave, initial }) {
                   </div>
                 </div>
               </div>
-              <div className="field-row cols-3">
+              <div className="field-row cols-4">
                 <div className="field">
-                  <label htmlFor="trade-date">Date</label>
-                  <input id="trade-date" type="date" value={form.date} onChange={(e) => set('date', e.target.value)} />
+                  <label htmlFor="trade-date">Entry Date</label>
+                  <GlassDateTimePicker id="trade-date" label="Entry Date" type="date" value={form.date} onChange={(value) => set('date', value)} />
                 </div>
                 <div className="field">
                   <label htmlFor="trade-entry-time">Entry Time</label>
-                  <input id="trade-entry-time" type="time" value={form.entryTime} onChange={(e) => set('entryTime', e.target.value)} />
+                  <GlassDateTimePicker id="trade-entry-time" label="Entry Time" type="time" value={form.entryTime} onChange={(value) => set('entryTime', value)} />
+                </div>
+                <div className="field">
+                  <label htmlFor="trade-exit-date">Exit Date</label>
+                  <GlassDateTimePicker id="trade-exit-date" label="Exit Date" type="date" value={form.exitDate} onChange={(value) => set('exitDate', value)} />
+                  {errors.exitDate && <span className="auth-error-text">{errors.exitDate}</span>}
                 </div>
                 <div className="field">
                   <label htmlFor="trade-exit-time">Exit Time</label>
-                  <input id="trade-exit-time" type="time" value={form.exitTime} onChange={(e) => set('exitTime', e.target.value)} />
+                  <GlassDateTimePicker id="trade-exit-time" label="Exit Time" type="time" value={form.exitTime} onChange={(value) => set('exitTime', value)} />
                 </div>
               </div>
             </Section>

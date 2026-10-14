@@ -45,6 +45,18 @@ const STATUS_OPTIONS = [
   { value: 'cancelled', label: 'Cancelled' },
 ];
 
+const assignControlStyle = {
+  width: '100%',
+  minHeight: 42,
+  boxSizing: 'border-box',
+  padding: '0 12px',
+  color: '#e8fbff',
+  background: 'rgba(13, 63, 76, 0.7)',
+  border: '1px solid rgba(178, 247, 246, 0.24)',
+  borderRadius: 10,
+  colorScheme: 'dark',
+};
+
 function formatDate(isoString) {
   if (!isoString) return 'Never / None';
   const d = new Date(isoString);
@@ -1272,18 +1284,27 @@ export default function AdminSubscriptions() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="card"
+              className="card admin-assign-modal"
               style={{
                 width: '100%',
-                maxWidth: 500,
+                maxWidth: 540,
+                maxHeight: 'min(88vh, 760px)',
+                overflowY: 'auto',
                 padding: '24px 28px',
-                background: 'var(--bg-elevated)',
+                background: 'linear-gradient(145deg, rgba(7, 48, 61, 0.98), rgba(8, 31, 44, 0.98))',
+                border: '1px solid rgba(142, 255, 248, 0.38)',
+                boxShadow: '0 24px 80px rgba(0, 8, 18, 0.55), inset 0 1px 0 rgba(220, 255, 255, 0.12)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>
-                  {targetSub ? 'Change User Subscription' : 'Assign Subscription'}
-                </h3>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid rgba(178, 247, 246, 0.16)' }}>
+                <div>
+                  <h3 style={{ fontSize: 19, fontWeight: 750, margin: '0 0 5px' }}>
+                    {targetSub ? 'Change User Subscription' : 'Assign Subscription'}
+                  </h3>
+                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 12.5 }}>
+                    Choose a user, plan, and access status.
+                  </p>
+                </div>
                 <button
                   onClick={() => setIsAssignModalOpen(false)}
                   className="btn btn-ghost btn-sm"
@@ -1322,7 +1343,7 @@ export default function AdminSubscriptions() {
                     Select User *
                   </label>
                   <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-                    <div style={{ position: 'relative', flex: 1 }}>
+                    <div style={{ position: 'relative', flex: 1, width: '100%' }}>
                       <Search
                         size={14}
                         style={{
@@ -1344,7 +1365,7 @@ export default function AdminSubscriptions() {
                           setUserSearch(e.target.value);
                           loadAllUsers(e.target.value);
                         }}
-                        style={{ paddingLeft: 32, fontSize: 13 }}
+                        style={{ paddingLeft: 32, fontSize: 13, height: 42, width: '100%', boxSizing: 'border-box' }}
                         autoComplete="off"
                       />
                     </div>
@@ -1355,8 +1376,7 @@ export default function AdminSubscriptions() {
                     value={assignForm.userId}
                     onChange={(e) => setAssignForm({ ...assignForm, userId: e.target.value })}
                     required
-                    size={Math.min(5, allUsers.length + 1)}
-                    style={{ width: '100%', fontSize: 13, minHeight: 80 }}
+                    style={{ ...assignControlStyle, fontSize: 13, marginTop: 2 }}
                     aria-label="Select user for subscription assignment"
                   >
                     <option value="">— choose a user —</option>
@@ -1417,6 +1437,7 @@ export default function AdminSubscriptions() {
                     required
                     id="assign-plan-select"
                     disabled={plans.length === 0}
+                    style={assignControlStyle}
                   >
                     {plans.length === 0 ? (
                       <option value="">— no plans available —</option>
@@ -1440,6 +1461,7 @@ export default function AdminSubscriptions() {
                     onChange={(e) => setAssignForm({ ...assignForm, status: e.target.value })}
                     required
                     id="assign-status-select"
+                    style={assignControlStyle}
                   >
                     <option value="active">Active (Full access)</option>
                     <option value="trialing">Trialing</option>
@@ -1458,6 +1480,7 @@ export default function AdminSubscriptions() {
                     value={assignForm.expiresAt}
                     onChange={(e) => setAssignForm({ ...assignForm, expiresAt: e.target.value })}
                     id="assign-expiry-input"
+                    style={assignControlStyle}
                   />
                   <span style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4, display: 'block' }}>
                     Leave blank for permanent or ongoing admin-managed entitlement.

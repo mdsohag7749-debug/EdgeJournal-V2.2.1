@@ -131,19 +131,27 @@ export function computeDerived(form) {
   let result = '';
   if (hasEntry && hasExit) result = pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'BE';
 
-  // Trade duration (HH:MM)
+  // Trade duration includes calendar days so multi-day swing trades are accurate.
   let duration = '';
   if (form.entryTime && form.exitTime) {
-    const toMin = (t) => {
-      const [h, m] = t.split(':').map(Number);
-      return h * 60 + m;
-    };
-    let diff = toMin(form.exitTime) - toMin(form.entryTime);
-    if (diff < 0) diff += 24 * 60;
+    const entryDate = form.date || form.entryDate;
+    const exitDate = form.exitDate || entryDate;
+    const entryStamp = new Date(`${entryDate}T${form.entryTime}:00`);
+    const exitStamp = new Date(`${exitDate}T${form.exitTime}:00`);
+    let diff = Math.floor((exitStamp.getTime() - entryStamp.getTime()) / 60000);
+    if (Number.isNaN(diff)) {
+      const toMin = (t) => {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+      };
+      diff = toMin(form.exitTime) - toMin(form.entryTime);
+      if (diff < 0) diff += 24 * 60;
+    }
     if (diff > 0) {
-      const h = Math.floor(diff / 60);
+      const days = Math.floor(diff / (24 * 60));
+      const h = Math.floor((diff % (24 * 60)) / 60);
       const m = diff % 60;
-      duration = h > 0 ? `${h}h ${m}m` : `${m}m`;
+      duration = days > 0 ? `${days}d ${h}h ${m}m` : h > 0 ? `${h}h ${m}m` : `${m}m`;
     }
   }
 
@@ -167,6 +175,10 @@ export function computeDerived(form) {
 
 export function validateTrade(form) {
   const errors = {};
+
+  if (form.date && form.exitDate && form.exitDate < form.date) {
+    errors.exitDate = 'Exit date must be on or after entry date';
+  }
   if (!form.accountId) errors.accountId = 'Select an account for this trade';
 
   const riskPct = num(form.riskPercent);
@@ -206,6 +218,7 @@ export function validateTrade(form) {
 export const BLANK = {
   accountId: '',
   date: todayISO(),
+  exitDate: todayISO(),
   entryTime: '',
   exitTime: '',
   instrument: 'EURUSD',

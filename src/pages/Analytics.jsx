@@ -117,9 +117,8 @@ function useSectionSpy(groups, enabled) {
   const scrollTo = useCallback(
     (key) => {
       setActiveKey(key);
-      const el = sections.current[key];
-      if (el && typeof el.scrollIntoView === 'function') {
-        el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
       }
     },
     []
@@ -182,7 +181,7 @@ function PerformanceBarChart({ data, xKey }) {
           <CartesianGrid stroke="var(--border)" vertical={false} />
           <XAxis dataKey={xKey} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border-strong)' }} tickLine={false} />
           <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatMoneyShort(v)} width={64} />
-          <Tooltip content={<MoneyBarTooltip />} />
+          <Tooltip content={<MoneyBarTooltip />} cursor={false} />
           <Bar dataKey="netPnl" radius={[4, 4, 0, 0]}>
             {data.map((d, i) => (
               <Cell key={i} fill={d.netPnl >= 0 ? WIN_COLOR : LOSS_COLOR} />
@@ -412,23 +411,10 @@ export default function Analytics({ onNavigate }) {
   const { allAccounts, selectedAccount, accounts } = useAccounts();
   const a = useMemo(() => computeAnalytics(trades.items), [trades.items]);
 
-  const { activeKey, register, scrollTo } = useSectionSpy(GROUPS, trades.items.length > 0);
+  const { activeKey, register, scrollTo } = useSectionSpy(GROUPS, false);
 
-  const [expanded, setExpanded] = useState(() => Object.fromEntries(GROUPS.map((g) => [g.key, true])));
-
-  const handleToggle = useCallback((key) => {
-    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
-  }, []);
-
-  // Tree / selector click: expand the folder (if collapsed) and smooth-scroll
-  // to it. Never reloads the page and never triggers AI.
-  const handleSelect = useCallback(
-    (key) => {
-      setExpanded((prev) => ({ ...prev, [key]: true }));
-      scrollTo(key);
-    },
-    [scrollTo]
-  );
+  // Select one analytics section and return the page to its header.
+  const handleSelect = useCallback((key) => scrollTo(key), [scrollTo]);
 
   const scopeLabel = allAccounts ? 'All Accounts' : selectedAccount?.name || (accounts.length ? accounts[0].name : 'This account');
 
@@ -447,21 +433,18 @@ export default function Analytics({ onNavigate }) {
   return (
     <div className="analytics-page">
       <div className="analytics-layout">
-        <AnalyticsTree groups={GROUPS} activeKey={activeKey} expanded={expanded} onSelect={handleSelect} />
+        <AnalyticsTree groups={GROUPS} activeKey={activeKey} onSelect={handleSelect} />
 
         <div className="analytics-content">
           <AnalyticsSectionSelector groups={GROUPS} activeKey={activeKey} onSelect={handleSelect} />
 
           <AnalyticsHeader scopeLabel={scopeLabel} />
 
-          {GROUPS.map((g, order) => (
+          {GROUPS.filter((g) => g.key === activeKey).map((g) => (
             <AnalyticsSection
               key={g.key}
               group={g}
-              expanded={expanded[g.key]}
-              onToggle={() => handleToggle(g.key)}
               registerSection={register}
-              order={order + 1}
             >
               <GroupContent groupKey={g.key} a={a} onNavigate={onNavigate} />
             </AnalyticsSection>

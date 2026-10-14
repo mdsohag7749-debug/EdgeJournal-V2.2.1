@@ -5,6 +5,8 @@ import AuthVisual from './AuthVisual';
 import AnimatedBrandSection from './AnimatedBrandSection';
 import AuthFAQ from './AuthFAQ';
 import { TRADING_QUOTES } from '../../lib/quotes';
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 
 const EASE = [0.22, 1, 0.36, 1];
 
@@ -37,7 +39,7 @@ const FEATURES = [
   },
 ];
 
-export default function AuthLayout({ eyebrow, title, subtitle, children, footer, headline, headlineText }) {
+export default function AuthLayout({ eyebrow, title, subtitle, children, footer, headline, headlineText, compact = false, mode }) {
   const reduceMotion = useReducedMotion();
   const heroRef = useRef(null);
 
@@ -66,6 +68,58 @@ export default function AuthLayout({ eyebrow, title, subtitle, children, footer,
     headlineText ||
     'EdgeJournal captures your execution, discipline, performance, and the decisions behind every trade — so patterns become measurable and the edge compounds.';
 
+  if (mode) {
+    const isRegister = mode === 'register';
+    const isForgot = mode === 'forgot';
+    const formPanel = (
+      <motion.section
+        layoutId="edgejournal-auth-form-panel"
+        layout="position"
+        transition={{ type: 'spring', stiffness: 280, damping: 30, mass: 0.9 }}
+        className={`auth-split-form${isRegister ? ' is-register' : isForgot ? ' is-forgot' : ' is-login'}`}
+        aria-label={isRegister ? 'Create account' : isForgot ? 'Reset password' : 'Sign in'}
+      >
+        <div className="auth-split-form-heading">
+          <span>{eyebrow || (isRegister ? 'GET STARTED' : 'WELCOME BACK')}</span>
+          <h1>{title}</h1>
+          {subtitle && <p>{subtitle}</p>}
+        </div>
+        <div className="auth-panel-form">{children}</div>
+        {footer && <div className="auth-panel-footer">{footer}</div>}
+      </motion.section>
+    );
+    const welcomePanel = (
+      <motion.aside
+        layoutId="edgejournal-auth-welcome-panel"
+        layout="position"
+        transition={{ type: 'spring', stiffness: 280, damping: 30, mass: 0.9 }}
+        className={`auth-split-welcome${isRegister ? ' is-welcome' : ' is-hello'}`}
+      >
+        <div>
+          <h2>{isRegister ? <>Welcome<br />back!</> : isForgot ? <>Password<br />recovery</> : <>Hello,<br />friend!</>}</h2>
+          <p>{isRegister ? 'Already a member? Please log in with your credentials.' : isForgot ? 'We’ll help you get back into your account.' : 'Enter your personal details and start your journey with us.'}</p>
+          <Link className="auth-split-switch" to={isRegister || isForgot ? '/login' : '/register'}>
+            {isRegister || isForgot ? 'Sign in' : 'Create account'} <ArrowRight size={14} />
+          </Link>
+        </div>
+      </motion.aside>
+    );
+
+    return (
+      <main className="auth-landing auth-split-page">
+        <div className="auth-split-brand"><span className="auth-brand-mark"><TrendingUp size={17} /></span><span className="auth-brand-name">EdgeJournal</span></div>
+        <motion.div
+          layoutId="edgejournal-auth-card"
+          layout
+          transition={{ type: 'spring', stiffness: 280, damping: 30, mass: 0.9 }}
+          className={`auth-split-card ${isRegister ? 'auth-split-register' : 'auth-split-login'}`}
+        >
+          {isRegister ? <>{welcomePanel}{formPanel}</> : <>{formPanel}{welcomePanel}</>}
+        </motion.div>
+      </main>
+    );
+  }
+
   const chipContainer = {
     hidden: {},
     show: {
@@ -78,7 +132,7 @@ export default function AuthLayout({ eyebrow, title, subtitle, children, footer,
   };
 
   return (
-    <div className="auth-landing">
+    <div className={`auth-landing${compact ? ' auth-landing-compact' : ''}`}>
       {/* ---- Layer 1: fixed background (subtle scroll parallax) ---- */}
       <motion.div
         className="auth-bg"
@@ -206,7 +260,7 @@ export default function AuthLayout({ eyebrow, title, subtitle, children, footer,
           </div>
         </div>
 
-        <motion.div
+        {!compact && <motion.div
           className="auth-scroll-cue"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -214,9 +268,10 @@ export default function AuthLayout({ eyebrow, title, subtitle, children, footer,
           aria-hidden="true"
         >
           <ChevronDown size={18} />
-        </motion.div>
+        </motion.div>}
       </motion.section>
 
+      {!compact && <>
       {/* Supporting visual — decorative market/journal composition */}
       <section className="auth-visual-band" aria-label="What EdgeJournal records">
         <div className="auth-visual-wrap">
@@ -348,6 +403,7 @@ export default function AuthLayout({ eyebrow, title, subtitle, children, footer,
           </div>
         </div>
       </footer>
+      </>}
     </div>
   );
 }

@@ -35,6 +35,7 @@ export default function ForgotPassword() {
   if (sent) {
     return (
       <AuthLayout
+        mode="forgot"
         eyebrow="Check your email"
         title="Reset link sent"
         subtitle={`If an account exists for ${email || 'that address'}, a reset link is on its way.`}
@@ -72,6 +73,7 @@ export default function ForgotPassword() {
 
   return (
     <AuthLayout
+      mode="forgot"
       eyebrow="Reset password"
       title="Forgot your password?"
       subtitle="Enter the email tied to your account and we'll send you a reset link."

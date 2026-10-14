@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   CreditCard,
@@ -14,10 +13,9 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { fetchActivePlans } from '../lib/subscriptionApi';
 import {
-  DEFAULT_FREE_PLAN,
   KNOWN_FEATURES,
+  PUBLIC_PLAN_CATALOG,
   formatPlanPrice,
 } from '../lib/entitlements';
 
@@ -41,27 +39,6 @@ export default function Subscription() {
     planLimits,
     isSubscriptionActive,
   } = useAuth();
-
-  const [availablePlans, setAvailablePlans] = useState([]);
-  const [loadingPlans, setLoadingPlans] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-    fetchActivePlans()
-      .then((data) => {
-        if (mounted) setAvailablePlans(data);
-      })
-      .catch((err) => {
-        console.warn('Could not load plan list:', err);
-      })
-      .finally(() => {
-        if (mounted) setLoadingPlans(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   const activePlanName = currentPlan?.name || 'Free';
   const isFreePlan = currentPlan?.slug === 'free';
@@ -267,11 +244,6 @@ export default function Subscription() {
           </p>
         </div>
 
-        {loadingPlans ? (
-          <div className="card" style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
-            Loading available plans…
-          </div>
-        ) : (
           <div
             style={{
               display: 'grid',
@@ -279,7 +251,7 @@ export default function Subscription() {
               gap: 20,
             }}
           >
-            {(availablePlans.length > 0 ? availablePlans : [DEFAULT_FREE_PLAN]).map((plan) => {
+            {PUBLIC_PLAN_CATALOG.map((plan) => {
               const isCurrent = currentPlan?.slug === plan.slug;
 
               return (
@@ -319,23 +291,12 @@ export default function Subscription() {
                         Tier Capabilities:
                       </div>
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <li style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <Check size={14} color="var(--green)" />
-                          <span>Up to {plan.limits?.accounts ?? 1} Trading Accounts</span>
-                        </li>
-                        <li style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <Check size={14} color="var(--green)" />
-                          <span>Up to {(plan.limits?.trades ?? 500).toLocaleString()} Trades</span>
-                        </li>
-                        {(plan.features || []).map((featId) => {
-                          const meta = KNOWN_FEATURES.find((f) => f.id === featId);
-                          return (
-                            <li key={featId} style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {(plan.highlights || []).map((highlight) => (
+                            <li key={highlight} style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
                               <Check size={14} color="var(--green)" />
-                              <span>{meta ? meta.label : featId}</span>
+                              <span>{highlight}</span>
                             </li>
-                          );
-                        })}
+                        ))}
                       </ul>
                     </div>
                   </div>
@@ -369,7 +330,6 @@ export default function Subscription() {
               );
             })}
           </div>
-        )}
       </div>
     </div>
   );

@@ -74,9 +74,10 @@ export default function Goals() {
               className="btn btn-sm"
               onClick={() => setPeriodFilter(p)}
               style={{
-                background: periodFilter === p ? 'var(--red)' : 'transparent',
-                color: periodFilter === p ? '#fff' : 'var(--text-muted)',
-                border: periodFilter === p ? '1px solid var(--red)' : '1px solid var(--border)',
+                background: periodFilter === p ? 'linear-gradient(135deg, #8bf3ee, #3ad7c7)' : 'rgba(45, 145, 162, 0.11)',
+                color: periodFilter === p ? '#05212a' : 'var(--text-muted)',
+                border: periodFilter === p ? '1px solid rgba(142, 255, 248, 0.78)' : '1px solid rgba(178, 247, 246, 0.18)',
+                boxShadow: periodFilter === p ? '0 0 14px rgba(74, 229, 198, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.5)' : 'none',
               }}
             >
               {p}

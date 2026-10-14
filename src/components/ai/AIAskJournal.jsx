@@ -71,7 +71,7 @@ const EXAMPLE_PROMPTS = [
   'What should I improve next?',
 ];
 
-const RED = '#c1121f';
+const RED = '#42d9ff';
 
 const chipBase = {
   padding: '6px 12px',
@@ -86,8 +86,8 @@ const chipBase = {
   whiteSpace: 'nowrap',
 };
 const chipActive = {
-  background: 'rgba(193,18,31,0.14)',
-  borderColor: 'rgba(193,18,31,0.45)',
+  background: 'rgba(66,217,255,0.14)',
+  borderColor: 'rgba(66,217,255,0.45)',
   color: 'var(--text)',
 };
 
@@ -100,7 +100,7 @@ function FilterSelect({ label, options, value, onChange, disabled }) {
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         style={{
-          background: 'var(--bg-elevated, rgba(255,255,255,0.02))',
+          background: 'rgba(10, 124, 145, 0.24)',
           border: '1px solid var(--border)',
           borderRadius: 8,
           color: 'var(--text)',
@@ -326,7 +326,7 @@ export default function AIAskJournal({ provider, accountIdOverride, accountNameO
               Turn your trading history into actionable insight. Ask any question about your recorded journal — answers come only from the selected account's data, never from market predictions.
             </p>
           </div>
-          <div role="group" aria-label="Ask journal period" style={{ display: 'inline-flex', gap: 4, padding: 3, borderRadius: 11, border: '1px solid var(--border)', background: 'var(--bg-elevated, rgba(255,255,255,0.02))', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <div role="group" aria-label="Ask journal period" style={{ display: 'inline-flex', gap: 4, padding: 3, borderRadius: 11, border: '1px solid rgba(66,217,255,0.3)', background: 'rgba(10, 124, 145, 0.24)', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             {PERIODS.map((p) => (
               <button key={p.value} type="button" onClick={() => setPeriod(p.value)} disabled={busy} style={{ ...chipBase, ...(period === p.value ? chipActive : {}) }}>
                 {p.label}
@@ -371,7 +371,7 @@ export default function AIAskJournal({ provider, accountIdOverride, accountNameO
               style={{
                 flex: 1,
                 minWidth: 260,
-                background: 'var(--bg-elevated, rgba(255,255,255,0.02))',
+                background: 'rgba(10, 124, 145, 0.24)',
                 border: '1.5px solid var(--border)',
                 borderRadius: 10,
                 color: 'var(--text)',
@@ -400,7 +400,7 @@ export default function AIAskJournal({ provider, accountIdOverride, accountNameO
                 onClick={() => setQuestion(p)}
                 disabled={busy}
                 aria-label={`Try example: ${p}`}
-                style={{ ...chipBase, border: '1px solid var(--border)', color: 'var(--text-faint)', background: 'var(--bg-elevated, rgba(255,255,255,0.01))', ...(question === p ? chipActive : {}) }}
+                style={{ ...chipBase, border: '1px solid rgba(66,217,255,0.22)', color: 'var(--text-faint)', background: 'rgba(10, 124, 145, 0.2)', ...(question === p ? chipActive : {}) }}
               >
                 {p}
               </button>

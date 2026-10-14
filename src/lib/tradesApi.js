@@ -9,6 +9,7 @@ import { ledgerFromRow } from './accountStats';
 
 const TEXT_FIELDS = {
   date: 'date',
+  exitDate: 'exit_date',
   entryTime: 'entry_time',
   exitTime: 'exit_time',
   instrument: 'instrument',
@@ -113,6 +114,7 @@ export function fromTradeRow(row) {
   return {
     id: row.id,
     date: row.date,
+    exitDate: row.exit_date || row.date || '',
     entryTime: row.entry_time || '',
     exitTime: row.exit_time || '',
     instrument: row.instrument || '',

@@ -5,9 +5,7 @@
 // rows trick so no JS measurement loop is needed, and is fully inert under
 // prefers-reduced-motion.
 
-import { ChevronDown, Folder, FolderOpen } from 'lucide-react';
-
-export default function AnalyticsSection({ group, expanded, onToggle, registerSection, order, children }) {
+export default function AnalyticsSection({ group, registerSection, children }) {
   return (
     <section
       id={group.id}
@@ -15,14 +13,10 @@ export default function AnalyticsSection({ group, expanded, onToggle, registerSe
       ref={registerSection(group.key)}
       className="analytics-group"
       aria-labelledby={`${group.id}-heading`}
-      style={{ '--order': order }}
     >
       <div className="analytics-group-headrow">
         <span className="analytics-group-index" aria-hidden>
           {group.index}
-        </span>
-        <span className="analytics-group-folder" aria-hidden>
-          {expanded ? <FolderOpen size={15} /> : <Folder size={15} />}
         </span>
         <div className="analytics-group-head">
           <h3 id={`${group.id}-heading`} className="analytics-group-title">
@@ -30,23 +24,8 @@ export default function AnalyticsSection({ group, expanded, onToggle, registerSe
           </h3>
           <span className="analytics-group-eyebrow">{group.eyebrow}</span>
         </div>
-        <button
-          type="button"
-          className="analytics-group-toggle"
-          aria-expanded={expanded}
-          aria-controls={`${group.id}-panel`}
-          aria-label={`${expanded ? 'Collapse' : 'Expand'} ${group.title}`}
-          onClick={() => onToggle()}
-        >
-          <ChevronDown size={15} aria-hidden />
-        </button>
       </div>
-
-      <div id={`${group.id}-panel`} className={`analytics-fold${expanded ? '' : ' analytics-fold-closed'}`}>
-        <div className="analytics-fold-inner">
-          <div className="analytics-group-body">{children}</div>
-        </div>
-      </div>
+      <div className="analytics-group-body">{children}</div>
     </section>
   );
 }

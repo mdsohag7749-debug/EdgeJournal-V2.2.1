@@ -50,9 +50,10 @@ function useTradeScreenshots(tradeId) {
   return { items, setItems, loading, error, setError, reload: load };
 }
 
-function GridThumb({ children }) {
+function GridThumb({ children, className }) {
   return (
     <div
+      className={className}
       style={{
         position: 'relative',
         aspectRatio: '4 / 3',
@@ -352,7 +353,7 @@ export function TradeScreenshotManager({ tradeId }) {
 // Editing (upload/delete/replace) happens in TradeFormPanel — here the
 // user can only preview via the Lightbox, matching how the legacy
 // single `screenshot` field already behaves in this view.
-export function TradeScreenshotGallery({ tradeId }) {
+export function TradeScreenshotGallery({ tradeId, onPreview }) {
   const { items, loading, error } = useTradeScreenshots(tradeId);
   const [lightbox, setLightbox] = useState(null);
 
@@ -385,21 +386,34 @@ export function TradeScreenshotGallery({ tradeId }) {
         Trade Screenshots ({items.length})
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: 8 }}>
-        {items.map((s) => (
-          <GridThumb key={s.id}>
-            {s.url && (
-              <img
-                src={s.url}
-                alt={s.fileName || 'Trade screenshot'}
-                loading="lazy"
-                onClick={() => setLightbox(s.url)}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'zoom-in', display: 'block' }}
-              />
-            )}
-          </GridThumb>
+        {items.map((s, index) => (
+          <button
+            key={s.id}
+            type="button"
+            className="genie-grid-thumb"
+            aria-label={`Open screenshot ${index + 1} of ${items.length}`}
+            onClick={(event) => {
+              if (!onPreview) { setLightbox(s.url); return; }
+              onPreview({
+                images: items.map((item) => ({
+                  url: item.originalUrl || item.url,
+                  thumbnailUrl: item.thumbnailUrl || item.url,
+                  fileName: item.fileName,
+                  caption: item.caption,
+                })),
+                index,
+                origin: event.currentTarget,
+                thumbnailSrc: s.thumbnailUrl || s.url,
+                slow: event.shiftKey,
+              });
+            }}
+            style={{ position: 'relative', minWidth: 0, width: '100%', aspectRatio: '4 / 3', padding: 0, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border)', background: 'var(--bg)', cursor: 'zoom-in' }}
+          >
+            {s.url && <img src={s.url} alt={s.fileName || `Trade screenshot ${index + 1}`} loading="lazy" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+          </button>
         ))}
       </div>
-      <Lightbox src={lightbox} onClose={() => setLightbox(null)} />
+      {!onPreview && <Lightbox src={lightbox} onClose={() => setLightbox(null)} />}
     </>
   );
 }

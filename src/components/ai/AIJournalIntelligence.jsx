@@ -66,8 +66,8 @@ const chipBase = {
   whiteSpace: 'nowrap',
 };
 const chipActive = {
-  background: 'rgba(124,58,237,0.15)',
-  borderColor: 'rgba(124,58,237,0.4)',
+  background: 'rgba(66,217,255,0.15)',
+  borderColor: 'rgba(66,217,255,0.45)',
   color: 'var(--text)',
 };
 
@@ -79,7 +79,7 @@ function FilterSelect({ label, options, value, onChange }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         style={{
-          background: 'var(--bg-elevated, rgba(255,255,255,0.02))',
+          background: 'rgba(10, 124, 145, 0.24)',
           border: '1px solid var(--border)',
           borderRadius: 8,
           color: 'var(--text)',
@@ -248,7 +248,7 @@ export default function AIJournalIntelligence({ provider, accountIdOverride, acc
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
         <div style={{ minWidth: 0 }}>
           <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <Sparkles size={16} color="#7c3aed" /> AI Journal Intelligence
+            <Sparkles size={16} color="#42d9ff" /> AI Journal Intelligence
             <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-faint)', letterSpacing: '0.03em' }}>
               · {allAccounts ? '(All Accounts)' : selectedAccount?.name || '—'}
             </span>
@@ -257,7 +257,7 @@ export default function AIJournalIntelligence({ provider, accountIdOverride, acc
             A read-only, journal-level read of your recorded analytics — which setups and pairs show the strongest recorded performance, which mistakes recur, and which discipline areas deserve attention. Advisory only; never a signal generator.
           </p>
         </div>
-        <div style={{ display: 'inline-flex', gap: 4, padding: 3, borderRadius: 11, border: '1px solid var(--border)', background: 'var(--bg-elevated, rgba(255,255,255,0.02))', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'inline-flex', gap: 4, padding: 3, borderRadius: 11, border: '1px solid rgba(66,217,255,0.3)', background: 'rgba(10, 124, 145, 0.24)', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {PERIODS.map((p) => (
             <button key={p.value} type="button" onClick={() => setPeriod(p.value)} style={{ ...chipBase, ...(period === p.value ? chipActive : {}) }}>
               {p.label}

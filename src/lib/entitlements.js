@@ -31,6 +31,63 @@ export const DEFAULT_FREE_PLAN = {
   },
 };
 
+// The public offer and the subscription migration share these capabilities.
+// Keep marketing claims tied to entitlements the application already enforces.
+export const PUBLIC_PLAN_CATALOG = [
+  {
+    ...DEFAULT_FREE_PLAN,
+    tagline: 'Build a consistent journaling habit.',
+    highlights: [
+      '1 trading account',
+      'Up to 500 trades',
+      'Trading journal and essential analytics',
+      'Goals, reflections, and challenges',
+      'Up to 5 screenshots per trade',
+    ],
+  },
+  {
+    id: 'edge-plus',
+    name: 'Edge Plus',
+    slug: 'edge-plus',
+    description: 'More room for active traders who want clearer performance insights.',
+    tagline: 'More room to learn from every trade.',
+    price: 9,
+    currency: 'USD',
+    billing_interval: 'monthly',
+    is_active: true,
+    features: ['journal', 'analytics', 'basic_reports', 'advanced_analytics', 'multiple_accounts', 'reports', 'csv_export', 'goals', 'reflections', 'challenges'],
+    limits: { accounts: 3, trades: 2500, screenshots_per_trade: 10 },
+    highlights: [
+      'Up to 3 trading accounts',
+      'Up to 2,500 trades',
+      'Advanced analytics and performance breakdowns',
+      'Platform reports and CSV export',
+      'Up to 10 screenshots per trade',
+    ],
+  },
+  {
+    id: 'edge-pro',
+    name: 'Edge Pro',
+    slug: 'edge-pro',
+    description: 'The complete EdgeJournal toolkit for serious performance review.',
+    tagline: 'The full toolkit for serious review.',
+    price: 19,
+    currency: 'USD',
+    billing_interval: 'monthly',
+    is_active: true,
+    features: ['journal', 'analytics', 'basic_reports', 'advanced_analytics', 'multiple_accounts', 'reports', 'csv_export', 'custom_goals', 'unlimited_trades', 'edge_ai', 'goals', 'reflections', 'challenges'],
+    limits: { accounts: 10, trades: 10000, screenshots_per_trade: 10 },
+    highlights: [
+      'Up to 10 trading accounts',
+      'Up to 10,000 trades',
+      'All advanced analytics, reports, and CSV export',
+      'Custom goals and Edge AI tools',
+      'Up to 10 screenshots per trade',
+    ],
+    featured: true,
+  },
+];
+
 export const KNOWN_FEATURES = [
   { id: 'journal', label: 'Trading Journal', description: 'Core trade logging and execution notes' },
   { id: 'analytics', label: 'Basic Analytics', description: 'Win rate, P&L curve, and essential trade metrics' },

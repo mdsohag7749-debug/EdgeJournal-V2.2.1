@@ -11,9 +11,7 @@
 // group (if collapsed) and smooth-scrolls to it (behavior 'auto' under
 // prefers-reduced-motion).
 
-import { Folder, FolderOpen } from 'lucide-react';
-
-export function AnalyticsTree({ groups, activeKey, expanded, onSelect }) {
+export function AnalyticsTree({ groups, activeKey, onSelect }) {
   return (
     <nav className="analytics-tree" aria-label="Analytics sections">
       <div className="analytics-tree-heading">
@@ -23,26 +21,19 @@ export function AnalyticsTree({ groups, activeKey, expanded, onSelect }) {
       <div className="analytics-tree-list">
         {groups.map((g, i) => {
           const active = activeKey === g.key;
-          const open = expanded[g.key] === true;
           return (
             <button
               key={g.key}
               type="button"
-              className={`analytics-folder${active ? ' analytics-folder-active' : ''}`}
+              className={`analytics-section-link${active ? ' analytics-section-link-active' : ''}`}
               aria-current={active ? 'location' : undefined}
-              aria-expanded={open}
-              aria-controls={g.id}
               onClick={() => onSelect(g.key)}
               style={{ '--i': i }}
             >
-              <span className="analytics-folder-tick" aria-hidden />
-              <span className="analytics-folder-index" aria-hidden>
+              <span className="analytics-section-link-index" aria-hidden>
                 {g.index}
               </span>
-              <span className="analytics-folder-icon" aria-hidden>
-                {open ? <FolderOpen size={14} /> : <Folder size={14} />}
-              </span>
-              <span className="analytics-folder-label">{g.title}</span>
+              <span className="analytics-section-link-label">{g.title}</span>
             </button>
           );
         })}

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, memo, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useInRouterContext, useLocation, useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAccounts } from '../context/AccountContext';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +14,7 @@ import { TradeScreenshotGallery } from '../components/TradeScreenshots';
 import ConfirmDialog from '../components/ConfirmDialog';
 import EmptyState from '../components/EmptyState';
 import SidePanel from '../components/SidePanel';
+import GenieModal from '../components/GenieModal';
 import { loadJSON, saveJSON, downloadJSONFile } from '../lib/storage';
 import { uid, todayISO, formatDate, formatMoney, pnlClass, resultTagClass, directionTagClass } from '../lib/utils';
 import { REVIEW_ITEMS, isClosedTrade, reviewScoreForTrade, reviewStatusForTrade } from '../lib/calculations';
@@ -42,6 +43,8 @@ import {
   RotateCcw,
   ArrowUp,
   ArrowDown,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 const SESSION_OPTIONS = ['Asia', 'London', 'New York', 'London + New York'];
 
@@ -198,20 +201,53 @@ function ToggleFilter({ label, active, onClick }) {
   );
 }
 
-const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, plan, library, onToggle, onEdit, onDelete, onQuickEdit, onToggleFavorite, onToggleSelect, onLightbox, onUpdateReview, onReview }) {
+function TradeDetailsContent({ t, plan, library, onLightbox, onScreenshotPreview, onUpdateReview }) {
+  const tags = Array.isArray(t.tags) ? t.tags : [];
+  return <div className="trade-detail-content" style={{ padding: '4px 20px 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+        <MiniStat label="Direction" value={t.direction} /><MiniStat label="Entry" value={t.entryPrice} /><MiniStat label="Exit" value={t.exitPrice} />
+        <MiniStat label="Contracts" value={t.contracts} /><MiniStat label="Stop Loss" value={t.stopLoss} /><MiniStat label="Take Profit" value={t.takeProfit} />
+        <MiniStat label="Risk %" value={t.riskPercent ? `${t.riskPercent}%` : ''} /><MiniStat label="R:R" value={t.rr} /><MiniStat label="Position Size" value={t.positionSize} />
+        <MiniStat label="Grade" value={t.tradeGrade} /><MiniStat label="Emotion" value={t.emotion} /><MiniStat label="Entry Time" value={t.entryTime} />
+        <MiniStat label="Exit Time" value={t.exitTime} /><MiniStat label="Commission" value={t.commission ? formatMoney(-Math.abs(t.commission)) : '—'} />
+      </div>
+      {tags.length > 0 && <div><div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>Tags</div><div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{tags.map((tag) => <TagChip key={tag} name={tag} library={library} />)}</div></div>}
+      {plan && <Field label="Linked Pre-Market Plan" value={plan} />}<Field label="Confluences" value={t.confluences} /><Field label="Trade Management" value={t.tradeManagement} /><Field label="Trade Notes" value={t.notes} /><Field label="Lessons Learned" value={t.lessonsLearned} />
+      <ChecklistSummary title="Risk Management" values={t.riskChecklist} /><ChecklistSummary title="Trade Checklist" values={t.tradeChecklist} /><ChecklistSummary title="Mistakes" values={t.mistakes} /><PsychologySummary t={t} /><ReviewBlock t={t} onChange={(review) => onUpdateReview?.(t.id, review)} />
+    </div>
+    <div style={{ paddingTop: 14 }}>{t.screenshot ? <><div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>Execution Screenshot</div><img src={t.screenshot} alt="Execution" onClick={() => onLightbox(t.screenshot)} style={{ width: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)', cursor: 'zoom-in' }} /></> : <div style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>No screenshot attached.</div>}<div style={{ marginTop: t.screenshot ? 16 : 0 }}><TradeScreenshotGallery tradeId={t.id} onPreview={onScreenshotPreview} /></div></div>
+  </div>;
+}
+
+const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, plan, library, layoutMode, onToggle, onEdit, onDelete, onQuickEdit, onToggleFavorite, onToggleSelect, onLightbox, onUpdateReview, onReview }) {
   const tags = Array.isArray(t.tags) ? t.tags : [];
   const closed = isClosedTrade(t);
   const reviewScore = reviewScoreForTrade(t);
   const reviewStatus = reviewStatusForTrade(t);
-  return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+  const rowRef = useRef(null);
+
+return (
+    <div className={`card card-lift trade-journal-row${layoutMode === 'grid' ? ' trade-journal-row--grid' : ''}`} style={{ padding: 0, overflow: 'hidden' }}>
       <div
-        onClick={() => (selectionMode ? onToggleSelect(t.id) : onToggle(t.id))}
+        ref={rowRef}
+        className="trade-journal-row-header"
+        onClick={(event) => {
+          if (selectionMode) {
+            onToggleSelect(t.id);
+            return;
+          }
+          onToggle({ trade: t, row: rowRef.current, point: { x: event.clientX, y: event.clientY }, slow: event.shiftKey });
+        }}
         onKeyDown={(e) => {
           if (e.target !== e.currentTarget) return;
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            selectionMode ? onToggleSelect(t.id) : onToggle(t.id);
+            if (selectionMode) onToggleSelect(t.id);
+            else {
+              const rect = e.currentTarget.getBoundingClientRect();
+              onToggle({ trade: t, row: rowRef.current, point: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } });
+            }
           }
         }}
         role="button"
@@ -229,7 +265,7 @@ const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, 
           borderBottom: isOpen ? '1px solid var(--border)' : 'none',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        <div className="trade-journal-summary" style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
           {selectionMode && <SelectBox checked={isSelected} />}
           {t.isFavorite && <Star size={14} fill="var(--red)" color="var(--red)" aria-hidden />}
           <span style={{ fontSize: 13, color: 'var(--text-muted)', minWidth: 84 }}>{formatDate(t.date)}</span>
@@ -266,7 +302,7 @@ const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, 
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={(e) => e.stopPropagation()}>
+        <div className="trade-journal-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={(e) => e.stopPropagation()}>
           <button className="btn btn-ghost btn-icon btn-sm" onClick={() => onReview(t)} aria-label="Review trade" title="Review Trade">
             <ClipboardCheck size={14} color="var(--text-muted)" />
           </button>
@@ -290,71 +326,7 @@ const TradeRow = memo(function TradeRow({ t, isOpen, isSelected, selectionMode, 
         </div>
       </div>
 
-      {isOpen && (
-        <div style={{ padding: '4px 20px 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: 20 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 14 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-              <MiniStat label="Direction" value={t.direction} />
-              <MiniStat label="Entry" value={t.entryPrice} />
-              <MiniStat label="Exit" value={t.exitPrice} />
-              <MiniStat label="Contracts" value={t.contracts} />
-              <MiniStat label="Stop Loss" value={t.stopLoss} />
-              <MiniStat label="Take Profit" value={t.takeProfit} />
-              <MiniStat label="Risk %" value={t.riskPercent ? `${t.riskPercent}%` : ''} />
-              <MiniStat label="R:R" value={t.rr} />
-              <MiniStat label="Position Size" value={t.positionSize} />
-              <MiniStat label="Grade" value={t.tradeGrade} />
-              <MiniStat label="Emotion" value={t.emotion} />
-              <MiniStat label="Entry Time" value={t.entryTime} />
-              <MiniStat label="Exit Time" value={t.exitTime} />
-              <MiniStat label="Commission" value={t.commission ? formatMoney(-Math.abs(t.commission)) : '—'} />
-            </div>
-            {tags.length > 0 && (
-              <div>
-                <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
-                  Tags
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {tags.map((tag) => (
-                    <TagChip key={tag} name={tag} library={library} />
-                  ))}
-                </div>
-              </div>
-            )}
-            {plan && <Field label="Linked Pre-Market Plan" value={plan} />}
-            <Field label="Confluences" value={t.confluences} />
-            <Field label="Trade Management" value={t.tradeManagement} />
-            <Field label="Trade Notes" value={t.notes} />
-            <Field label="Lessons Learned" value={t.lessonsLearned} />
-            <ChecklistSummary title="Risk Management" values={t.riskChecklist} />
-            <ChecklistSummary title="Trade Checklist" values={t.tradeChecklist} />
-            <ChecklistSummary title="Mistakes" values={t.mistakes} />
-            <PsychologySummary t={t} />
 
-            <ReviewBlock t={t} onChange={(review) => onUpdateReview?.(t.id, review)} />
-          </div>
-          <div style={{ paddingTop: 14 }}>
-            {t.screenshot ? (
-              <>
-                <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
-                  Execution Screenshot
-                </div>
-                <img
-                  src={t.screenshot}
-                  alt="Execution"
-                  onClick={() => onLightbox(t.screenshot)}
-                  style={{ width: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)', cursor: 'zoom-in' }}
-                />
-              </>
-            ) : (
-              <div style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>No screenshot attached.</div>
-            )}
-            <div style={{ marginTop: t.screenshot ? 16 : 0 }}>
-              <TradeScreenshotGallery tradeId={t.id} />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 });
@@ -371,7 +343,9 @@ export default function TradingJournal() {
   // ---- Existing state (full edit panel, expand, lightbox, single delete)
   const [panelOpen, setPanelOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const genieRef = useRef(null);
   const [expanded, setExpanded] = useState({});
+  const [layoutMode, setLayoutMode] = useState(() => window.localStorage.getItem('edgejournal-journal-layout') || 'grid');
   const [lightbox, setLightbox] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
 
@@ -423,6 +397,10 @@ export default function TradingJournal() {
   useEffect(() => {
     saveJSON(presetsKey, presets);
   }, [presets, presetsKey]);
+
+  useEffect(() => {
+    window.localStorage.setItem('edgejournal-journal-layout', layoutMode);
+  }, [layoutMode]);
 
   const filterKey = JSON.stringify(filters);
   useEffect(() => {
@@ -707,9 +685,10 @@ export default function TradingJournal() {
     setPanelOpen(false);
   }
 
-  const toggleExpand = useCallback((id) => {
-    setExpanded((e) => ({ ...e, [id]: !e[id] }));
+  const toggleExpand = useCallback((request) => {
+    genieRef.current?.toggle(request);
   }, []);
+  const setExpandedTrade = useCallback((id) => setExpanded(id ? { [id]: true } : {}), []);
 
   const toggleFavorite = useCallback(
     (trade) => {
@@ -910,6 +889,27 @@ export default function TradingJournal() {
           <button className={`btn btn-sm ${favoritesOnly ? 'btn-accent' : 'btn-ghost'}`} onClick={() => setFavoritesOnly((f) => !f)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <Star size={13} fill={favoritesOnly ? 'currentColor' : 'none'} /> Favorites
           </button>
+
+          <div className="journal-layout-toggle" role="group" aria-label="Trade layout">
+            <button
+              className={`btn btn-sm ${layoutMode === 'list' ? 'btn-accent' : 'btn-ghost'}`}
+              onClick={() => setLayoutMode('list')}
+              aria-label="Show trades in one column"
+              aria-pressed={layoutMode === 'list'}
+              title="List view"
+            >
+              <List size={14} />
+            </button>
+            <button
+              className={`btn btn-sm ${layoutMode === 'grid' ? 'btn-accent' : 'btn-ghost'}`}
+              onClick={() => setLayoutMode('grid')}
+              aria-label="Show trades in two columns"
+              aria-pressed={layoutMode === 'grid'}
+              title="Two-column card view"
+            >
+              <LayoutGrid size={14} />
+            </button>
+          </div>
 
           <button
             className={`btn btn-sm ${viewsOpen || views.some((v) => !v.accountId || v.accountId === (selectedAccountId || preferredAccountId || '')) ? 'btn-accent' : 'btn-ghost'}`}
@@ -1224,7 +1224,7 @@ export default function TradingJournal() {
           onAction={clearFilters}
         />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className={`trade-journal-list${layoutMode === 'grid' ? ' trade-journal-list--grid' : ''}`}>
           {visible.map((t) => (
             <TradeRow
               key={t.id}
@@ -1234,6 +1234,7 @@ export default function TradingJournal() {
               selectionMode={selectionMode}
               plan={planLabel(t.planId)}
               library={tagLibrary}
+              layoutMode={layoutMode}
               onToggle={toggleExpand}
               onEdit={openEdit}
               onDelete={requestDelete}
@@ -1255,6 +1256,8 @@ export default function TradingJournal() {
           )}
         </div>
       )}
+
+      <GenieModal ref={genieRef} onExpandedChange={setExpandedTrade} renderContent={(trade, openGenieLightbox) => <TradeDetailsContent t={trade} plan={planLabel(trade.planId)} library={tagLibrary} onLightbox={setLightbox} onScreenshotPreview={openGenieLightbox} onUpdateReview={handleUpdateReview} />} />
 
       {/* Quick edit panel */}
       <SidePanel

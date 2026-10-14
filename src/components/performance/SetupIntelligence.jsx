@@ -151,8 +151,8 @@ export default function SetupIntelligence() {
               gap: 14,
               padding: '14px 16px',
               borderRadius: 12,
-              border: '1px solid var(--border)',
-              background: 'var(--bg-elevated, rgba(255,255,255,0.02))',
+              border: '1px solid rgba(91, 194, 204, 0.32)',
+              background: 'linear-gradient(135deg, rgba(12, 83, 99, 0.72), rgba(8, 57, 73, 0.62))',
               marginBottom: 14,
             }}
           >

@@ -1,17 +1,18 @@
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from './context/AuthContext';
 import LoadingScreen from './components/LoadingScreen';
-import { MotionConfig } from 'framer-motion';
+import { LayoutGroup, MotionConfig } from 'framer-motion';
 import AppShell from './layouts/AppShell';
 import AdminShell from './layouts/AdminShell';
 import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ProtectedRoute from './routes/ProtectedRoute';
 import AdminRoute from './routes/AdminRoute';
 import GuestRoute from './routes/GuestRoute';
 import TradingCursor from './components/cursor/TradingCursor';
+import Register from './pages/auth/Register';
+import Landing from './pages/Landing';
 
 // Top-level router.
 // - /login, /register, /forgot-password: standalone auth pages, guarded
@@ -32,7 +33,7 @@ export default function App() {
     if (!isAuthenticated) setWorkspaceReady(false);
   }, [isAuthenticated]);
 
-  const showTradingCursor = location.pathname === '/login';
+  const showTradingCursor = ['/login', '/register', '/forgot-password'].includes(location.pathname);
   const [graphicsMode, setGraphicsMode] = useState(() => {
     try {
       const savedMode = window.localStorage.getItem('edgejournal-graphics-mode');
@@ -88,7 +89,18 @@ export default function App() {
             <LoadingScreen message="Loading your trading desk…" />
           </div>
         )}
+        <LayoutGroup id="edgejournal-auth-flow">
         <Routes>
+        <Route
+          path="/plans"
+          element={isAuthenticated ? <Navigate to="/subscription" replace /> : <Navigate to="/#plans" replace />}
+        />
+        <Route
+          path="/"
+          element={isAuthenticated ? (
+            <ProtectedRoute><AppShell onInitialReady={markWorkspaceReady} /></ProtectedRoute>
+          ) : <Landing />}
+        />
         <Route
           path="/login"
           element={
@@ -130,6 +142,7 @@ export default function App() {
           }
         />
         </Routes>
+        </LayoutGroup>
       </>
     </MotionConfig>
   );

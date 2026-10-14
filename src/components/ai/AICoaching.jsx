@@ -63,8 +63,8 @@ const chipBase = {
   whiteSpace: 'nowrap',
 };
 const chipActive = {
-  background: 'rgba(124,58,237,0.15)',
-  border: '1.5px solid rgba(124,58,237,0.4)',
+  background: 'rgba(66,217,255,0.15)',
+  border: '1.5px solid rgba(66,217,255,0.45)',
   color: 'var(--text)',
 };
 
@@ -76,7 +76,7 @@ function FilterSelect({ label, options, value, onChange }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         style={{
-          background: 'var(--bg-elevated, rgba(255,255,255,0.02))',
+          background: 'rgba(10, 124, 145, 0.24)',
           border: '1px solid var(--border)',
           borderRadius: 8,
           color: 'var(--text)',
@@ -263,7 +263,7 @@ export default function AICoaching({ provider, accountIdOverride, accountNameOve
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
         <div style={{ minWidth: 0 }}>
           <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <Sparkles size={16} color="#7c3aed" /> AI Coach
+            <Sparkles size={16} color="#42d9ff" /> AI Coach
             <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-faint)', letterSpacing: '0.03em' }}>
               · Your next improvement cycle · {allAccounts ? '(All Accounts)' : selectedAccount?.name || '—'}
             </span>
@@ -272,7 +272,7 @@ export default function AICoaching({ provider, accountIdOverride, accountNameOve
             A structured personal trading coach based only on recorded journal evidence — which process habits to review next, what is working, and a short action plan. Advisory only; never a signal generator.
           </p>
         </div>
-        <div role="group" aria-label="Coaching horizon" style={{ display: 'inline-flex', gap: 4, padding: 3, borderRadius: 11, border: '1px solid var(--border)', background: 'var(--bg-elevated, rgba(255,255,255,0.02))', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <div role="group" aria-label="Coaching horizon" style={{ display: 'inline-flex', gap: 4, padding: 3, borderRadius: 11, border: '1px solid rgba(66,217,255,0.3)', background: 'rgba(10, 124, 145, 0.24)', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {COACHING_HORIZONS.map((h) => (
             <button key={h} type="button" onClick={() => setHorizon(h)} style={{ ...chipBase, ...(horizon === h ? chipActive : {}) }}>
               {coachingHorizonLabel(h)}

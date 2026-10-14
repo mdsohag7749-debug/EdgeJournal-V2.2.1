@@ -67,7 +67,7 @@ export default function Recommendations() {
           const pr = PRIORITY_COLOR[r.priority] || '#94a3b8';
           return (
             <motion.div key={`${r.category}-${r.title}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, delay: Math.min(i * 0.03, 0.3) }}
-              style={{ padding: '13px 14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg-elevated, rgba(255,255,255,0.02))' }}>
+              style={{ padding: '13px 14px', borderRadius: 12, border: '1px solid rgba(91, 194, 204, 0.32)', background: 'linear-gradient(135deg, rgba(12, 83, 99, 0.72), rgba(8, 57, 73, 0.62))' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
                 <span style={{ fontSize: 10, fontWeight: 800, color: cat, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{r.category}</span>
                 <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)' }}>{r.title}</span>

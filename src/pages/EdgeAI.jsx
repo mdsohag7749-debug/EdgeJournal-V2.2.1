@@ -408,12 +408,12 @@ export default function EdgeAI({ onNavigate }) {
           {/* SECTION A: AI STATUS CARDS */}
           <section>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <Activity size={18} color="var(--red)" />
+              <Activity size={18} color="#42d9ff" />
               <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>SECTION A · AI Status & Telemetry</h2>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
-              <div style={{ padding: '16px 18px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div style={{ padding: '16px 18px', borderRadius: 12, background: 'linear-gradient(145deg, rgba(24, 111, 128, 0.46) 0%, rgba(12, 53, 73, 0.58) 100%)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid var(--border)' }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                   AI Provider Status
                 </span>
@@ -426,7 +426,7 @@ export default function EdgeAI({ onNavigate }) {
                 </div>
               </div>
 
-              <div style={{ padding: '16px 18px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div style={{ padding: '16px 18px', borderRadius: 12, background: 'linear-gradient(145deg, rgba(24, 111, 128, 0.46) 0%, rgba(12, 53, 73, 0.58) 100%)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid var(--border)' }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                   Plan Eligibility
                 </span>
@@ -438,7 +438,7 @@ export default function EdgeAI({ onNavigate }) {
                 </div>
               </div>
 
-              <div style={{ padding: '16px 18px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div style={{ padding: '16px 18px', borderRadius: 12, background: 'linear-gradient(145deg, rgba(24, 111, 128, 0.46) 0%, rgba(12, 53, 73, 0.58) 100%)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid var(--border)' }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                   Data Availability
                 </span>
@@ -450,7 +450,7 @@ export default function EdgeAI({ onNavigate }) {
                 </div>
               </div>
 
-              <div style={{ padding: '16px 18px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div style={{ padding: '16px 18px', borderRadius: 12, background: 'linear-gradient(145deg, rgba(24, 111, 128, 0.46) 0%, rgba(12, 53, 73, 0.58) 100%)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid var(--border)' }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                   Last Analysis Time
                 </span>
@@ -469,7 +469,7 @@ export default function EdgeAI({ onNavigate }) {
           <section>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <BarChart3 size={18} color="var(--red)" />
+                <BarChart3 size={18} color="#42d9ff" />
                 <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>SECTION B · Grounded Quick Insights</h2>
               </div>
               <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>
@@ -479,7 +479,7 @@ export default function EdgeAI({ onNavigate }) {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
               {/* Insight 1: Recent Performance */}
-              <div style={{ padding: '18px 20px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div style={{ padding: '18px 20px', borderRadius: 12, background: 'linear-gradient(145deg, rgba(24, 111, 128, 0.46) 0%, rgba(12, 53, 73, 0.58) 100%)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontSize: 13, fontWeight: 700 }}>Overall Performance</span>
                   <span style={{ fontSize: 12, color: quickMetrics.totalPnl >= 0 ? 'var(--win)' : 'var(--loss)', fontWeight: 700 }}>
@@ -517,7 +517,7 @@ export default function EdgeAI({ onNavigate }) {
               </div>
 
               {/* Insight 2: Win/Loss & Average R */}
-              <div style={{ padding: '18px 20px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div style={{ padding: '18px 20px', borderRadius: 12, background: 'linear-gradient(145deg, rgba(24, 111, 128, 0.46) 0%, rgba(12, 53, 73, 0.58) 100%)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontSize: 13, fontWeight: 700 }}>Average Realized R</span>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>Profit Factor: {quickMetrics.profitFactor || 0}</span>
@@ -553,7 +553,7 @@ export default function EdgeAI({ onNavigate }) {
               </div>
 
               {/* Insight 3: Risk Consistency */}
-              <div style={{ padding: '18px 20px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div style={{ padding: '18px 20px', borderRadius: 12, background: 'linear-gradient(145deg, rgba(24, 111, 128, 0.46) 0%, rgba(12, 53, 73, 0.58) 100%)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontSize: 13, fontWeight: 700 }}>Risk Consistency</span>
                   <span
@@ -600,7 +600,7 @@ export default function EdgeAI({ onNavigate }) {
               </div>
 
               {/* Insight 4: Instrument Performance */}
-              <div style={{ padding: '18px 20px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div style={{ padding: '18px 20px', borderRadius: 12, background: 'linear-gradient(145deg, rgba(24, 111, 128, 0.46) 0%, rgba(12, 53, 73, 0.58) 100%)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontSize: 13, fontWeight: 700 }}>Instrument Edge</span>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
@@ -642,7 +642,7 @@ export default function EdgeAI({ onNavigate }) {
               </div>
 
               {/* Insight 5: Session Performance */}
-              <div style={{ padding: '18px 20px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div style={{ padding: '18px 20px', borderRadius: 12, background: 'linear-gradient(145deg, rgba(24, 111, 128, 0.46) 0%, rgba(12, 53, 73, 0.58) 100%)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontSize: 13, fontWeight: 700 }}>Session Performance</span>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Time-of-day</span>
@@ -682,7 +682,7 @@ export default function EdgeAI({ onNavigate }) {
               </div>
 
               {/* Insight 6: Drawdown & Streaks */}
-              <div style={{ padding: '18px 20px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div style={{ padding: '18px 20px', borderRadius: 12, background: 'linear-gradient(145deg, rgba(24, 111, 128, 0.46) 0%, rgba(12, 53, 73, 0.58) 100%)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontSize: 13, fontWeight: 700 }}>Drawdown Behavior</span>
                   <span style={{ fontSize: 12, color: 'var(--loss)' }}>
@@ -728,13 +728,13 @@ export default function EdgeAI({ onNavigate }) {
             style={{
               padding: '24px 26px',
               borderRadius: 14,
-              background: 'var(--bg-elevated)',
+              background: 'linear-gradient(145deg, rgba(24, 111, 128, 0.46) 0%, rgba(12, 53, 73, 0.58) 100%)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
               border: '1px solid var(--border)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <MessageCircleQuestion size={20} color="var(--red)" />
+                <MessageCircleQuestion size={20} color="#42d9ff" />
                 <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>SECTION C · Ask Edge AI</h2>
               </div>
               <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>

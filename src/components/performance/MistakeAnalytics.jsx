@@ -40,9 +40,8 @@ function MistakeBars({ data, xKey, color, height = 240, prefix }) {
       </div>
     );
   }
-  const barHeight = xKey === 'count' && data.length > 6 ? Math.max(220, data.length * 40 + 50) : height;
   return (
-    <div style={{ width: '100%', height: barHeight }}>
+    <div style={{ width: '100%', height }}>
       <ResponsiveContainer>
         <BarChart data={data} margin={{ top: 5, right: 10, left: -8, bottom: 0 }}>
           <CartesianGrid stroke="var(--border)" vertical={false} />
@@ -92,7 +91,7 @@ function MistakeTable({ rows }) {
 
 function SectionCard({ icon: Icon, title, accent = '#7c3aed', children }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card card-lift" style={{ padding: 22 }}>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card card-lift" style={{ padding: 22, height: 'fit-content', alignSelf: 'start' }}>
       <h3 className="section-title" style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
         <Icon size={16} color={accent} /> {title}
       </h3>
@@ -151,16 +150,16 @@ export default function MistakeAnalytics() {
             />
           </div>
 
-          <div className="dash-two-col-even">
+          <div className="dash-two-col-even" style={{ alignItems: 'start' }}>
             <SectionCard title="Mistake Frequency" icon={AlertTriangle} accent={RED}>
-              <MistakeBars data={m.perMistake} xKey="count" color={RED} prefix=" mistakes" />
+              <MistakeBars data={m.perMistake} xKey="count" color={RED} height={210} prefix=" mistakes" />
             </SectionCard>
             <SectionCard title="Monthly Mistake Trend" icon={CalendarDays} accent={PURPLE}>
-              <MistakeBars data={m.monthly} xKey="count" color={PURPLE} height={250} prefix=" mistakes" />
+              <MistakeBars data={m.monthly} xKey="count" color={PURPLE} height={210} prefix=" mistakes" />
             </SectionCard>
           </div>
 
-          <div className="dash-two-col-even">
+          <div className="dash-two-col-even" style={{ alignItems: 'start' }}>
             <SectionCard title="Mistakes by Pair" icon={Crosshair} accent={BLUE}>
               <MistakeTable rows={byPairRows} />
             </SectionCard>

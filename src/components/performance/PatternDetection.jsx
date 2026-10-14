@@ -77,7 +77,7 @@ export default function PatternDetection() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 2 }}>
         {data.patterns.slice(0, 10).map((p) => (
-          <div key={p.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg-elevated, rgba(255,255,255,0.02))' }}>
+          <div key={p.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(91, 194, 204, 0.32)', background: 'linear-gradient(135deg, rgba(12, 83, 99, 0.72), rgba(8, 57, 73, 0.62))' }}>
             <span style={{ width: 8, height: 8, borderRadius: 4, background: (STRENGTH_COLOR[p.strength] || '#94a3b8'), marginTop: 6, flexShrink: 0 }} />
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>

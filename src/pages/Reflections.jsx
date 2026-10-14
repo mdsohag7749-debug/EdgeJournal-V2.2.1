@@ -67,9 +67,10 @@ export default function Reflections() {
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {['All', ...PERIODS].map((p) => (
           <button key={p} className="btn btn-sm" onClick={() => setFilter(p)} style={{
-            background: filter === p ? 'var(--red)' : 'transparent',
-            color: filter === p ? '#fff' : 'var(--text-muted)',
-            border: filter === p ? '1px solid var(--red)' : '1px solid var(--border)',
+            background: filter === p ? 'linear-gradient(135deg, #8bf3ee, #3ad7c7)' : 'rgba(45, 145, 162, 0.11)',
+            color: filter === p ? '#05212a' : 'var(--text-muted)',
+            border: filter === p ? '1px solid rgba(142, 255, 248, 0.78)' : '1px solid rgba(178, 247, 246, 0.18)',
+            boxShadow: filter === p ? '0 0 14px rgba(74, 229, 198, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.5)' : 'none',
           }}>
             {p}
           </button>

@@ -1,0 +1,19 @@
+.genie-lightbox-root { position: fixed; inset: 0; z-index: 10010; pointer-events: none; }
+.genie-lightbox-backdrop { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; padding: 0; border: 0; background: rgba(2, 12, 20, 0.68); pointer-events: auto; transition: none; }
+.genie-lightbox-strip-layer { position: fixed; inset: 0; z-index: 1; pointer-events: none; contain: strict; isolation: isolate; }
+.genie-lightbox-panel { position: fixed; z-index: 3; left: 50%; top: 50%; display: flex; flex-direction: column; box-sizing: border-box; max-height: 85vh; max-height: 85dvh; overflow: hidden; transform: translate(-50%, -50%); border: 1px solid color-mix(in srgb, var(--teal) 65%, transparent); border-radius: 20px; background: linear-gradient(145deg, rgba(23, 67, 87, 0.97), rgba(9, 31, 46, 0.98)); box-shadow: 0 32px 100px rgba(0, 0, 0, 0.62), 0 0 42px color-mix(in srgb, var(--teal) 16%, transparent); color: var(--text); pointer-events: auto; }
+.genie-lightbox-header { flex: 0 0 52px; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 0 8px; }
+.genie-lightbox-header > div:first-child { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.genie-lightbox-header strong { font-size: 14px; }
+.genie-lightbox-header span { overflow: hidden; color: var(--text-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.genie-lightbox-controls { display: flex; flex: 0 0 auto; gap: 4px; }
+.genie-lightbox-image-wrap { display: flex; flex: 1 1 auto; align-items: center; justify-content: center; min-height: 0; overflow: hidden; border-radius: 12px; background: rgba(1, 10, 17, 0.58); }
+.genie-lightbox-image { display: block; max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-out; transition: opacity 150ms ease; }
+.genie-grid-thumb { display: block; color: inherit; transition: border-color 0.4s ease, box-shadow 0.4s ease; }
+.genie-grid-thumb:hover { border-color: color-mix(in srgb, var(--teal) 55%, transparent) !important; }
+.genie-grid-thumb:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.genie-thumb-pulse { animation: genie-thumb-pulse 400ms ease-out; }
+@keyframes genie-thumb-pulse { 0% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--teal) 85%, transparent), 0 0 24px color-mix(in srgb, var(--teal) 45%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+.genie-strip-clone,
+.genie-strip-clone * { box-sizing: border-box; box-shadow: none !important; filter: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; animation: none !important; transition: none !important; }
+@media (max-width: 639px) { .genie-lightbox-panel { width: calc(100vw - 16px) !important; max-height: calc(100dvh - 16px); border-radius: 18px; } }
